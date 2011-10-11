@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="W7188" />
+		<Option pch_mode="2" />
+		<Option compiler="ow" />
+		<Build>
+			<Target title="7188">
+				<Option output="bin\w_bad.exe" prefix_auto="1" extension_auto="0" />
+				<Option working_dir="" />
+				<Option object_output="obj\" />
+				<Option type="5" />
+				<Option compiler="ow" />
+				<Option projectCompilerOptionsRelation="1" />
+				<Option projectLinkerOptionsRelation="1" />
+				<Option projectLibDirsRelation="2" />
+				<Compiler>
+					<Add option="-os" />
+					<Add option="-oi" />
+					<Add option="-oa" />
+					<Add option="-mc" />
+					<Add option="-zu" />
+					<Add option="-zdf" />
+					<Add option="-s" />
+					<Add option="-bt=dos" />
+					<Add option="-we -e10 -s -zq -os -oi -oa -zdf -zu -1 -bt=dos -mc" />
+					<Add option="-d__7188XA" />
+					<Add option="-d__TNGP_" />
+					<Add option="-d__WIRE" />
+					<Add option="-d__GPS_TIME" />
+					<Add option="-d__MTU" />
+					<Add option="-d__COM_STATUS_BUF_" />
+				</Compiler>
+				<Linker>
+					<Add option="name w d all SYS dos op m op maxe=25" />
+					<Add option="op symf" />
+					<Add option="op el" />
+				</Linker>
+				<ExtraCommands>
+					<Add after="d:\work\watcom\binnt\wlink.exe name bin\w.exe d all SYS dos op m op maxe=25 op q op symf op el file obj\WComms.obj,obj\main.obj,obj\WCRCs.obj,obj\WHrdware.obj,obj\wkern.obj" />
+					<Add after="cmd /c copy /y bin\w.exe D:\Work\I7188\NAPDOS\w.exe" />
+					<Mode after="always" />
+				</ExtraCommands>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-wx" />
+		</Compiler>
+		<Linker>
+			<Add directory="lib" />
+		</Linker>
+		<Unit filename="7188.H" />
+		<Unit filename="7188XA.H" />
+		<Unit filename="ADC_ARQ.h" />
+		<Unit filename="ADC_SVC.h" />
+		<Unit filename="CYCL_BUF.h" />
+		<Unit filename="DI_ARQ.h" />
+		<Unit filename="DI_SVC.h" />
+		<Unit filename="GPS_TIME.h" />
+		<Unit filename="HLI.h" />
+		<Unit filename="HLI_ARQ.h" />
+		<Unit filename="MODULE.h" />
+		<Unit filename="MSGBUF.h" />
+		<Unit filename="MTU05.h" />
+		<Unit filename="POLLING.h" />
+		<Unit filename="PROG_SVC.h" />
+		<Unit filename="PrtLiner.h" />
+		<Unit filename="Service.h" />
+		<Unit filename="TIMC_ARQ.h" />
+		<Unit filename="TIMC_SVC.h" />
+		<Unit filename="W16550IH.h" />
+		<Unit filename="W80188SP.h" />
+		<Unit filename="WAm186ES.H" />
+		<Unit filename="WCRCs.cpp" />
+		<Unit filename="WCRCs.hpp" />
+		<Unit filename="WClasses.HPP" />
+		<Unit filename="WComms.cpp" />
+		<Unit filename="WComms.hpp" />
+		<Unit filename="WConsole.h" />
+		<Unit filename="WFlash.h" />
+		<Unit filename="WFloat32.h" />
+		<Unit filename="WHrdware.cpp" />
+		<Unit filename="WHrdware.hpp" />
+		<Unit filename="WInlines.h" />
+		<Unit filename="WInt64.h" />
+		<Unit filename="WKern.cpp" />
+		<Unit filename="WKern.hpp" />
+		<Unit filename="WTLIST.hpp" />
+		<Unit filename="W_EmbSPH.h" />
+		<Unit filename="W_FSOpt.h" />
+		<Unit filename="dump_SVC.h" />
+		<Unit filename="hli_2238.h" />
+		<Unit filename="hli_gr47.h" />
+		<Unit filename="hli_sim3.h" />
+		<Unit filename="hli_tc65.h" />
+		<Unit filename="hli_wire.h" />
+		<Unit filename="main.cpp" />
+		<Unit filename="x600.h" />
+		<Extensions>
+			<code_completion />
+			<debugger />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>
