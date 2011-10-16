@@ -4,17 +4,19 @@ class THREAD_POLLING : public THREAD
 {
     U16 pollPort;
     U32 baudRate;
+    U16 declaredMTUs;
     //MODULES *modules;
     //PU_LIST *pollList;
 public:
 #ifndef __PollPort
 #define __PollPort 2
 #endif
-    THREAD_POLLING(U16 pollPort, U32 baudRate//, MODULES &m=Modules, PU_LIST &pl=PollList
+    THREAD_POLLING(U16 pollPort, U32 baudRate, U16 MTUs//, MODULES &m=Modules, PU_LIST &pl=PollList
     )
     {
         this->pollPort=pollPort;
         this->baudRate=baudRate;
+        this->declaredMTUs=MTUs;
         //modules=&m;
         //pollList=&pl;
     }
@@ -293,8 +295,8 @@ void THREAD_POLLING::execute()
 //*
 #define use_mtu_crc TRUE
     //***** Scan RS-485 bus
-    U16 detectedMTU;
-    while(!Terminated)
+    U16 detectedMTU = 0;
+    while(!Terminated && detectedMTU==0)
     {
         SYS::sleep(3000);
         dbg("\n\rMTU-05: searching...");
@@ -314,23 +316,23 @@ void THREAD_POLLING::execute()
                 if(cnt==1 && ans==0xAA)
                 {
                     bits |= 1<<i;
-                    dbg2("\n\rMTU-05: #%d detected", i);
+                    if(j==0) dbg2("\n\rMTU-05: #%d detected", i);
                     SYS::sleep(20);
                 }
             }
             detected[j]=bits;
         }
-        if(detected[0]!=0 && detected[0]==detected[1])
-        {
+        if(detected[0]==detected[1])
             detectedMTU = detected[0];
-            break;
-        }
     }
+    if(declaredMTUs==0)
+        declaredMTUs = detectedMTU;
+    else detectedMTU &= declaredMTUs;
     // create MTU objects
     PU_ADC_MTU *MTUs[16];
     int nMTU = 0;
     for(int i=0; i<=15; i++)
-        if((detectedMTU & (1<<i))!=0)
+        if((declaredMTUs & (1<<i))!=0)
             MTUs[nMTU++] = new PU_ADC_MTU(i);
     //dbg("\n\rMTU-05: getting coeffs...");
     {
@@ -436,7 +438,7 @@ void THREAD_POLLING::execute()
             U16 cnt = RS485.read(&ans,1,3);
             if(cnt!=1 || ans>10)
             {
-                dbg3("\n\rMTU #%X : Buffer reading FAILED (nRes=%X)",num,ans);
+                //dbg3("\n\rMTU #%X : Buffer reading FAILED (nRes=%X)",num,ans);
                 //PollStatAdd(1,0);
                 continue;
             }
@@ -444,7 +446,7 @@ void THREAD_POLLING::execute()
             cnt = RS485.read(Resp+1,size,size);
             if(cnt != size)
             {
-                ConPrintf("\n\rMTU #%X : Buffer reading FAILED (wrong answer size, %d!=%d)",num,cnt,size);
+                //ConPrintf("\n\rMTU #%X : Buffer reading FAILED (wrong answer size, %d!=%d)",num,cnt,size);
                 //PollStatAdd(1,0);
                 continue;
             }

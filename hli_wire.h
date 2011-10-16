@@ -5,24 +5,21 @@
 #define LinkTimeout (toTypeSec | 10)
 
 class THREAD_HLI : public THREAD {
-  COMPORT *HLI;
+  int comNum;
 public:
 
-THREAD_HLI(COMPORT &HLI):THREAD(4096+1024){
-  this->HLI=&HLI;
+THREAD_HLI(U16 comNum):THREAD(4096+1024){
+  this->comNum = comNum;
 }
 
 void execute(){
-  COMPORT& HLI=*(this->HLI);
-#if defined(__HLI_BaudRate)
+  COMPORT& HLI=GetCom(comNum);
+//#if !defined(__HLI_BaudRate)
+//  #define __HLI_BaudRate 19200
+//#endif
   HLI.install(__HLI_BaudRate);
-  //dbg2("\n\rHLI started (leased line) @ %ld",__HLI_BaudRate);
-#else
-  HLI.install(19200);
-  //dbg("\n\rHLI started (leased line) @ 19200");
-#endif
   PRT_LINER prt(&HLI);
-  dbg("\n\rHLI started (leased line)");
+  dbg3("\n\rHLI_WIRE started (COM%d, %ld)", comNum, (U32)__HLI_BaudRate);
   prt.Open();
   TIMEOUTOBJ toutLink, toutTx;
   U8 TxCnt=0, RxCnt=0;

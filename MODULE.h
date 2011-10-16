@@ -105,10 +105,10 @@ public:
 };
 
 #define flgError       0x80
-#define flgEComm       0x40
-#define flgEADCRange   0x20
-#define flgEDataFormat 0x10
-#define flgEResponse   0x08
+#define flgEComm       (flgError | 0x40)
+#define flgEADCRange   (flgError | 0x20)
+#define flgEDataFormat (flgError | 0x10)
+#define flgEResponse   (flgError | 0x08)
 #define ASItemSize 2
 #define ADC_Period (1000/ADC_Freq) // milliseconds
 
@@ -265,12 +265,20 @@ public:
             else ps[i] = flgEADCRange<<8;
         }
         cs.enter();
-        for(int i=0; i<cnt; i++)
+        if(cnt==0)
         {
             if(IsFull()) get(NULL);
-            put(&(ps[i]));
+            U16 data = flgEComm<<8;
+            put(&data);
         }
+        else
+            for(int i=0; i<cnt; i++)
+            {
+                if(IsFull()) get(NULL);
+                put(&(ps[i]));
+            }
         FirstTime=Time-S32(Count()-1)*ADC_Period;
+        cnt=0;
         cs.leave();
     }
 

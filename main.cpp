@@ -16,6 +16,8 @@
 static BOOL LedIsOn=FALSE;
 #define switchLed() SYS::led(LedIsOn=!LedIsOn)
 
+U32 __HLI_BaudRate;
+
 #define _HLI_HDR
 #if !defined(__ARQ)
 #include "HLI.h"
@@ -60,8 +62,6 @@ PU_DI puDI(NULL,0x00);
 
 #include "Polling.h"
 
-U32 __HLI_BaudRate;
-
 #undef _HLI_HDR
 #if !defined(__ARQ)
 #include "HLI.h"
@@ -90,6 +90,21 @@ U8 const *findCmdLineArg(char *prefix)
             if(strncmp(prefix,(char*)cmdLine,pn)==0)
                 return cmdLine+pn;
     return NULL;
+}
+
+U16 GetU16Param(char *prefix, U16 defaultValue)
+{
+    U8 const *arg = findCmdLineArg(prefix);
+    if(arg==NULL)
+        return defaultValue;
+    int n=0;
+    while(true)
+    {
+        U8 c=arg[n];
+        if(c==0 || c==' ' || c==0x13 || ++n==128)
+            break;
+    }
+    return (U16)FromHexStr(arg,n);
 }
 
 bool GetComParams(char *prefix, COM_PARAMS *res)
@@ -144,7 +159,7 @@ cdecl main()
         cp.com = __PollPort;
         cp.speed = 38400;
         GetComParams(" poll=",&cp);
-        ThdP = new THREAD_POLLING(cp.com, cp.speed);
+        ThdP = new THREAD_POLLING(cp.com, cp.speed, GetU16Param(" MTUs=",0));
         ThdP->run();
     }
 
@@ -161,7 +176,7 @@ cdecl main()
         cp.speed = 19200;
         GetComParams(" hli=",&cp);
         __HLI_BaudRate = cp.speed;
-        ThdHLI1 = new THREAD_HLI(GetCom(cp.com));
+        ThdHLI1 = new THREAD_HLI(cp.com);
         ThdHLI1->run();
     }
 #endif
