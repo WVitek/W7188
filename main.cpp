@@ -18,14 +18,17 @@ static BOOL LedIsOn=FALSE;
 
 U32 __HLI_BaudRate;
 
-#define _HLI_HDR
-#if !defined(__ARQ)
-#include "HLI.h"
+#if !defined(__NO_HLI)
+    #define _HLI_HDR
+    #if !defined(__ARQ)
+        #include "HLI.h"
+    #else
+        #include "HLI_ARQ.h"
+    #endif
 #else
-#include "HLI_ARQ.h"
+    #define HLI_linkCheck()
+    #define setNeedConnection(x)
 #endif
-//#define HLI_linkCheck()
-//#define setNeedConnection(x)
 
 #include "Module.h"
 #ifndef __MTU
@@ -60,17 +63,19 @@ PU_DI puDI(NULL,0x00);
 //*/
 //***** END Digital inputs & events
 
-#include "Polling.h"
-
-#undef _HLI_HDR
-#if !defined(__ARQ)
-#include "HLI.h"
-#else
-#include "HLI_ARQ.h"
-#endif
-
 #ifdef __GPS_TIME
 #include "GPS_TIME.h"
+#endif
+
+#include "Polling.h"
+
+#if !defined(__NO_HLI)
+    #undef _HLI_HDR
+    #if !defined(__ARQ)
+        #include "HLI.h"
+    #else
+        #include "HLI_ARQ.h"
+    #endif
 #endif
 
 struct COM_PARAMS
@@ -92,19 +97,41 @@ U8 const *findCmdLineArg(char *prefix)
     return NULL;
 }
 
-U16 GetU16Param(char *prefix, U16 defaultValue)
+//U16 GetU16Param(char *prefix, U16 defaultValue)
+//{
+//    U8 const *arg = findCmdLineArg(prefix);
+//    if(arg==NULL)
+//        return defaultValue;
+//    int n=0;
+//    while(true)
+//    {
+//        U8 c=arg[n];
+//        if(c==0 || c==' ' || c==0x13 || ++n==128)
+//            break;
+//    }
+//    return (U16)FromHexStr(arg,n);
+//}
+
+U16 GetU8ArrParam(char *prefix, U8* dst, U16 maxCount)
 {
     U8 const *arg = findCmdLineArg(prefix);
     if(arg==NULL)
-        return defaultValue;
-    int n=0;
+        return 0;
+    int iPrev=0;
+    int i=0;
+    int cnt=0;
     while(true)
     {
-        U8 c=arg[n];
-        if(c==0 || c==' ' || c==0x13 || ++n==128)
-            break;
+        U8 c=arg[i++];
+        if(c==';' || c==0 || c==' ' || c==0x13 || i==128)
+        {
+            dst[cnt++] = (U8)FromDecStr(&(arg[iPrev]),i-iPrev-1);
+            if(c!=';' || cnt>=maxCount)
+                break;
+            iPrev=i;
+        }
     }
-    return (U16)FromHexStr(arg,n);
+    return cnt;
 }
 
 bool GetComParams(char *prefix, COM_PARAMS *res)
@@ -159,11 +186,13 @@ cdecl main()
         cp.com = __PollPort;
         cp.speed = 38400;
         GetComParams(" poll=",&cp);
-        ThdP = new THREAD_POLLING(cp.com, cp.speed, GetU16Param(" MTUs=",0));
+        ThdP = new THREAD_POLLING(cp.com, cp.speed);//, GetU16Param(" MTUs=",0));
+        ThdP->count = GetU8ArrParam(" MTUs=",ThdP->addrs,16);
+        ConPrintHex(ThdP->addrs, ThdP->count);
         ThdP->run();
     }
 
-#if !defined(__7188XB) || !defined(__ConPort)
+#if !defined(__NO_HLI) && (!defined(__7188XB) || !defined(__ConPort))
     #define ThdHLI
     THREAD_HLI* ThdHLI1;
     {
@@ -181,15 +210,12 @@ cdecl main()
     }
 #endif
 
-#ifdef __MTU
-    while(!ThdP->scanComplete)
-        SYS::sleep(100);
-#endif
-
 #ifdef __GPS_TIME
     THREAD_GPS* ThdGPS =new THREAD_GPS();  ThdGPS->run();
 #endif
+#if !defined(__NO_TMR)
     THREAD_TMR* ThdTmr =new THREAD_TMR();  ThdTmr->run();
+#endif
 
     // 'RESTART' event
     EVENT_DI Event;
@@ -199,11 +225,6 @@ cdecl main()
     puDI.EventDigitalInput(Event);
     //
     BOOL Quit=FALSE;
-    //  TIMEOUTOBJ too;
-    //  too.start(toTypeSec | 10);
-    //  EVENT* evtCTS[] = { &GetCom(1).EventLoCTS(), &GetCom(1).EventHiCTS()};
-    //  evtCTS[0]->reset();
-    //  evtCTS[1]->reset();
     while(TRUE){
         while(ConBytesInRxB()){
             char c=ConReadChar();
@@ -212,21 +233,6 @@ cdecl main()
         }
         if(Quit) break;
         SYS::sleep(333);
-        //    int i = SYS::waitForAny(20, 2, (SYNCOBJ**)&evtCTS);
-        //    if (i>0) {
-        //        if(evtCTS[0]->IsSignaled()){
-        //            evtCTS[0]->reset();
-        //            ConPrint("\n\rCTS0");
-        //        }
-        //        else if(evtCTS[1]->IsSignaled()){
-        //            evtCTS[1]->reset();
-        //            ConPrint("\n\rCTS1");
-        //        }
-        //        else ConPrint("\n\rCTS???");
-        //    }
-        //    if(GetCom(1).IsClearToSend())
-        //        ConPrint("CTS");
-        //    else ConPrint("cts");
     }
     SYS::stopKernel();
 #ifdef ThdHLI
@@ -236,7 +242,9 @@ cdecl main()
     delete ThdGPS;
 #endif
     delete ThdP;
+#if !defined(__NO_TMR)
     delete ThdTmr;
+#endif
     dbg("\n\rMAIN stopped\n\r");
     SYS::DelayMs(100);
     return 0;

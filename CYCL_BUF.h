@@ -72,7 +72,7 @@ public:
 
   int getn(void* Data,int n){
     if (Data!=NULL)
-    { 
+    {
       n=readn(Data,0,n);
       First=(First+n)&BufMask;
       FCount-=n;
@@ -88,6 +88,8 @@ CYCL_BUF::CYCL_BUF(int ItemSize,U8 Log2Capacity){
   FItemSize=ItemSize;
   BufMask=(1<<Log2Capacity);
   Items=SYS::malloc(BufMask*FItemSize);
+//  if(Items==NULL)
+//    dbg("Items==NULL!!!\n\r");
   BufMask--;
 }
 

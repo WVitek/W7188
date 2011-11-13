@@ -238,6 +238,7 @@ public:
     const static F32 fMaxPto32K = 0x44A3D5C3; // 32767/25
 
     static U8 quant;
+    static const U16 noDataErrCode = flgEComm << 8;
 
     void doSample(TIME Time)
     {
@@ -264,20 +265,21 @@ public:
                 ps[i] = (raw<0) ? 0 :(U16)raw;
             else ps[i] = flgEADCRange<<8;
         }
+        TIME timeA = GetLastTime();
+        TIME timeB = Time - smul(ADC_Period, cnt);
         cs.enter();
-        if(cnt==0)
+        for(int i=10; i>0 && timeA<timeB; i--)
         {
             if(IsFull()) get(NULL);
-            U16 data = flgEComm<<8;
-            put(&data);
+            put(&noDataErrCode);
+            timeA += ADC_Period;
         }
-        else
-            for(int i=0; i<cnt; i++)
-            {
-                if(IsFull()) get(NULL);
-                put(&(ps[i]));
-            }
-        FirstTime=Time-S32(Count()-1)*ADC_Period;
+        for(int i=0; i<cnt; i++)
+        {
+            if(IsFull()) get(NULL);
+            put(&(ps[i]));
+        }
+        FirstTime=Time-smul(Count()-1,ADC_Period);
         cnt=0;
         cs.leave();
     }

@@ -4,23 +4,22 @@ class THREAD_POLLING : public THREAD
 {
     U16 pollPort;
     U32 baudRate;
-    U16 declaredMTUs;
-    //MODULES *modules;
-    //PU_LIST *pollList;
+//    MODULES *modules;
+//    PU_LIST *pollList;
 public:
 #ifndef __PollPort
 #define __PollPort 2
 #endif
-    THREAD_POLLING(U16 pollPort, U32 baudRate, U16 MTUs//, MODULES &m=Modules, PU_LIST &pl=PollList
-    )
+    U8 count;
+    U8 addrs[16];
+
+    THREAD_POLLING(U16 pollPort, U32 baudRate)//, MODULES &m=Modules, PU_LIST &pl=PollList)
     {
         this->pollPort=pollPort;
         this->baudRate=baudRate;
-        this->declaredMTUs=MTUs;
-        //modules=&m;
-        //pollList=&pl;
+//        modules=&m;
+//        pollList=&pl;
     }
-    BOOL scanComplete;
     void execute();
 };
 
@@ -29,7 +28,6 @@ void THREAD_POLLING::execute()
     COMPORT& RS485=GetCom(pollPort);
     RS485.install(baudRate);
     RS485.setDataFormat(8,pkMark,1);
-    scanComplete = TRUE;
 #ifdef __COM_STATUS_BUF
 /*
     // MTU simple emulator
@@ -289,8 +287,8 @@ void THREAD_POLLING::execute()
     }
 //*/
 #else
-    U8 Query[16];
-    U8 Resp[256];
+    U8 Qry_MTU[16];
+    U8 Rsp_MTU[64];
     dbg3("\n\rMTU polling started (COM%d, %ld)", pollPort, baudRate);
 //*
 #define use_mtu_crc TRUE
@@ -325,23 +323,28 @@ void THREAD_POLLING::execute()
         if(detected[0]==detected[1])
             detectedMTU = detected[0];
     }
-    if(declaredMTUs==0)
-        declaredMTUs = detectedMTU;
-    else detectedMTU &= declaredMTUs;
+    if(detectedMTU==0)
+        return;
+    if(count==0)
+        for(int i=0; i<=15; i++)
+            if((detectedMTU & (1<<i))!=0)
+                addrs[count++] = i;
+
     // create MTU objects
     PU_ADC_MTU *MTUs[16];
-    int nMTU = 0;
-    for(int i=0; i<=15; i++)
-        if((declaredMTUs & (1<<i))!=0)
-            MTUs[nMTU++] = new PU_ADC_MTU(i);
-    //dbg("\n\rMTU-05: getting coeffs...");
+    U16 noCoeffMTU = 0;
+    for(int i=0; i<=count; i++)
     {
-        Query[1] = 0x04;
-        Query[2] = 0x00;
-        Query[4] = 0x00;
-        Query[5] = 0x02;
-        U16 noCoeffMTU = detectedMTU;
-        while(noCoeffMTU!=0)
+        noCoeffMTU |= 1<<addrs[i];
+        MTUs[i] = new PU_ADC_MTU(addrs[i]);
+    }
+    noCoeffMTU &= detectedMTU;
+    {
+        Qry_MTU[1] = 0x04;
+        Qry_MTU[2] = 0x00;
+        Qry_MTU[4] = 0x00;
+        Qry_MTU[5] = 0x02;
+        while(noCoeffMTU!=0 && !Terminated)
         {
             // set modbus mode for present MTUs
             for(int i=0; i<=15; i++)
@@ -349,10 +352,10 @@ void THREAD_POLLING::execute()
                 if((detectedMTU & (1<<i))==0)
                     continue;
                 RS485.writeChar(0x40 | i);
-                RS485.read(&Resp,1,10);
+                RS485.read(&Rsp_MTU,1,10);
             }
             // Query coeffs for transformation raw (p,t) values to physical P value
-            for(int k = 0; k<nMTU; k++)
+            for(int k = 0; k<count; k++)
             {
                 PU_ADC_MTU *mtu = MTUs[k];
                 int i = mtu->BusNum;
@@ -362,21 +365,21 @@ void THREAD_POLLING::execute()
                 SYS::sleep(200);
                 // Get pressure calculation coeffs
                 BOOL ok = TRUE;
-                Query[0] = i;
+                Qry_MTU[0] = i;
                 for(int j=0; j<9; j++)
                 {
                     if(mtu->coeffs.C[j]!=0)
                         continue;
                     if(Terminated)
                         return;
-                    Query[3] = 0x0C + (j<<2);
+                    Qry_MTU[3] = 0x0C + (j<<2);
 //                    for(int k = (j==0) ? 2 : 1; k>0; k--)
                     {
-                        U16 crc16 = CRC16(Query, 6, use_mtu_crc ? CRC16_MTU05 : CRC16_ModBus);
-                        *(U16*)&(Query[6]) = crc16;
+                        U16 crc16 = CRC16(Qry_MTU, 6, use_mtu_crc ? CRC16_MTU05 : CRC16_ModBus);
+                        *(U16*)&(Qry_MTU[6]) = crc16;
                         RS485.clearRxBuf();
-                        RS485.write(Query,8);
-                        U16 n = RS485.read(Resp,9,300);
+                        RS485.write(Qry_MTU,8);
+                        U16 n = RS485.read(Rsp_MTU,9,300);
 //                        if(n<9 && k==2)
 //                        { use_mtu_crc = FALSE; continue; }
                         if(n!=9)
@@ -385,14 +388,14 @@ void THREAD_POLLING::execute()
                             SYS::sleep(500);
                             ok = FALSE; //break;
                         }
-                        crc16 = CRC16(Resp, 7, use_mtu_crc ? CRC16_MTU05 : CRC16_ModBus);
-                        if(crc16 != *(U16*)&(Resp[7]))
+                        crc16 = CRC16(Rsp_MTU, 7, use_mtu_crc ? CRC16_MTU05 : CRC16_ModBus);
+                        if(crc16 != *(U16*)&(Rsp_MTU[7]))
                         {
                             ConPrintf("\n\rMTU #%X: Coeff[%d] FAILED (CRC)",i,j);
                             SYS::sleep(500);
                             ok = FALSE; //break;
                         }
-                        U32 coeff = swap4bytes(*(U32*)&(Resp[3]));
+                        U32 coeff = swap4bytes(*(U32*)&(Rsp_MTU[3]));
                         mtu->coeffs.setCoeff(j,coeff);
 //                        if(k==2) break;
                     }
@@ -406,58 +409,57 @@ void THREAD_POLLING::execute()
             }
         }
     }
-    scanComplete = TRUE;
     // disable modbus mode
     SYS::sleep(3000);
     // polling
-    int i=nMTU-1;
-    Realtime=TRUE;
+    int iMTU=-1;
     while(!Terminated)
     {
+        Realtime=TRUE;
         SYS::sleep(toTypeNext + 40);
         // start new measurement
         RS485.writeChar(0xF0);
         TIME netTime;
         SYS::getNetTime(netTime);
-        // wait while measure in process
-        SYS::sleep(19);
-        PollStatAdd(1,0);
+        Realtime=FALSE;
+        //***** MTU query
         RS485.clearRxBuf();
-        for(int i=0; i<nMTU; i++)
+        int iM=iMTU-1;
+        if(iM<0)
+            iM=count-1;
+        PU_ADC_MTU *mtu = MTUs[iM];
+        // send MTU data request
+        int num = mtu->BusNum;
+        RS485.setExpectation(0,0,1);
+        RS485.writeChar(0xE0 | num);
+        RS485.RxEvent().waitFor(10);
+        PollStatAdd(1,0);
+        //***** MTU receive response
+        U8 ans = 0xFF;
+        U16 cnt = RS485.read(&ans,1,10);
+        BOOL ansOk =  cnt==1 && ans<=10;
+        // process previous MTU response
+        if(iMTU>=0)
         {
-            // archiving previous
-            PU_ADC_MTU *mtu = MTUs[i];
-            // choose next MTU for reading
-//            if(--i < 0)
-//                i=nMTU-1;
-            int num = mtu->BusNum;
-            // read buffer with values
-            RS485.writeChar(0xE0 | num);
-            mtu->doSample(netTime-ADC_Period);
-            U8 ans = 0xFF;
-            U16 cnt = RS485.read(&ans,1,3);
-            if(cnt!=1 || ans>10)
-            {
-                //dbg3("\n\rMTU #%X : Buffer reading FAILED (nRes=%X)",num,ans);
-                //PollStatAdd(1,0);
-                continue;
-            }
-            U16 size = ans*4+1;
-            cnt = RS485.read(Resp+1,size,size);
-            if(cnt != size)
-            {
-                //ConPrintf("\n\rMTU #%X : Buffer reading FAILED (wrong answer size, %d!=%d)",num,cnt,size);
-                //PollStatAdd(1,0);
-                continue;
-            }
-            PollStatAdd(0,ans);
-            Resp[0]=ans;
-            mtu->response(Resp);
+            PU_ADC_MTU *pm = MTUs[iMTU];
+            pm->response(Rsp_MTU);
+            pm->doSample(netTime-ADC_Period);
         }
+        Rsp_MTU[0]=0;
+        if(ansOk)
+        {
+            U16 size = ans*4+1;
+            cnt = RS485.read(Rsp_MTU+1,size,size);
+            if(cnt == size)
+            {
+                PollStatAdd(0,ans);
+                Rsp_MTU[0]=ans;
+            }
+        }
+        iMTU = iM;
     }
 /*/
-    scanComplete = TRUE;
-    //ile(!Terminated && !SYS::TimeOk)
+    //while(!Terminated && !SYS::TimeOk)
     //  SYS::sleep(333);
     Realtime = TRUE;
     int j=0;
@@ -465,22 +467,24 @@ void THREAD_POLLING::execute()
     //S::sleep(toTypeNext + 1000);
     while(!Terminated)
     {
-        //SYS::sleep(toTypeNext + 40);
+        SYS::sleep(toTypeNext + 40);
         //int i = (j++ & 1) ? 3 : 4;
-        //RS485.writeChar(0xF0);
-        SYS::sleep(19);
+        RS485.writeChar(0xF0);
+        PollStatAdd(1,0);
+        if(j++ & 0x3)
+            continue;
+        //SYS::sleep(19);
         RS485.clearRxBuf();
-        for(int i=3; i<=4; i++)
+        for(int i=3; i<=3; i++)
         {
             RS485.writeChar(0xE0 | i);
             //SYS::sleep(13);
-            PollStatAdd(1,0);
             U8 nResults;
             U16 cnt = RS485.read(&nResults,1,10);
             if(cnt==1)
             {
                 U16 size = (nResults<<2) + 1;
-                cnt = RS485.read(Resp,size,100);
+                cnt = RS485.read(Rsp_MTU,size,size);
                 if(cnt==size)// && 0<nResults && nResults<=10)
                 {
                     PollStatAdd(0,nResults);

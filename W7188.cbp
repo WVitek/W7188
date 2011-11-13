@@ -26,11 +26,13 @@
 					<Add option="-bt=dos" />
 					<Add option="-we -e10 -s -zq -os -oi -oa -zdf -zu -1 -bt=dos -mc" />
 					<Add option="-d__7188XA" />
-					<Add option="-d__TNGP_" />
+					<Add option="-dq__TNGP" />
 					<Add option="-d__WIRE" />
+					<Add option="-dq__NO_HLI" />
+					<Add option="-dq__NO_TMR" />
 					<Add option="-d__GPS_TIME" />
 					<Add option="-d__MTU" />
-					<Add option="-d__COM_STATUS_BUF_" />
+					<Add option="-dq__COM_STATUS_BUF" />
 				</Compiler>
 				<Linker>
 					<Add option="name w d all SYS dos op m op maxe=25" />

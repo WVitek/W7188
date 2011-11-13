@@ -94,6 +94,7 @@ void THREAD_POLLING::execute(){
 }
 #endif
 
+#if !defined(__NO_TMR)
 //class THREAD_TMR
 class THREAD_TMR : public THREAD {
 public:
@@ -157,3 +158,5 @@ void THREAD_TMR::execute(){
   S(0x00);
   dbg("\n\rTIMER stopped");
 }
+
+#endif // __NO_TMR
