@@ -140,7 +140,6 @@ public:
 
   int readArchive(TIME &FromTime, U8 *Buf, U16 BufSize)
   {
-//    cs.enter();
     int r;
     TIME LastTime = GetLastTime();
     if ( LastTime <= FromTime )
@@ -165,7 +164,6 @@ public:
       else
         r=0;
     }
-//    cs.leave();
     return r;
   }
 }; // PU_ADC
@@ -188,7 +186,7 @@ public:
         F32 T = S32_to_F32(t);
         F32 P2 = fmul(P,P);
         F32 T2 = fmul(T,T);
-        // Ñ[0] + C[1] * T + C[2] * T*T
+        // C[0] + C[1] * T + C[2] * T*T
         F32 r0 = fadd(C[0], fadd(fmul(C[2],T2),fmul(C[1],T)));
         // (C[3] + C[4] * T + C[5] * T*T) * P;
         F32 r1 = fmul( fadd( C[3], fadd( fmul(C[4],T), fmul(C[5],T2) ) ), P);
@@ -279,15 +277,19 @@ public:
             if(IsFull()) get(NULL);
             put(&(ps[i]));
         }
+        //FirstTime=Time-S32(Count()-1)*ADC_Period;
         FirstTime=Time-smul(Count()-1,ADC_Period);
         cnt=0;
         cs.leave();
+//        if((quant++ & 0x3F)==0)
+//            ConPrintf("\n\rtimeA=%lld;",timeA);
     }
 
 }; // PU_ADC_MTU
 static U8 PU_ADC_MTU::quant;
-#endif
+#endif // __MTU
 
+#ifdef __I7K
 // Analog Input Channel (from I7017)
 class PU_ADC_7K : public PU_ADC
 {
@@ -402,6 +404,7 @@ public:
   }
 
 }; // PU_ADC_7K
+#endif // __I7K
 
 struct EVENT_DI {
   TIME Time; U8 Channel; U8 ChangedTo;

@@ -333,7 +333,7 @@ void THREAD_POLLING::execute()
     // create MTU objects
     PU_ADC_MTU *MTUs[16];
     U16 noCoeffMTU = 0;
-    for(int i=0; i<=count; i++)
+    for(int i=0; i<count; i++)
     {
         noCoeffMTU |= 1<<addrs[i];
         MTUs[i] = new PU_ADC_MTU(addrs[i]);
@@ -416,7 +416,7 @@ void THREAD_POLLING::execute()
     while(!Terminated)
     {
         Realtime=TRUE;
-        SYS::sleep(toTypeNext + 40);
+        SYS::sleep(toTypeNext + ADC_Period);
         // start new measurement
         RS485.writeChar(0xF0);
         TIME netTime;
@@ -443,7 +443,7 @@ void THREAD_POLLING::execute()
         {
             PU_ADC_MTU *pm = MTUs[iMTU];
             pm->response(Rsp_MTU);
-            pm->doSample(netTime-ADC_Period);
+            pm->doSample(netTime);//-ADC_Period);
         }
         Rsp_MTU[0]=0;
         if(ansOk)

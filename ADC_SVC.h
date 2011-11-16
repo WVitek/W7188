@@ -22,9 +22,9 @@ int getDataToTransmit(U8 /*To*/,void* Data,int MaxSize)
 {
   Request=FALSE;
   int nADC = plADC.Count();
-  if(!nADC) return 0;
-  //TIME tmpTime = FromTime;
-
+  if(!nADC)
+      return 0;
+  TIME tmpTime = FromTime;
   // determine correct fromtime
   for(int i=0; i<nADC; i++)
   {
@@ -33,7 +33,7 @@ int getDataToTransmit(U8 /*To*/,void* Data,int MaxSize)
     P->readArchive(FromTime,NULL,0); // correct time value
   }
   // determine correct recsize
-  U16 RecSize = (MaxSize-sizeof(TIME)-1) / plADC.Count();
+  U16 RecSize = (MaxSize-sizeof(TIME)-1) / nADC;
   for(int i=0; i<nADC; i++)
   {
     PU_ADC* P = plADC_(i);
