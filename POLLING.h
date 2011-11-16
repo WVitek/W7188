@@ -16,8 +16,9 @@ inline void PollStatRead(int &Qry, int &Ans) {
 
 #ifdef __MTU
 #include "MTU05.h"
-#else
+#endif
 
+#ifdef __I7K
 #include "Module.h"
 #include "WHrdware.hpp"
 

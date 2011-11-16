@@ -188,7 +188,7 @@ cdecl main()
         GetComParams(" poll=",&cp);
         ThdP = new THREAD_POLLING(cp.com, cp.speed);//, GetU16Param(" MTUs=",0));
         ThdP->count = GetU8ArrParam(" MTUs=",ThdP->addrs,16);
-        ConPrintHex(ThdP->addrs, ThdP->count);
+        //ConPrintHex(ThdP->addrs, ThdP->count);
         ThdP->run();
     }
 

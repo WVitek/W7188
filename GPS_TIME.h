@@ -69,7 +69,7 @@ void THREAD_GPS::execute()
         }
         if(pCS==NULL)
         {
-            ConPrint("\n\rGPS: unrecognized message format");
+            ConPrint("\n\rGPS: unrecognized message format: ");
             ConPrint((char const*)buf);
             continue;
         }
@@ -88,7 +88,7 @@ void THREAD_GPS::execute()
             TIME sysTimeOfPPS = comPPS.TimeOfHiCTS();
             if((U16)sysTimeOfPPS == prevPPS)
             {
-                if(++cntNoPulse>2)
+                if(++cntNoPulse>5)
                     ConPrint("\n\rGPS: No PPS pulse detected");
                 continue;
             }
@@ -96,12 +96,13 @@ void THREAD_GPS::execute()
             prevPPS = (U16)sysTimeOfPPS;
             TIME delta = sysTimeOfNMEA - sysTimeOfPPS;
             if(delta<=-999 || +999<=delta)
-                ConPrintf("\n\rGPS: PPS pulse rejected (d=%Ld-%Ld=%Ldms)",
-                    sysTimeOfNMEA, sysTimeOfPPS, delta);
+                ConPrint("\n\rGPS: PPS pulse rejected");
+//                ConPrintf("\n\rGPS: PPS pulse rejected (d=%Ld-%Ld=%Ldms)",
+//                    sysTimeOfNMEA, sysTimeOfPPS, delta);
             else
             {
                 S16 d = (S16)delta;
-                TIME offs = timeGPS - sysTimeOfPPS + ((d<0)? 1000 : 0);
+                TIME offs = timeGPS - sysTimeOfPPS;// + ((d<0)? 1000 : 0);
                 TIME change = abs64(offs - SYS::NetTimeOffset);
                 if(900<change && change<1100 && ++cnt<32)
                     ConPrintf("\n\rGPS: '1s jitter' bug avoided (d=%dms)",d);

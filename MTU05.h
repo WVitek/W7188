@@ -293,35 +293,33 @@ void THREAD_POLLING::execute()
 //*
 #define use_mtu_crc TRUE
     //***** Scan RS-485 bus
-    U16 detectedMTU = 0;
-    while(!Terminated && detectedMTU==0)
+    U16 detectedMTU = 0xFFFF;
+    SYS::sleep(3000);
+    dbg("\n\rMTU-05: searching...");
+    while(!Terminated)
     {
-        SYS::sleep(3000);
-        dbg("\n\rMTU-05: searching...");
         // scan all possible MTUs twice
         U16 detected[2];
         RS485.clearRxBuf();
-        for(int j=0; j<2; j++)
+        U16 bits = 0;
+        for(int i=0; i<=15; i++)
         {
-            U16 bits = 0;
-            for(int i=0; i<=15; i++)
+            // Check presence and set modbus mode
+            RS485.writeChar(0xC0 | i);
+            U8 ans;
+            U16 cnt = RS485.read(&ans,1,10);
+            if(cnt==1 && ans==0xAA)
             {
-                U8 ans;
-                U16 cnt;
-                // Check presence and set modbus mode
-                RS485.writeChar(0xC0 | i);
-                cnt = RS485.read(&ans,1,10);
-                if(cnt==1 && ans==0xAA)
-                {
-                    bits |= 1<<i;
-                    if(j==0) dbg2("\n\rMTU-05: #%d detected", i);
-                    SYS::sleep(20);
-                }
+                U16 bit = 1<<i;
+                bits |= bit;
+                if(detectedMTU==0xFFFF)
+                    dbg2("\n\rMTU-05: #%d detected", i);
+                SYS::sleep(20);
             }
-            detected[j]=bits;
         }
-        if(detected[0]==detected[1])
-            detectedMTU = detected[0];
+        if(detectedMTU==bits)
+            break;
+        detectedMTU = bits;
     }
     if(detectedMTU==0)
         return;
@@ -416,7 +414,7 @@ void THREAD_POLLING::execute()
     while(!Terminated)
     {
         Realtime=TRUE;
-        SYS::sleep(toTypeNext + ADC_Period);
+        SYS::sleep(toTypeNext | ADC_Period);
         // start new measurement
         RS485.writeChar(0xF0);
         TIME netTime;
@@ -432,24 +430,28 @@ void THREAD_POLLING::execute()
         int num = mtu->BusNum;
         RS485.setExpectation(0,0,1);
         RS485.writeChar(0xE0 | num);
-        RS485.RxEvent().waitFor(10);
+        RS485.RxEvent().waitFor(5);
         PollStatAdd(1,0);
         //***** MTU receive response
         U8 ans = 0xFF;
-        U16 cnt = RS485.read(&ans,1,10);
+        U16 cnt = RS485.read(&ans,1,0);
         BOOL ansOk =  cnt==1 && ans<=10;
         // process previous MTU response
         if(iMTU>=0)
         {
             PU_ADC_MTU *pm = MTUs[iMTU];
             pm->response(Rsp_MTU);
-            pm->doSample(netTime);//-ADC_Period);
+            pm->doSample(netTime-ADC_Period);
         }
         Rsp_MTU[0]=0;
         if(ansOk)
         {
-            U16 size = ans*4+1;
-            cnt = RS485.read(Rsp_MTU+1,size,size);
+            int size = ans*4+1;
+            int left = size-RS485.BytesInRxB();
+            RS485.setExpectation(0,0,left);
+            if(left>0)
+                RS485.RxEvent().waitFor(30);
+            cnt = RS485.read(Rsp_MTU+1,size,0);
             if(cnt == size)
             {
                 PollStatAdd(0,ans);
