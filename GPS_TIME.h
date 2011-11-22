@@ -25,24 +25,32 @@ void THREAD_GPS::execute()
     U16 prevPPS = 0;
     com.clearRxBuf();
     com.setExpectation(0xFF,'\n');
-    BOOL noInputLine = FALSE;
-    U8 cntNoPulse = 0;
+    U16 noInputLine = 0;
+    U16 cntNoPulse = 0;
+    U16 jBugs = 0;
+    TIME sysTimeOfPPS;
     while(!Terminated)
     {
-        int res = com.receiveLine(buf,100,FALSE,'\n');
+        int res = com.receiveLine(buf,200,FALSE,'\n');
         com.setExpectation(0xFF,'\n');
+
         if(res<0)
         {
-            noInputLine = TRUE;
+            if((++noInputLine & 0xF)==0)
+                ConPrint("\n\rGPS info expected at COM3...");
             continue;
         }
         else if(noInputLine)
         {
+            noInputLine = 0;
+            prevPPS = (U16)sysTimeOfPPS;
+            sysTimeOfPPS = comPPS.TimeOfHiCTS();;
             SYS::getSysTime(sysTimeOfNMEA);
-            noInputLine = FALSE;
         }
+
         if(res<0 || buf[0]!='$' || buf[1]!='G' || buf[3]!='R' || buf[4]!='M'|| buf[5]!='C')
             continue;
+
         U8 checkSum = 0;
         U8* pTime = NULL;
         U8* pDate = NULL;
@@ -85,7 +93,6 @@ void THREAD_GPS::execute()
         TIME timeGPS;
         if(SYS::TryEncodeTime(year,month,day,hour,min,sec,timeGPS))
         {
-            TIME sysTimeOfPPS = comPPS.TimeOfHiCTS();
             if((U16)sysTimeOfPPS == prevPPS)
             {
                 if(++cntNoPulse>5)
@@ -93,23 +100,32 @@ void THREAD_GPS::execute()
                 continue;
             }
             cntNoPulse = 0;
-            prevPPS = (U16)sysTimeOfPPS;
-            TIME delta = sysTimeOfNMEA - sysTimeOfPPS;
-            if(delta<=-999 || +999<=delta)
-                ConPrint("\n\rGPS: PPS pulse rejected");
+            U16 delta = (U16)sysTimeOfNMEA - (U16)sysTimeOfPPS;
+            ConPrintf("\n\rGPS: jBugs=%d, dPPS=%d, delta=%d, NMEA_sec=%d",
+                jBugs, (U16)sysTimeOfPPS-prevPPS, delta, sec);
+            if(delta>999)
+//            if(delta<0 || +999<=delta)
+            {
+                ConPrintf("\n\r%02d:%02d GPS: PPS pulse skipped (delta=%d)",hour,min,delta);
 //                ConPrintf("\n\rGPS: PPS pulse rejected (d=%Ld-%Ld=%Ldms)",
 //                    sysTimeOfNMEA, sysTimeOfPPS, delta);
+                //com.clearRxBuf();
+            }
             else
             {
-                S16 d = (S16)delta;
-                TIME offs = timeGPS - sysTimeOfPPS;// + ((d<0)? 1000 : 0);
+                TIME offs = timeGPS - sysTimeOfPPS;
                 TIME change = abs64(offs - SYS::NetTimeOffset);
                 if(900<change && change<1100 && ++cnt<32)
-                    ConPrintf("\n\rGPS: '1s jitter' bug avoided (d=%dms)",d);
+                {
+                    ConPrintf("\n\rGPS: '1s jitter' bug avoided (d=%dms)",delta);
+                    jBugs++;
+                    //com.clearRxBuf();
+                }
                 else
                 {
                     if(cnt>=32)
-                        ConPrintf("\n\rGPS: second jitter BUG? (d=%dms)",d);
+                        ConPrintf( "\n\r%02d:%02d GPS: second jitter BUG? (d=%dms)", hour, min, delta );
+//                        ConPrintf("\n\rGPS: second jitter BUG? (d=%dms)",d);
                     cnt=0;
                     SYS::setNetTimeOffset(offs);
                     //ConPrintf("\n\rGPS: delta=%LX-%LX=%dms", sysTimeOfNMEA, sysTimeOfPPS, delta);

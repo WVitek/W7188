@@ -293,8 +293,7 @@ void THREAD_POLLING::execute()
 //*
 #define use_mtu_crc TRUE
     //***** Scan RS-485 bus
-    U16 detectedMTU = 0xFFFF;
-    SYS::sleep(3000);
+    U16 detectedMTU = 0;
     dbg("\n\rMTU-05: searching...");
     while(!Terminated)
     {
@@ -312,16 +311,21 @@ void THREAD_POLLING::execute()
             {
                 U16 bit = 1<<i;
                 bits |= bit;
-                if(detectedMTU==0xFFFF)
+                if((detectedMTU & bit) == 0)
                     dbg2("\n\rMTU-05: #%d detected", i);
                 SYS::sleep(20);
             }
+        }
+        if(bits==0)
+        {
+            SYS::sleep(3000);
+            continue;
         }
         if(detectedMTU==bits)
             break;
         detectedMTU = bits;
     }
-    if(detectedMTU==0)
+    if(Terminated || detectedMTU==0)
         return;
     if(count==0)
         for(int i=0; i<=15; i++)
