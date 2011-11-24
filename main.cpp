@@ -184,11 +184,11 @@ cdecl main()
     {
         COM_PARAMS cp;
         cp.com = __PollPort;
-        cp.speed = 38400;
+        cp.speed = 19200;
         GetComParams(" poll=",&cp);
         ThdP = new THREAD_POLLING(cp.com, cp.speed);//, GetU16Param(" MTUs=",0));
-        ThdP->count = GetU8ArrParam(" MTUs=",ThdP->addrs,0);
-        //ConPrintHex(ThdP->addrs, ThdP->count);
+        ThdP->count = GetU8ArrParam(" MTUs=",ThdP->addrs,16);
+        ConPrintHex(ThdP->addrs, ThdP->count);
         ThdP->run();
     }
 

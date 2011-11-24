@@ -27,7 +27,7 @@ void THREAD_GPS::execute()
     com.setExpectation(0xFF,'\n');
     U16 noInputLine = 0;
     U16 cntNoPulse = 0;
-    U16 jBugs = 0;
+    U16 prevSec = 60;
     TIME sysTimeOfPPS;
     while(!Terminated)
     {
@@ -97,41 +97,38 @@ void THREAD_GPS::execute()
             {
                 if(++cntNoPulse>5)
                     ConPrint("\n\rGPS: No PPS pulse detected");
-                continue;
-            }
-            cntNoPulse = 0;
-            U16 delta = (U16)sysTimeOfNMEA - (U16)sysTimeOfPPS;
-            ConPrintf("\n\rGPS: jBugs=%d, dPPS=%d, delta=%d, NMEA_sec=%d",
-                jBugs, (U16)sysTimeOfPPS-prevPPS, delta, sec);
-            if(delta>999)
-//            if(delta<0 || +999<=delta)
-            {
-                ConPrintf("\n\r%02d:%02d GPS: PPS pulse skipped (delta=%d)",hour,min,delta);
-//                ConPrintf("\n\rGPS: PPS pulse rejected (d=%Ld-%Ld=%Ldms)",
-//                    sysTimeOfNMEA, sysTimeOfPPS, delta);
-                //com.clearRxBuf();
             }
             else
             {
-                TIME offs = timeGPS - sysTimeOfPPS;
-                TIME change = abs64(offs - SYS::NetTimeOffset);
-                if(900<change && change<1100 && ++cnt<32)
-                {
-                    ConPrintf("\n\rGPS: '1s jitter' bug avoided (d=%dms)",delta);
-                    jBugs++;
-                    //com.clearRxBuf();
-                }
+                cntNoPulse = 0;
+                U16 delta = (U16)sysTimeOfNMEA - (U16)sysTimeOfPPS;
+    //            ConPrintf("\n\rGPS: jBugs=%d, dPPS=%d, delta=%d, NMEA_sec=%d",
+    //                jBugs, (U16)sysTimeOfPPS-prevPPS, delta, sec);
+                if(delta>999)
+                    ConPrintf("\n\r%02d:%02d GPS: PPS pulse skipped (delta=%d)",hour,min,delta);
                 else
                 {
-                    if(cnt>=32)
-                        ConPrintf( "\n\r%02d:%02d GPS: second jitter BUG? (d=%dms)", hour, min, delta );
-//                        ConPrintf("\n\rGPS: second jitter BUG? (d=%dms)",d);
-                    cnt=0;
-                    SYS::setNetTimeOffset(offs);
-                    //ConPrintf("\n\rGPS: delta=%LX-%LX=%dms", sysTimeOfNMEA, sysTimeOfPPS, delta);
+                    TIME offs = timeGPS - sysTimeOfPPS;
+                    TIME change = abs64(offs - SYS::NetTimeOffset);
+    //                if(900<change && change<1100 && ++cnt<32)
+    //                {
+    //                    ConPrintf("\n\rGPS: '1s jitter' bug avoided (d=%dms)",delta);
+    //                    jBugs++;
+    //                }
+    //                else
+                    {
+                        if(900<change && change<1100)
+                        //if(cnt>=32)
+                            ConPrintf( "\n\r%02d:%02d:%02d GPS: second jitter BUG? (d=%dms, dPPS=%dms, prevSec=%d)",
+                                hour, min, sec, delta, (U16)sysTimeOfPPS-prevPPS, prevSec );
+    //                        ConPrintf("\n\rGPS: second jitter BUG? (d=%dms)",d);
+                        cnt=0;
+                        SYS::setNetTimeOffset(offs);
+                        //ConPrintf("\n\rGPS: delta=%LX-%LX=%dms", sysTimeOfNMEA, sysTimeOfPPS, delta);
+                    }
                 }
-                //ConPrintf("\n\rOffs=%Ld, delta=%d", offs, delta );
             }
+            prevSec = sec;
         }
     }
     dbg("\n\rGPS sync stopped");

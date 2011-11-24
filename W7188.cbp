@@ -29,7 +29,7 @@
 					<Add option="-dq__TNGP" />
 					<Add option="-d__WIRE" />
 					<Add option="-dq__NO_HLI" />
-					<Add option="-d__NO_TMR" />
+					<Add option="-dq__NO_TMR" />
 					<Add option="-d__GPS_TIME" />
 					<Add option="-d__MTU" />
 					<Add option="-dq__COM_STATUS_BUF" />

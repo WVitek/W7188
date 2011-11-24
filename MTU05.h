@@ -363,7 +363,6 @@ void THREAD_POLLING::execute()
                 int i = mtu->BusNum;
                 if((noCoeffMTU & (1<<i))==0)
                     continue;
-//                dbg2("\n\rMTU #%X : get coeffs",i);
                 SYS::sleep(200);
                 // Get pressure calculation coeffs
                 BOOL ok = TRUE;
@@ -375,37 +374,32 @@ void THREAD_POLLING::execute()
                     if(Terminated)
                         return;
                     Qry_MTU[3] = 0x0C + (j<<2);
-//                    for(int k = (j==0) ? 2 : 1; k>0; k--)
                     {
                         U16 crc16 = CRC16(Qry_MTU, 6, use_mtu_crc ? CRC16_MTU05 : CRC16_ModBus);
                         *(U16*)&(Qry_MTU[6]) = crc16;
                         RS485.clearRxBuf();
                         RS485.write(Qry_MTU,8);
                         U16 n = RS485.read(Rsp_MTU,9,300);
-//                        if(n<9 && k==2)
-//                        { use_mtu_crc = FALSE; continue; }
                         if(n!=9)
                         {
-                            ConPrintf("\n\rMTU #%X: Coeff[%d] FAILED (RespLen:%d!=9)",i,j,n);
+                            ConPrintf("\n\rMTU #%d: Coeff[%d] FAILED (RespLen:%d!=9)",i,j,n);
                             SYS::sleep(500);
                             ok = FALSE; //break;
                         }
                         crc16 = CRC16(Rsp_MTU, 7, use_mtu_crc ? CRC16_MTU05 : CRC16_ModBus);
                         if(crc16 != *(U16*)&(Rsp_MTU[7]))
                         {
-                            ConPrintf("\n\rMTU #%X: Coeff[%d] FAILED (CRC)",i,j);
+                            ConPrintf("\n\rMTU #%d: Coeff[%d] FAILED (CRC)",i,j);
                             SYS::sleep(500);
                             ok = FALSE; //break;
                         }
                         U32 coeff = swap4bytes(*(U32*)&(Rsp_MTU[3]));
                         mtu->coeffs.setCoeff(j,coeff);
-//                        if(k==2) break;
                     }
-                    //if(!ok) break;
                 }
                 if(ok)
                 {
-                    ConPrintf("\n\rMTU #%X: coeffs OK", i);
+                    ConPrintf("\n\rMTU #%d: coeffs OK", i);
                     noCoeffMTU &= ~(1<<i);
                 }
             }
@@ -414,53 +408,48 @@ void THREAD_POLLING::execute()
     // disable modbus mode
     SYS::sleep(3000);
     // polling
-    int iMTU=-1;
+    int iMTU=0;
+    Realtime=TRUE;
     while(!Terminated)
     {
-        Realtime=TRUE;
         SYS::sleep(toTypeNext | ADC_Period);
         // start new measurement
         RS485.writeChar(0xF0);
         TIME netTime;
         SYS::getNetTime(netTime);
-        Realtime=FALSE;
-        //***** MTU query
-        RS485.clearRxBuf();
-        int iM=iMTU-1;
-        if(iM<0)
-            iM=count-1;
-        PU_ADC_MTU *mtu = MTUs[iM];
-        // send MTU data request
-        int num = mtu->BusNum;
-        RS485.setExpectation(0,0,1);
-        RS485.writeChar(0xE0 | num);
-        RS485.RxEvent().waitFor(5);
-        PollStatAdd(1,0);
-        //***** MTU receive response
+        //Realtime=FALSE;
+        SYS::sleep(1);
+        //***** MTU receive previous response
         U8 ans = 0xFF;
-        U16 cnt = RS485.read(&ans,1,0);
+        U16 cnt = RS485.read(&ans,1,1);
         BOOL ansOk =  cnt==1 && ans<=10;
-        // process previous MTU response
-        if(iMTU>=0)
-        {
-            PU_ADC_MTU *pm = MTUs[iMTU];
-            pm->response(Rsp_MTU);
-            pm->doSample(netTime-ADC_Period);
-        }
         Rsp_MTU[0]=0;
         if(ansOk)
         {
             int size = ans*4+1;
-            int left = size-RS485.BytesInRxB();
-            RS485.setExpectation(0,0,left);
-            if(left>0)
-                RS485.RxEvent().waitFor(30);
-            cnt = RS485.read(Rsp_MTU+1,size,0);
+            cnt = RS485.read(Rsp_MTU+1,size,1);
             if(cnt == size)
             {
                 PollStatAdd(0,ans);
                 Rsp_MTU[0]=ans;
             }
+        }
+        //***** next MTU query
+        RS485.clearRxBuf();
+        int iM=iMTU-1;
+        if(iM<0) iM=count-1;
+        {
+            PU_ADC_MTU *mtu = MTUs[iM];
+            // send MTU data request
+            int num = mtu->BusNum;
+            RS485.writeChar(0xE0 | num);
+            PollStatAdd(1,0);
+        }
+        // process previous MTU response
+        {
+            PU_ADC_MTU *pm = MTUs[iMTU];
+            pm->response(Rsp_MTU);
+            pm->doSample(netTime-ADC_Period);
         }
         iMTU = iM;
     }
