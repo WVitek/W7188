@@ -66,15 +66,20 @@ U16 COMPORT::read(void* Buf,U16 Cnt,int Timeout){
   if(Timeout){
     if(Cnt>COMBUF_SIZE) Cnt=COMBUF_SIZE;
     SYS::cli();
-    if(BytesInRxB()<Cnt) {
-      setExpectation(0,0,Cnt-BytesInRxB()); //any char
+    if(RxB.BytesOccupied()<Cnt) {
+      setExpectation(0,0,Cnt-RxB.BytesOccupied()); //any char
       SYS::sti();
       RxB.Event.waitFor(Timeout);
     }
     else SYS::sti();
     U16 i=0;
-    for(;i<Cnt && BytesInRxB();i++){
+    for(;i<Cnt;i++){
       _disable();
+      if(RxB.RdP==RxB.WrP)
+      {
+          _enable();
+          break;
+      }
       ((U8*)Buf)[i]=RxB.Data[RxB.RdP++];
       RxB.RdP&=COMBUF_WRAPMASK;
       _enable();

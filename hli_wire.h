@@ -32,7 +32,7 @@ void execute(){
     if(R & IO_UP==0)
 #endif
     {
-      SYS::sleep(20);
+      SYS::sleep(73);
       continue;
     }
     BOOL NothingToDo = TRUE;
@@ -66,7 +66,7 @@ void execute(){
     if( NothingToDo )
     {
       HLI.RxEvent().reset();
-      HLI.RxEvent().waitFor(50);
+      HLI.RxEvent().waitFor(53);
     }
   }
   prt.Close();

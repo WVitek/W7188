@@ -202,7 +202,7 @@ cdecl main()
     #else
         cp.com = 1;
     #endif
-        cp.speed = 19200;
+        cp.speed = 38400;
         GetComParams(" hli=",&cp);
         __HLI_BaudRate = cp.speed;
         ThdHLI1 = new THREAD_HLI(cp.com);

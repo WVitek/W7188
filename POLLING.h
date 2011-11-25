@@ -107,13 +107,16 @@ public:
 void THREAD_TMR::execute(){
   dbg("\n\rTIMER started");
   while(!Terminated){
-    S(0x01);
+    //S(0x01);
     switchLed();
-    TIME Time;
     //int C0=0,C1=0;
     SYS::sleep(toNextSecond);
+    int Qry,Ans;
+    PollStatRead(Qry,Ans);
+    TIME Time;
 #ifdef __MTU
     SYS::getNetTime(Time);
+    SYS::sleep(1);
 #else
     for(int i=ADC_Freq-1; i>=0; i--)
     {
@@ -130,11 +133,9 @@ void THREAD_TMR::execute(){
       else SYS::sleep(100);
     }
 #endif
-    S(0x04);
+    //S(0x04);
 #define __UNDEFINED
 #ifdef __UNDEFINED
-    int Qry,Ans;
-    PollStatRead(Qry,Ans);
     U16 year,month,day,hour,min,sec,msec;
     //SYS::getNetTime(Time);
     SYS::DecodeDate(Time, year, month, day);

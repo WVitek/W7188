@@ -365,12 +365,12 @@ void THREAD_POLLING::execute()
                     continue;
                 SYS::sleep(200);
                 // Get pressure calculation coeffs
-                BOOL ok = TRUE;
+                //BOOL ok = TRUE;
                 Qry_MTU[0] = i;
-                for(int j=0; j<9; j++)
+                for(int j=0; j<9;)
                 {
                     if(mtu->coeffs.C[j]!=0)
-                        continue;
+                    { j++; continue; }
                     if(Terminated)
                         return;
                     Qry_MTU[3] = 0x0C + (j<<2);
@@ -382,22 +382,25 @@ void THREAD_POLLING::execute()
                         U16 n = RS485.read(Rsp_MTU,9,300);
                         if(n!=9)
                         {
-                            ConPrintf("\n\rMTU #%d: Coeff[%d] FAILED (RespLen:%d!=9)",i,j,n);
-                            SYS::sleep(500);
-                            ok = FALSE; //break;
+                            ConPrintf("\n\rMTU #%d: Coeff[%d] ERROR RespLen:%d!=9",i,j,n);
+                            SYS::sleep(200);
+                            continue;
+                            //ok = FALSE; //break;
                         }
                         crc16 = CRC16(Rsp_MTU, 7, use_mtu_crc ? CRC16_MTU05 : CRC16_ModBus);
                         if(crc16 != *(U16*)&(Rsp_MTU[7]))
                         {
-                            ConPrintf("\n\rMTU #%d: Coeff[%d] FAILED (CRC)",i,j);
-                            SYS::sleep(500);
-                            ok = FALSE; //break;
+                            ConPrintf("\n\rMTU #%d: Coeff[%d] ERROR CRC",i,j);
+                            SYS::sleep(200);
+                            continue;
+                            //ok = FALSE; //break;
                         }
                         U32 coeff = swap4bytes(*(U32*)&(Rsp_MTU[3]));
                         mtu->coeffs.setCoeff(j,coeff);
+                        j++;
                     }
                 }
-                if(ok)
+                //if(ok)
                 {
                     ConPrintf("\n\rMTU #%d: coeffs OK", i);
                     noCoeffMTU &= ~(1<<i);
@@ -405,6 +408,7 @@ void THREAD_POLLING::execute()
             }
         }
     }
+    //ConPrintf("\n\rCOUNT = %d",count);
     // disable modbus mode
     SYS::sleep(3000);
     // polling
