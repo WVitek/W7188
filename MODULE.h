@@ -1,51 +1,88 @@
 #pragma once
 
+#define I7K_Period 1000
+#define I7K_Log2BufSize 13
+
+#define MTU_Period 40
+#define MTU_Log2BufSize 14
+
 #ifndef __STRING_H
   #include <string.h>
 #endif
 #include "WTLIST.hpp"
 
 
-#define dtChecksumBit 0x40
-U16 BaudCodeBaudRate[0x09]={
-      0, // 0x00
-      0, // 0x01
-      0, // 0x02
-   1200, // 0x03
-   2400, // 0x04
-   4800, // 0x05
-   9600, // 0x06
-  19200, // 0x07
-  38400  // 0x08
-};
+//#define dtChecksumBit 0x40
+//U16 BaudCodeBaudRate[0x09]={
+//      0, // 0x00
+//      0, // 0x01
+//      0, // 0x02
+//   1200, // 0x03
+//   2400, // 0x04
+//   4800, // 0x05
+//   9600, // 0x06
+//  19200, // 0x07
+//  38400  // 0x08
+//};
 
 class MODULE;
 class POLL_UNIT;
+class PU_ADC;
 
 typedef TLIST<MODULE*> MODULES;
 typedef TLIST<POLL_UNIT*> PU_LIST;
+typedef TLIST<PU_ADC*> ADC_LIST;
 
-MODULES Modules;
-PU_LIST PollList;
-PU_LIST PollListAll;
+struct
+{
+    MODULE* Module;
+    MODULES* Modules;
+    PU_LIST* PollList;
+    ADC_LIST* ADCsList;
+    int PeriodADC;
+    int Log2BufSize;
+} _ctx;
+
+class CONTEXT_CREATOR
+{
+public:
+    CONTEXT_CREATOR(int PeriodADC, int Log2BufSize)
+    {
+        _ctx.PeriodADC = PeriodADC;
+        _ctx.Log2BufSize = Log2BufSize;
+        _ctx.Modules = new MODULES();
+        _ctx.PollList = new PU_LIST();
+        _ctx.ADCsList = new ADC_LIST();
+    }
+};
+
+class CONTEXT
+{
+public:
+    MODULES* Modules;
+    PU_LIST* PollList;
+    ADC_LIST* ADCsList;
+    CONTEXT()
+    {
+        Modules = _ctx.Modules;
+        PollList = _ctx.PollList;
+        ADCsList = _ctx.ADCsList;
+    }
+};
+
 
 class MODULE : public OBJECT {
 protected:
   U8 Address;  //*
-  U8 BaudCode; //*   (see ADAM or ICPCON documentation)
-  U8 InputType;//*
-  U8 DataType; //*
 public:
-  PU_LIST* pollList;
   CRITICALSECTION cs;
-  MODULE(int Addr=1, MODULES& ms=Modules, PU_LIST& pl=PollList)
+  MODULE(int Addr=1)
   {
-    pollList=&pl;
-    BaudCode=0x08; DataType=dtChecksumBit; Address=Addr;
-    ms.addLast(this);
+    Address=Addr;
+    if(Addr>0) _ctx.Modules->addLast(this);
+    _ctx.Module = this;
   }
   U8 inline GetAddress()const{ return Address; }
-  U8 inline GetBaudCode()const{ return BaudCode; }
   BOOL virtual GetConfigCmd(U8*/*Buf*/){ return FALSE; }
 };
 
@@ -53,7 +90,7 @@ class I7017 : public MODULE {
   U8 ChMask; // used channels mask
   U8 State;
 public:
-  I7017(int Addr=1, MODULES &ms=Modules, PU_LIST& pl=PollList):MODULE(Addr,ms,pl){}
+  I7017(int Addr=1):MODULE(Addr) { }
   inline void useChannel(U8 Num){
     ChMask |= U8(1)<<Num;
   }
@@ -91,12 +128,14 @@ protected:
   MODULE *Module;
 public:
   CRITICALSECTION cs;
-  POLL_UNIT(MODULE *M,int ItSz,U8 Lg2Cp):CYCL_BUF(ItSz,Lg2Cp){
-    Module=M;
+  POLL_UNIT(int ItSz,U8 Lg2Cp):CYCL_BUF(ItSz,Lg2Cp)
+  {
+      Module = _ctx.Module;
+      if(Module->GetAddress()>0)
+        _ctx.PollList->addLast(this);
   }
-  int inline SafeCount(){
-    cs.enter(); int r=Count(); cs.leave(); return r;
-  }
+  int inline SafeCount()
+  { cs.enter(); int r=Count(); cs.leave(); return r; }
   BOOL virtual GetPollCmd(U8 *Buf)=0;
   BOOL virtual response(const U8 *Resp)=0;
   void virtual latchPollData(){}
@@ -110,13 +149,7 @@ public:
 #define flgEDataFormat (flgError | 0x10)
 #define flgEResponse   (flgError | 0x08)
 #define ASItemSize 2
-#define ADC_Period (1000/ADC_Freq) // milliseconds
-
-#define plADC_(i) ((PU_ADC*)plADC[i])
-
-#if !defined(LOG2_ADC_BUF_SIZE)
-#define LOG2_ADC_BUF_SIZE 14
-#endif
+//#define ADC_Period (1000/ADC_Freq) // milliseconds
 
 PU_LIST plADC;
 
@@ -124,14 +157,13 @@ class PU_ADC : public POLL_UNIT
 {
 public:
   TIME FirstTime;
-public:
-  PU_ADC(MODULE *M):POLL_UNIT(M,ASItemSize, LOG2_ADC_BUF_SIZE)
+  int ADC_Period;
+
+  PU_ADC():POLL_UNIT(2, _ctx.Log2BufSize)
   {
+    ADC_Period = _ctx.PeriodADC;
     if(Items)
-    {
-      if(M) { M->pollList->addLast(this); PollListAll.addLast(this); }
-      plADC.addLast(this);
-    }
+        _ctx.ADCsList->addLast(this);
     else ConPrint("\n\rPU_ADC:Items==NULL!!!");
   }
 
@@ -206,9 +238,8 @@ public:
     //static TLIST<PU_ADC_MTU*> all;
     MTU_Coeffs coeffs;
 
-    PU_ADC_MTU(int busNum):PU_ADC(NULL)
+    PU_ADC_MTU(int busNum):PU_ADC()
     {
-        //all.addLast(this);
         BusNum=busNum;
     }
 
@@ -246,18 +277,6 @@ public:
             U16 p = buf[i<<1];
             U16 t = buf[(i<<1)+1];
             F32 fP = coeffs.calc(p,t);
-//            if((quant++ & 0x3F)==0)
-//            {
-//                S32 realP = F32_to_1000scaled(fP);
-//                char sign;
-//                if(realP<0)
-//                { sign='-'; realP=-realP; }
-//                else sign = '+';
-//                U16 Pfrac;
-//                U16 Pint = udivmod(realP,1000,Pfrac);
-//                ConPrintf("\n\rP%X=%c%d.%03d (p=%04X, t=%04X); ",
-//                    BusNum, sign, Pint, Pfrac, p, t);
-//            }
             S32 raw = F32_to_S32(fmul(fP,fMaxPto32K));
             if(raw<32767)
                 ps[i] = (raw<0) ? 0 :(U16)raw;
@@ -277,19 +296,16 @@ public:
             if(IsFull()) get(NULL);
             put(&(ps[i]));
         }
-        //FirstTime=Time-S32(Count()-1)*ADC_Period;
         FirstTime=Time-smul(Count()-1,ADC_Period);
         cnt=0;
         cs.leave();
-//        if((quant++ & 0x3F)==0)
-//            ConPrintf("\n\rtimeA=%lld;",timeA);
     }
 
 }; // PU_ADC_MTU
-static U8 PU_ADC_MTU::quant;
 #endif // __MTU
 
 #ifdef __I7K
+
 // Analog Input Channel (from I7017)
 class PU_ADC_7K : public PU_ADC
 {
@@ -307,9 +323,10 @@ public:
 #endif
 
 public:
-  PU_ADC_7K(I7017 *M,int Ch):PU_ADC(M)
+  PU_ADC_7K(int Ch):PU_ADC()
   {
-    Channel=Ch; M->useChannel(Ch);
+    Channel=Ch;
+    ((I7017*)_ctx.Module)->useChannel(Ch);
   }
 
   BOOL GetPollCmd(U8 *Buf)
@@ -402,7 +419,6 @@ public:
     FirstTime=Time-S32(Count()-1)*ADC_Period;
     cs.leave();
   }
-
 }; // PU_ADC_7K
 #endif // __I7K
 
@@ -413,18 +429,21 @@ struct EVENT_DI {
 #define AlarmEventSize sizeof(EVENT_DI)
 // Digital Input Channels 0-7 (from 7063)
 
+#define Events (*PU_DI::Instance)
+
 class PU_DI : public POLL_UNIT  {
 protected:
   U16 ChMask,PrevStatus,Status,ChangedTo0,ChangedTo1;
   TIME FLastEventTime;
   BOOL TimeOk;
 public:
-  PU_DI(MODULE *M, U16 ChMask):POLL_UNIT(M,AlarmEventSize,8){
+  static PU_DI* Instance;
+
+  PU_DI(U16 ChMask):POLL_UNIT(AlarmEventSize,8)
+  {
     PrevStatus=Status=this->ChMask=ChMask;
-    if(ChMask){
-      M->pollList->addLast(this);
-      PollListAll.addLast(this);
-    }
+    if(!Instance)
+        Instance = this;
     FLastEventTime=0;
   }
   BOOL GetPollCmd(U8 *Buf){
@@ -494,6 +513,7 @@ public:
     return r;
   }
 };
+static PU_DI* PU_DI::Instance = NULL;
 
 #if defined(__ARQ)
 void PU_DI::getData(void* Data,int Cnt){
@@ -538,3 +558,164 @@ void PU_DI::doSample(TIME Time){
   }
   PrevStatus=St;
 }
+
+#ifdef __GPS_TIME_GPS721
+// GPS-721 module
+class PU_GPS_721 : public PU_ADC
+{
+    enum {updateDate, getDate, getTime, getNSats} state;
+    U16 ChSum;
+    U8  ChCnt;
+    U8  ChFlg;
+    U16 year,month,day,prevSec;
+    U16 prevPPS;
+    U16 cntSomeWrong;
+    U8 A;
+public:
+    U16 LatchedSum;
+    U8  LatchedCnt;
+    U8  LatchedFlg;
+public:
+    PU_GPS_721(U8 Addr):PU_ADC()
+    {
+        state = updateDate;
+        A = Addr;
+    }
+
+    BOOL GetPollCmd(U8 *Buf)
+    {
+        Buf[1]=hex_to_ascii[A >> 4];
+        Buf[2]=hex_to_ascii[A & 0xF];
+        switch(state)
+        {
+            case updateDate: Buf[0]='$'; Buf[3]='D'; break;
+            case getDate:    Buf[0]='#'; Buf[3]='4'; break;
+            case getTime:    Buf[0]='#'; Buf[3]='1'; break;
+            case getNSats:   Buf[0]='#'; Buf[3]='3'; break;
+        }
+        Buf[4]=0;
+        return FALSE;
+    }
+
+  BOOL response(const U8 *Resp)
+  {
+        if(!Resp)
+        {
+            ChFlg|=flgEComm;
+            return FALSE;
+        }
+        if(Resp[0]!='!')
+        {
+            ChFlg|=flgEResponse;
+            return FALSE;
+        }
+        switch(state)
+        {
+            case updateDate:
+                state = getDate;
+                //dbg((const char*)Resp);
+                break;
+            case getDate:
+                day = (U16)FromDecStr(Resp+3,2);
+                month = (U16)FromDecStr(Resp+5,2);
+                year = (U16)FromDecStr(Resp+7,2) + 2000u;
+                if(1<=day && day<=31 && 1<=month && month<=12)
+                    state = getTime;
+                else ChFlg|=flgEDataFormat;
+                //ConPrintf("\n\r%s = %d-%d-%d",Resp,year,month,day);
+                break;
+            case getTime:
+                {
+                    U16 sec = (U16)FromDecStr(Resp+7,2);
+                    if(prevSec==sec)
+                    {
+                        state = getNSats;
+                        break;
+                    }
+                    prevSec = sec;
+                    U16 hour = (U16)FromDecStr(Resp+3,2);
+                    U16 min = (U16)FromDecStr(Resp+5,2);
+                    //ConPrintf("\n\r%s = %d:%d:%d",Resp,hour,min,sec);
+                    TIME timeGPS;
+                    if(!SYS::TryEncodeTime(year,month,day,hour,min,sec,timeGPS))
+                    {
+                        ChFlg|=flgEADCRange;
+                        state = updateDate;
+                        break;
+                    }
+                    TIME sysTimeOfPPS = GetCom(1).TimeOfHiCTS();;
+                    if((U16)sysTimeOfPPS == prevPPS)
+                    {
+                        if(++cntSomeWrong>32)
+                        {
+                            cntSomeWrong = 0;
+                            ConPrint("\n\rGPS: No PPS pulse detected");
+                            ChFlg|=flgEComm;
+                        }
+                    }
+                    else
+                    {
+                        cntSomeWrong = 0;
+                        prevPPS = (U16)sysTimeOfPPS;
+                        TIME offs = timeGPS - sysTimeOfPPS;
+                        if(offs>0 || !SYS::TimeOk)
+                        {
+                            TIME change = abs64(offs - SYS::NetTimeOffset);
+                            if(900<change && change<1100)
+                            {
+                                if(++cntSomeWrong<4)
+                                {
+                                    state = getNSats;
+                                    break;
+                                }
+                                EVENT_DI Event;
+                                SYS::getNetTime(Event.Time);
+                                Event.Channel=255;
+                                Event.ChangedTo=5;
+                                PU_DI::Instance->EventDigitalInput(Event);
+                                ConPrintf( "\n\r%02d:%02d:%02d GPS: second jitter BUG", hour, min, sec);
+                            }
+                            SYS::setNetTimeOffset(offs);
+                            state = getNSats;
+                            cntSomeWrong = 0;
+                        }
+                        else state = getDate;
+                    }
+                }
+                break;
+            case getNSats:
+                U16 value = Resp[3]-'0';
+                state = getTime;
+                cs.enter();
+                ChSum+=value;
+                ChCnt++;
+                cs.leave();
+                break;
+        }
+        return TRUE;
+    }
+
+  void latchPollData(){
+    cs.enter();
+    LatchedSum=ChSum; ChSum=0;
+    LatchedCnt=ChCnt; ChCnt=0;
+    LatchedFlg=ChFlg; ChFlg=0;
+    cs.leave();
+  }
+  void doSample(TIME Time){
+    U16 Sample;
+    if (LatchedCnt>0){
+      Sample = udiv(LatchedSum, LatchedCnt);
+    }
+    else {
+      Sample=(flgError | LatchedFlg)<<8;
+    }
+    cs.enter();
+    if(IsFull()) get(NULL);
+    put(&Sample);
+    FirstTime=Time-S32(Count()-1)*ADC_Period;
+    cs.leave();
+  }
+
+}; // PU_GPS_721
+#endif

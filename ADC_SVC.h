@@ -6,10 +6,14 @@
 class ADC_SVC : public SERVICE {
   BOOL Request;
   TIME FromTime;
+  ADC_LIST *plADC;
 public:
 
-ADC_SVC():SERVICE(2)
+//#define plADC_(i) ((PU_ADC*)(*plADC)[i])
+
+ADC_SVC(ADC_LIST *ADCs, U8 ID):SERVICE(ID)
 {
+    plADC = ADCs;
 }
 
 BOOL HaveDataToTransmit(U8 /*To*/)
@@ -21,14 +25,14 @@ BOOL HaveDataToTransmit(U8 /*To*/)
 int getDataToTransmit(U8 /*To*/,void* Data,int MaxSize)
 {
   Request=FALSE;
-  int nADC = plADC.Count();
+  int nADC = plADC->Count();
   if(!nADC)
       return 0;
   TIME tmpTime = FromTime;
   // determine correct fromtime
   for(int i=0; i<nADC; i++)
   {
-    PU_ADC* P = plADC_(i);
+    PU_ADC* P = (*plADC)[i];
     P->cs.enter();
     P->readArchive(FromTime,NULL,0); // correct time value
   }
@@ -36,7 +40,7 @@ int getDataToTransmit(U8 /*To*/,void* Data,int MaxSize)
   U16 RecSize = (MaxSize-sizeof(TIME)-1) / nADC;
   for(int i=0; i<nADC; i++)
   {
-    PU_ADC* P = plADC_(i);
+    PU_ADC* P = (*plADC)[i];
     RecSize = P->readArchive(FromTime,NULL,RecSize); // correct time value
   }
   // reading
@@ -45,7 +49,7 @@ int getDataToTransmit(U8 /*To*/,void* Data,int MaxSize)
   *Dst++ = (U8)nADC;
   for(int i=0; i<nADC; i++)
   {
-    PU_ADC* P = plADC_(i);
+    PU_ADC* P = (*plADC)[i];
     P->readArchive(FromTime,Dst,RecSize);
     Dst+=RecSize;
     P->cs.leave();

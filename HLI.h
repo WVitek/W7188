@@ -27,7 +27,6 @@ void HLI_linkCheck();
 
 
 #include "ADC_Svc.h"
-ADC_SVC ADC_Svc;
 #include "DI_Svc.h"
 DI_SVC DI_Svc;
 #include "PROG_Svc.h"
@@ -35,13 +34,23 @@ PROG_SVC PROG_Svc;
 #include "DUMP_Svc.h"
 DUMP_SVC DUMP_Svc;
 
-#if defined(__GPS_TIME)
-    #define ServicesCount 4
-    SERVICE* Service[ServicesCount]={&DI_Svc,&ADC_Svc,&PROG_Svc,&DUMP_Svc};
-#else
-    #define ServicesCount 5
-    SERVICE* Service[ServicesCount]={&TimeSvc,&DI_Svc,&ADC_Svc,&PROG_Svc,&DUMP_Svc};
+SERVICE* Service[]=
+{
+#ifndef __GPS_TIME
+    &TimeSvc,
 #endif
+    &DI_Svc,
+#ifdef __MTU
+    new ADC_SVC(ctx_MTU.ADCsList, 2),
+    new ADC_SVC(ctx_I7K.ADCsList, 6),
+#else
+    new ADC_SVC(ctx_I7K, 2);
+#endif
+    &PROG_Svc,
+    &DUMP_Svc,
+    NULL
+};
+
 struct PACKETHEADER
 {
   U8 To,From;
@@ -100,10 +109,11 @@ BOOL HLI_receive(void const * Buf, int BufSize)
     PACKET *p = (PACKET*)Buf;
     if(p->Hdr.To != MyAddr) return TRUE;
     U8 SvcID = p->Hdr.ServiceID;
-    int i;
-    for(i=0; i<ServicesCount && Service[i]->ID!=SvcID; i++);
-    if(i<ServicesCount)
-      Service[i]->receiveData( p->Hdr.From, p->Data, BufSize - HLI_SYSDATASIZE );
+    SERVICE **svc = Service;
+    while(*svc && (**svc).ID!=SvcID)
+        svc++;
+    if(*svc)
+        (**svc).receiveData( p->Hdr.From, p->Data, BufSize - HLI_SYSDATASIZE );
     toutLink.start(TOUT_LINK_AFTER_DATA_RX);
     return TRUE;
   }
@@ -118,31 +128,33 @@ BOOL HLI_receive(void const * Buf, int BufSize)
 
 int HLI_totransmit(void* Buf, int BufSize)
 {
-  static TIMEOUTOBJ toutTx;
-  int DataSize = 0;
-  int i;
-  for(i=0; i<ServicesCount && !Service[i]->HaveDataToTransmit(HLI_Addr); i++);
-  if( i<ServicesCount || toutTx.IsSignaled() || BufSize==0)
-  {
-    PACKET *p = (PACKET*)Buf;
-    p->Hdr.To = HLI_Addr;
-    p->Hdr.From = MyAddr;
-    if( i<ServicesCount && BufSize>0 )
+    static TIMEOUTOBJ toutTx;
+    int DataSize = 0;
+
+    SERVICE **svc = Service;
+    while(*svc && !(**svc).HaveDataToTransmit(HLI_Addr))
+        svc++;
+    if( *svc || toutTx.IsSignaled() || BufSize==0)
     {
-      p->Hdr.ServiceID = Service[i]->ID;
-      DataSize = sizeof(PACKETHEADER) + Service[i]->getDataToTransmit( HLI_Addr, p->Data, BufSize - HLI_SYSDATASIZE );
+        PACKET *p = (PACKET*)Buf;
+        p->Hdr.To = HLI_Addr;
+        p->Hdr.From = MyAddr;
+        if( *svc && BufSize>0 )
+        {
+            p->Hdr.ServiceID = (**svc).ID;
+            DataSize = sizeof(PACKETHEADER) + (**svc).getDataToTransmit( HLI_Addr, p->Data, BufSize - HLI_SYSDATASIZE );
+        }
+        else
+        { // ping
+            p->Hdr.To = 0;
+            p->Hdr.From = MyAddr;
+            p->Hdr.ServiceID = 0;
+            DataSize = sizeof(PACKETHEADER);
+        }
+        toutTx.start(toTypeSec | 40); // need some tx every 40 sec
+        CRC16_write( Buf,  DataSize, CRC16_PPP );
+        DataSize += CRC_SIZE;
     }
-    else
-    { // ping
-      p->Hdr.To = 0;
-      p->Hdr.From = MyAddr;
-      p->Hdr.ServiceID = 0;
-      DataSize = sizeof(PACKETHEADER);
-    }
-    toutTx.start(toTypeSec | 40); // need some tx every 40 sec
-    CRC16_write( Buf,  DataSize, CRC16_PPP );
-    DataSize += CRC_SIZE;
-  }
   return DataSize;
 }
 

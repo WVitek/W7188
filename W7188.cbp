@@ -5,6 +5,7 @@
 		<Option title="W7188" />
 		<Option pch_mode="2" />
 		<Option compiler="ow" />
+		<Option virtualFolders="DataAcquisition\;HLI\;Z_Unused\;" />
 		<Build>
 			<Target title="7188">
 				<Option output="bin\w_bad.exe" prefix_auto="1" extension_auto="0" />
@@ -30,7 +31,8 @@
 					<Add option="-d__WIRE" />
 					<Add option="-dq__NO_HLI" />
 					<Add option="-dq__NO_TMR" />
-					<Add option="-d__GPS_TIME" />
+					<Add option="-d__I7K" />
+					<Add option="-d__GPS_TIME_GPS721" />
 					<Add option="-d__MTU" />
 					<Add option="-dq__COM_STATUS_BUF" />
 				</Compiler>
@@ -54,23 +56,55 @@
 		</Linker>
 		<Unit filename="7188.H" />
 		<Unit filename="7188XA.H" />
-		<Unit filename="ADC_ARQ.h" />
-		<Unit filename="ADC_SVC.h" />
-		<Unit filename="CYCL_BUF.h" />
-		<Unit filename="DI_ARQ.h" />
-		<Unit filename="DI_SVC.h" />
+		<Unit filename="ADC_ARQ.h">
+			<Option virtualFolder="DataAcquisition\" />
+		</Unit>
+		<Unit filename="ADC_SVC.h">
+			<Option virtualFolder="DataAcquisition\" />
+		</Unit>
+		<Unit filename="CYCL_BUF.h">
+			<Option virtualFolder="DataAcquisition\" />
+		</Unit>
+		<Unit filename="DI_ARQ.h">
+			<Option virtualFolder="DataAcquisition\" />
+		</Unit>
+		<Unit filename="DI_SVC.h">
+			<Option virtualFolder="DataAcquisition\" />
+		</Unit>
 		<Unit filename="GPS_TIME.h" />
-		<Unit filename="HLI.h" />
-		<Unit filename="HLI_ARQ.h" />
-		<Unit filename="MODULE.h" />
-		<Unit filename="MSGBUF.h" />
-		<Unit filename="MTU05.h" />
-		<Unit filename="POLLING.h" />
-		<Unit filename="PROG_SVC.h" />
-		<Unit filename="PrtLiner.h" />
-		<Unit filename="Service.h" />
-		<Unit filename="TIMC_ARQ.h" />
-		<Unit filename="TIMC_SVC.h" />
+		<Unit filename="HLI.h">
+			<Option virtualFolder="HLI\" />
+		</Unit>
+		<Unit filename="HLI_ARQ.h">
+			<Option virtualFolder="HLI\" />
+		</Unit>
+		<Unit filename="MODULE.h">
+			<Option virtualFolder="DataAcquisition\" />
+		</Unit>
+		<Unit filename="MSGBUF.h">
+			<Option virtualFolder="Z_Unused\" />
+		</Unit>
+		<Unit filename="MTU05.h">
+			<Option virtualFolder="DataAcquisition\" />
+		</Unit>
+		<Unit filename="POLLING.h">
+			<Option virtualFolder="DataAcquisition\" />
+		</Unit>
+		<Unit filename="PROG_SVC.h">
+			<Option virtualFolder="HLI\" />
+		</Unit>
+		<Unit filename="PrtLiner.h">
+			<Option virtualFolder="HLI\" />
+		</Unit>
+		<Unit filename="Service.h">
+			<Option virtualFolder="HLI\" />
+		</Unit>
+		<Unit filename="TIMC_ARQ.h">
+			<Option virtualFolder="HLI\" />
+		</Unit>
+		<Unit filename="TIMC_SVC.h">
+			<Option virtualFolder="HLI\" />
+		</Unit>
 		<Unit filename="W16550IH.h" />
 		<Unit filename="W80188SP.h" />
 		<Unit filename="WAm186ES.H" />
@@ -81,7 +115,9 @@
 		<Unit filename="WComms.hpp" />
 		<Unit filename="WConsole.h" />
 		<Unit filename="WFlash.h" />
-		<Unit filename="WFloat32.h" />
+		<Unit filename="WFloat32.h">
+			<Option virtualFolder="DataAcquisition\" />
+		</Unit>
 		<Unit filename="WHrdware.cpp" />
 		<Unit filename="WHrdware.hpp" />
 		<Unit filename="WInlines.h" />
@@ -91,14 +127,28 @@
 		<Unit filename="WTLIST.hpp" />
 		<Unit filename="W_EmbSPH.h" />
 		<Unit filename="W_FSOpt.h" />
-		<Unit filename="dump_SVC.h" />
-		<Unit filename="hli_2238.h" />
-		<Unit filename="hli_gr47.h" />
-		<Unit filename="hli_sim3.h" />
-		<Unit filename="hli_tc65.h" />
-		<Unit filename="hli_wire.h" />
+		<Unit filename="dump_SVC.h">
+			<Option virtualFolder="HLI\" />
+		</Unit>
+		<Unit filename="hli_2238.h">
+			<Option virtualFolder="HLI\" />
+		</Unit>
+		<Unit filename="hli_gr47.h">
+			<Option virtualFolder="HLI\" />
+		</Unit>
+		<Unit filename="hli_sim3.h">
+			<Option virtualFolder="HLI\" />
+		</Unit>
+		<Unit filename="hli_tc65.h">
+			<Option virtualFolder="HLI\" />
+		</Unit>
+		<Unit filename="hli_wire.h">
+			<Option virtualFolder="HLI\" />
+		</Unit>
 		<Unit filename="main.cpp" />
-		<Unit filename="x600.h" />
+		<Unit filename="x600.h">
+			<Option virtualFolder="Z_Unused\" />
+		</Unit>
 		<Extensions>
 			<code_completion />
 			<debugger />

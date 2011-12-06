@@ -22,14 +22,13 @@ inline void PollStatRead(int &Qry, int &Ans) {
 #include "Module.h"
 #include "WHrdware.hpp"
 
-class THREAD_POLLING : public THREAD {
+class THREAD_POLL_I7K : public THREAD {
   U16 pollPort;
   U32 baudRate;
   MODULES *modules;
   PU_LIST *pollList;
 public:
-  THREAD_POLLING(U16 pollPort=0, U32 baudRate=38400,
-    MODULES &m=Modules, PU_LIST &pl=PollList)
+  THREAD_POLL_I7K(U16 pollPort=0, U32 baudRate=38400)
   {
     if(pollPort==0)
 #ifdef __PollPort
@@ -39,22 +38,22 @@ public:
 #endif
     else this->pollPort=pollPort;
     this->baudRate=baudRate;
-    modules=&m;
-    pollList=&pl;
+    modules = ctx_I7K.Modules;
+    pollList = ctx_I7K.PollList;
   }
   void execute();
 };
 
-void THREAD_POLLING::execute(){
+void THREAD_POLL_I7K::execute(){
   COMPORT& RS485=GetCom(pollPort);
   RS485.install(baudRate);
-  dbg("\n\rPOLLING started");
-  //dbg3("\n\rPOLLING started COM%d @ %ld",pollPort,baudRate);
+  dbg3("\n\rPOLL_I7K started @ COM%d:%ld",pollPort,baudRate);
   U8 Query[16];
   U8 Resp[256];
   POLL_UNIT *pu,*pu_;
   int i0=0, i;
-  Realtime=TRUE;
+  //Realtime=TRUE;
+  //dbg2("\n\rModulesCount=%d",modules->Count());
   // Configure modules
   while(TRUE){
     BOOL Quit=TRUE;
@@ -67,6 +66,7 @@ void THREAD_POLLING::execute(){
     }
     if(Quit)break;
   }
+  //dbg2("\n\rPollListCount=%d",pollList->Count());
   pu_=(*pollList)[i0];
   // send first command
   if(!pu_->GetPollCmd(Query)) if(--i0<0) i0=pollList->Count()-1;;
@@ -85,13 +85,12 @@ void THREAD_POLLING::execute(){
     int R=RS485.receiveLine(Resp,0,TRUE);
     U8* Tmp = (R==0) ? Resp : NULL;
     int Ans = (pu_->response(Tmp)) ? 1: 0;
-    PollStatAdd(1,Ans);
+    //PollStatAdd(1,Ans);
     S(0x04);
     pu_=pu;
   }
   S(0x00);
-  dbg("\n\rPOLLING stopped");
-  //dbg2("\n\rPOLLING stopped COM%d",pollPort);
+  dbg("\n\rPOLL_I7K stopped");
 }
 #endif
 

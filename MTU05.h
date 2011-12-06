@@ -1,29 +1,22 @@
 #include "WCRCs.hpp"
 
-class THREAD_POLLING : public THREAD
+class THREAD_POLL_MTU : public THREAD
 {
     U16 pollPort;
     U32 baudRate;
-//    MODULES *modules;
-//    PU_LIST *pollList;
 public:
-#ifndef __PollPort
-#define __PollPort 2
-#endif
     U8 count;
     U8 addrs[16];
 
-    THREAD_POLLING(U16 pollPort, U32 baudRate)//, MODULES &m=Modules, PU_LIST &pl=PollList)
+    THREAD_POLL_MTU(U16 pollPort, U32 baudRate)
     {
         this->pollPort=pollPort;
         this->baudRate=baudRate;
-//        modules=&m;
-//        pollList=&pl;
     }
     void execute();
 };
 
-void THREAD_POLLING::execute()
+void THREAD_POLL_MTU::execute()
 {
     COMPORT& RS485=GetCom(pollPort);
     RS485.install(baudRate);
@@ -289,7 +282,7 @@ void THREAD_POLLING::execute()
 #else
     U8 Qry_MTU[16];
     U8 Rsp_MTU[64];
-    dbg3("\n\rMTU polling started (COM%d, %ld)", pollPort, baudRate);
+    dbg3("\n\rPOLL_MTU started @ COM%d:%ld", pollPort, baudRate);
 //*
 #define use_mtu_crc TRUE
     //***** Scan RS-485 bus
@@ -408,7 +401,7 @@ void THREAD_POLLING::execute()
             }
         }
     }
-    //ConPrintf("\n\rCOUNT = %d",count);
+    ConPrintf("\n\rCOUNT = %d",ctx_MTU.ADCsList->Count());
     // disable modbus mode
     SYS::sleep(3000);
     // polling
@@ -416,7 +409,7 @@ void THREAD_POLLING::execute()
     Realtime=TRUE;
     while(!Terminated)
     {
-        SYS::sleep(toTypeNext | ADC_Period);
+        SYS::sleep(toTypeNext | MTU_Period);
         // start new measurement
         RS485.writeChar(0xF0);
         TIME netTime;
@@ -453,7 +446,7 @@ void THREAD_POLLING::execute()
         {
             PU_ADC_MTU *pm = MTUs[iMTU];
             pm->response(Rsp_MTU);
-            pm->doSample(netTime-ADC_Period);
+            pm->doSample(netTime-MTU_Period);
         }
         iMTU = iM;
     }
@@ -494,7 +487,7 @@ void THREAD_POLLING::execute()
         }
     }
 //*/
-    dbg("\n\rMTU polling stopped");
+    dbg("\n\rPOLL_MTU stopped");
 #endif
 }
 

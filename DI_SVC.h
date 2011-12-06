@@ -17,14 +17,14 @@ DI_SVC():SERVICE(4)
 
 BOOL HaveDataToTransmit(U8 /*To*/)
 {
-  return SYS::TimeOk && toutAck.IsSignaled() && puDI.HaveNewEvents(TimeOfLastSended);// || NeedTx;
+  return SYS::TimeOk && toutAck.IsSignaled() && Events.HaveNewEvents(TimeOfLastSended);// || NeedTx;
 }
 
 int getDataToTransmit(U8 /*To*/,void* Data,int MaxSize)
 {
 //  NeedTx = FALSE;
   TIME Time = TimeOfLastSended+1;
-  int size = puDI.readArchive(Time,(U8*)Data,MaxSize);
+  int size = Events.readArchive(Time,(U8*)Data,MaxSize);
   if( size )
   {
     TimeOfLastSended = Time;

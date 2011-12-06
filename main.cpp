@@ -1,6 +1,5 @@
 //__7188XA __GPRS_TC65 __TNGP
 #define MyAddr 1
-#define ADC_Freq 25 // Herz
 #undef __ARQ
 
 #include <stdio.h>
@@ -31,39 +30,38 @@ U32 __HLI_BaudRate;
 #endif
 
 #include "Module.h"
-#ifndef __MTU
-//***** BEG Analog Inputs
-// TNGP
-I7017 i7017a(0x01); // ( Address )
-//I7017 i7017b(0x02);
-//*
-PU_ADC_7K
-  puAD0(&i7017a,0), // ( Module, AIN, ArchNum )
-  puAD1(&i7017a,1),
-  puAD2(&i7017a,2);
-//  puAD3(&i7017b,0,3),
-//  puAD4(&i7017b,1,4),
-//  puAD5(&i7017b,2,5);
-/*/
-PU_ADC_7K // testing mode only
-  puAD0(&i7017a,0), // ( Module, AIN, ArchNum )
-  puAD1(&i7017b,0);
-//*/
-//***** END Analog Inputs
+
+#ifdef __I7K
+    CONTEXT_CREATOR _cc_I7K(1000, 13);
+
+//    I7017 i7017a(0x01); // ( Address )
+//    ////*
+//    PU_ADC_7K
+//        puAD0(0), // ( Module, AIN, ArchNum )
+//        puAD1(1),
+//        puAD2(2);
+
+    MODULE moduleDIO(0xFF);
+    PU_DI puDI(0x00FF);
+
+    #ifdef __GPS_TIME_GPS721
+        #ifndef __I7K
+            #error Need __I7K for enable polling of GPS721
+        #endif
+        #define __GPS_TIME
+        MODULE moduleGPS(0xF0);
+        PU_GPS_721 pu_gps(0xF0);
+    #endif
+
+    CONTEXT ctx_I7K;
 #endif
 
-//***** BEG Digital inputs & events
-//*
-//***** 70DI (TNGP: KP 74)
-MODULE i70DI(0xFF);
-PU_DI puDI(&i70DI,0x00DF);
-/*/
-//***** No DI (TNGP: GNS & T9)
-PU_DI puDI(NULL,0x00);
-//*/
-//***** END Digital inputs & events
+#ifdef __MTU
+    CONTEXT_CREATOR _cc_MTU(40, 14);
+    CONTEXT ctx_MTU;
+#endif
 
-#ifdef __GPS_TIME
+#ifdef __GPS_TIME_NMEA
 #include "GPS_TIME.h"
 #endif
 
@@ -180,28 +178,38 @@ cdecl main()
     //SYS::sleep(2000); // need to avoid bug when very fast start from autoexec :-(
     dbg("\n\rMAIN started\n\r");
 
-    THREAD_POLLING* ThdP;
+#if __MTU
+    THREAD_POLL_MTU* ThdPM;
     {
         COM_PARAMS cp;
-        cp.com = __PollPort;
+        cp.com = 1;
         cp.speed = 19200;
-        GetComParams(" poll=",&cp);
-        ThdP = new THREAD_POLLING(cp.com, cp.speed);//, GetU16Param(" MTUs=",0));
-        ThdP->count = GetU8ArrParam(" MTUs=",ThdP->addrs,16);
-        ConPrintHex(ThdP->addrs, ThdP->count);
+        GetComParams(" mtu=",&cp);
+        ThdPM = new THREAD_POLL_MTU(cp.com, cp.speed);
+        ThdPM->count = GetU8ArrParam(" MTUs=",ThdPM->addrs,16);
+        ConPrintHex(ThdPM->addrs, ThdPM->count);
+        ThdPM->run();
+    }
+#endif
+
+#if __I7K
+    THREAD_POLL_I7K* ThdP;
+    {
+        COM_PARAMS cp;
+        cp.com = 2;
+        cp.speed = 38400;
+        GetComParams(" i7k=",&cp);
+        ThdP = new THREAD_POLL_I7K(cp.com, cp.speed);
         ThdP->run();
     }
+#endif
 
 #if !defined(__NO_HLI) && (!defined(__7188XB) || !defined(__ConPort))
     #define ThdHLI
     THREAD_HLI* ThdHLI1;
     {
         COM_PARAMS cp;
-    #ifdef __HLI_COM2
-        cp.com = 2;
-    #else
-        cp.com = 1;
-    #endif
+        cp.com = 3;
         cp.speed = 38400;
         GetComParams(" hli=",&cp);
         __HLI_BaudRate = cp.speed;
@@ -210,7 +218,7 @@ cdecl main()
     }
 #endif
 
-#ifdef __GPS_TIME
+#ifdef __GPS_TIME_NMEA
     THREAD_GPS* ThdGPS =new THREAD_GPS();  ThdGPS->run();
 #endif
 #if !defined(__NO_TMR)
@@ -222,7 +230,7 @@ cdecl main()
     SYS::getNetTime(Event.Time);
     Event.Channel=255;
     Event.ChangedTo=0;
-    puDI.EventDigitalInput(Event);
+    Events.EventDigitalInput(Event);
     //
     BOOL Quit=FALSE;
     while(TRUE){
@@ -238,7 +246,7 @@ cdecl main()
 #ifdef ThdHLI
     delete ThdHLI1;
 #endif
-#ifdef __GPS_TIME
+#ifdef __GPS_TIME_NMEA
     delete ThdGPS;
 #endif
     delete ThdP;
