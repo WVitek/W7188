@@ -1,6 +1,4 @@
 //file WKERN.CPP
-#define __TIMEOUTS_V2
-
 #include "WKern.hpp"
 #include <string.h>
 #include "WComms.hpp"
@@ -16,9 +14,6 @@ THREAD MainThread;
 
 //*** timeouts lists
 _BDLI *TO001=NULL,*TO010=NULL,*TO100=NULL,*TOSec=NULL; // "sleep some time" timeouts
-#ifndef __TIMEOUTS_V2
-_BDLI *TN1E1=NULL,*TN1E2=NULL,*TN1E3=NULL; // "next 1Ex msec" timeouts
-#endif
 
 //*** time counters
 U8 Cnt001=0,Cnt010=0,Cnt100=0; // 1ms, 10ms, 100ms
@@ -187,138 +182,145 @@ void resumeAll(_BDLI *_TN) {
 //******************** class SYS
 
 void _fast SYS::TimerProc(){
-  disable_sti();
-  static BOOL Hard;
-  Hard = HardwareTimerIntr;
-#ifdef __UsePerfCounters
-  if(Hard)startSysTicksCount();
-#endif
-  BOOL DoThSw=!Hard;
-  if(Hard){
-    //***** Period = SysTimerInterval ms
-    SystemTime+=SysTimerInterval;
-    _BDLI *Tmp=TO001;
-    while(Tmp){
-      _BDLI *Next=Tmp->Next; TIMEOUTOBJ* pto = *(Tmp->TOPtr());
-      if( pto->Timeout < SysTimerInterval )
-        { pto->setReady(); DoThSw=TRUE; }
-      else
-        pto->Timeout -= SysTimerInterval;
-      Tmp=Next;
-    }
-    if((Cnt001+=SysTimerInterval)>=10){
-      //***** Period = 10ms
-      Cnt001-=10;
-      DoThSw=TRUE; // default thread switching interval = 10ms (100 switches/sec)
-      // Check 10ms timeouts
-      _BDLI *Tmp=TO010;
-      while(Tmp)
-      {
-        _BDLI *Next=Tmp->Next; TIMEOUTOBJ* pto = *(Tmp->TOPtr());
-        if((pto->Timeout-=10)<10+SysTimerInterval) Tmp->mov(TO001);
-        Tmp=Next;
-      }
-#ifndef __TIMEOUTS_V2
-      resumeAll(TN1E1);
-#endif
-      if(++Cnt010==10)
-      {
-        //***** Period = 100ms
-        Cnt010=0;
-        RefreshWDT();
-        // Check 100ms timeouts
-        Tmp=TO100;
-        while(Tmp)
-        {
-          _BDLI *Next=Tmp->Next; TIMEOUTOBJ* pto = *(Tmp->TOPtr());
-          if((pto->Timeout-=100)<110+SysTimerInterval) Tmp->mov(TO010);
-          Tmp=Next;
-        }
-#ifndef __TIMEOUTS_V2
-        resumeAll(TN1E2);
-#endif
-        if(++Cnt100==10)
-        {
-          //***** Period = 1000ms
-          // "Wait next second" timeouts
-          Cnt100=0;
-#ifndef __TIMEOUTS_V2
-          resumeAll(TN1E3);
-#endif
-          // Check long timeouts (in seconds)
-          Tmp=TOSec;
-          while(Tmp)
-          {
-            _BDLI *Next=Tmp->Next; TIMEOUTOBJ* pto = *(Tmp->TOPtr());
-            if( pto->Timeout-- <= 1 ) pto->setReady();
-            Tmp=Next;
-          }
-        }
-      }
-    }
-  }
-  else if(NewThread!=NULL)
-  {
-    memcpy(MK_FP(NewThread->SavedSS,0),MK_FP(_SS,0),NewThread->StackSize);
-    NewThread->SavedBP=_BP;
-    NewThread->SavedSP=_SP;
-    NewThread=NULL;
-  }
-  HardwareTimerIntr=TRUE;
-#ifdef __UsePerfCounters
-  if(Hard)stopSysTicksCount(TimerISRTicks);
-#endif
-  static BOOL InProcess=FALSE;
-  if(DoThSw && !InProcess){
+    disable_sti();
+    static BOOL Hard;
+    Hard = HardwareTimerIntr;
 #ifdef __UsePerfCounters
     if(Hard)startSysTicksCount();
 #endif
-    InProcess=TRUE;
-    // if CurThread is not active "realtime" thread, then ...
-    if(!(CurThread->Realtime && *(CurThread->SysRef.ThdPtr())) ){
-      // ... do switching to next thread
-      THREAD *NewCur;
-      _BDLI *Tmp=CurThread->SysRef.Next;
-      if(Tmp!=NULL) NewCur = *(Tmp->ThdPtr());
-      else { // no active threads.
-#ifdef __UsePerfCounters
-        if(Hard)stopSysTicksCount(TimerISRTicks);
-#endif
-        TIME IdleStart=SystemTime;
-//        U16 BegTicks=inpw(TMR_T1CNT);
-        // Let's have a rest :)
-        enable_sti();
-        while(Threads==NULL)
-          _asm{
-            sti
-            hlt
-            cli
-          }
-        disable_sti();
-//        U16 EndTicks=inpw(TMR_T1CNT);
-//        if(EndTicks<BegTicks) IdleTicks+=SysTimerMaxcount-BegTicks
-        IdleMsCnt += (U16)(SystemTime-IdleStart);
-#ifdef __UsePerfCounters
-        if(Hard)startSysTicksCount();
-#endif
-        NewCur = *(Threads->ThdPtr());
-      }
-      if(NewCur!=CurThread){
-        CurThread->SavedSS=_SS; CurThread->SavedSP=_SP; CurThread->SavedBP=_BP;
-        CurThread=NewCur;
-#ifdef __DebugThreadState
-        WriteNVRAM(0,CurThread->StateAddr);
-#endif // __DebugThreadState
-        NewCur->Terminated=SystemStopped;
-        changeStack(NewCur->SavedSS,NewCur->SavedSP,NewCur->SavedBP);
-      }
+    BOOL DoThSw=!Hard;
+    if(Hard)
+    {
+        //***** Period = SysTimerInterval ms
+        SystemTime+=SysTimerInterval;
+        _BDLI *Tmp=TO001;
+        while(Tmp)
+        {
+            _BDLI *Next=Tmp->Next;
+            TIMEOUTOBJ* pto = *(Tmp->TOPtr());
+            if( pto->Timeout < SysTimerInterval )
+            {
+                pto->setReady();
+                DoThSw=TRUE;
+            }
+            else pto->Timeout -= SysTimerInterval;
+            Tmp=Next;
+        }
+        if((Cnt001+=SysTimerInterval)>=10)
+        {
+            //***** Period = 10ms
+            Cnt001-=10;
+            DoThSw=TRUE; // default thread switching interval = 10ms (100 switches/sec)
+            // Check 10ms timeouts
+            _BDLI *Tmp=TO010;
+            while(Tmp)
+            {
+                _BDLI *Next=Tmp->Next;
+                TIMEOUTOBJ* pto = *(Tmp->TOPtr());
+                if((pto->Timeout-=10)<10+SysTimerInterval)
+                    Tmp->mov(TO001);
+                Tmp=Next;
+            }
+            if(++Cnt010==10)
+            {
+                //***** Period = 100ms
+                Cnt010=0;
+                RefreshWDT();
+                // Check 100ms timeouts
+                Tmp=TO100;
+                while(Tmp)
+                {
+                    _BDLI *Next=Tmp->Next;
+                    TIMEOUTOBJ* pto = *(Tmp->TOPtr());
+                    if((pto->Timeout-=100)<110+SysTimerInterval)
+                        Tmp->mov(TO010);
+                    Tmp=Next;
+                }
+                if(++Cnt100==10)
+                {
+                    //***** Period = 1000ms
+                    // "Wait next second" timeouts
+                    Cnt100=0;
+                    // Check long timeouts (in seconds)
+                    Tmp=TOSec;
+                    while(Tmp)
+                    {
+                        _BDLI *Next=Tmp->Next;
+                        TIMEOUTOBJ* pto = *(Tmp->TOPtr());
+                        if( pto->Timeout-- <= 1 )
+                            pto->setReady();
+                        Tmp=Next;
+                    }
+                }
+            }
+        }
     }
-    InProcess=FALSE;
+    else if(NewThread!=NULL)
+    {
+        memcpy(MK_FP(NewThread->SavedSS,0),MK_FP(_SS,0),NewThread->StackSize);
+        NewThread->SavedBP=_BP;
+        NewThread->SavedSP=_SP;
+        NewThread=NULL;
+    }
+    HardwareTimerIntr=TRUE;
 #ifdef __UsePerfCounters
     if(Hard)stopSysTicksCount(TimerISRTicks);
 #endif
-  }
-  enable_sti();
+    static BOOL InProcess=FALSE;
+    if(DoThSw && !InProcess)
+    {
+#ifdef __UsePerfCounters
+        if(Hard)startSysTicksCount();
+#endif
+        InProcess=TRUE;
+        // if CurThread is not active "realtime" thread, then ...
+        if(!(CurThread->Realtime && *(CurThread->SysRef.ThdPtr())) )
+        {
+            // ... do switching to next thread
+            THREAD *NewCur;
+            _BDLI *Tmp=CurThread->SysRef.Next;
+            if(Tmp!=NULL) NewCur = *(Tmp->ThdPtr());
+            else // no active threads.
+            {
+#ifdef __UsePerfCounters
+                if(Hard)stopSysTicksCount(TimerISRTicks);
+#endif
+                TIME IdleStart=SystemTime;
+    //        U16 BegTicks=inpw(TMR_T1CNT);
+                // Let's have a rest :)
+                enable_sti();
+                while(Threads==NULL)
+                  _asm{
+                    sti
+                    hlt
+                    cli
+                  }
+                disable_sti();
+    //        U16 EndTicks=inpw(TMR_T1CNT);
+    //        if(EndTicks<BegTicks) IdleTicks+=SysTimerMaxcount-BegTicks
+                IdleMsCnt += (U16)(SystemTime-IdleStart);
+#ifdef __UsePerfCounters
+                if(Hard)startSysTicksCount();
+#endif
+                NewCur = *(Threads->ThdPtr());
+            }
+            if(NewCur!=CurThread)
+            {
+                CurThread->SavedSS=_SS; CurThread->SavedSP=_SP; CurThread->SavedBP=_BP;
+                CurThread=NewCur;
+#ifdef __DebugThreadState
+                WriteNVRAM(0,CurThread->StateAddr);
+#endif // __DebugThreadState
+                NewCur->Terminated=SystemStopped;
+                changeStack(NewCur->SavedSS,NewCur->SavedSP,NewCur->SavedBP);
+            }
+        }
+        InProcess=FALSE;
+#ifdef __UsePerfCounters
+        if(Hard)stopSysTicksCount(TimerISRTicks);
+#endif
+    }
+    enable_sti();
 }
 
 void interrupt far TimerISR(void){
@@ -456,11 +458,7 @@ void SYS::stopKernel(){
   while(Wait){
     sleep(250);
     _disable();
-    Wait = Threads->Next!=NULL ||
-      TO001!=NULL || TO010!=NULL || TO100!=NULL;
-#ifndef __TIMEOUTS_V2
-    Wait = Wait || TN1E1!=NULL || TN1E2!=NULL || TN1E3!=NULL;
-#endif
+    Wait = Threads->Next!=NULL || TO001!=NULL || TO010!=NULL || TO100!=NULL;
     _enable();
   }
   DisableWDT();
@@ -514,12 +512,6 @@ void SYS::checkNetTime(TIME &Time){
 void SYS::setNetTime(const TIME& Time){
   _disable();
   NetTimeOffset=Time-SystemTime;
-#ifndef __TIMEOUTS_V2
-  int mSec=(int)(Time%1000);
-  Cnt001=mSec%10;
-  Cnt010=mSec/10%10;
-  Cnt100=mSec/100;
-#endif
   _enable();
   TimeOk = TRUE;
 }
@@ -528,12 +520,6 @@ void SYS::setNetTimeOffset(const TIME& Offset)
 {
   _disable();
   NetTimeOffset=Offset;
-#ifndef __TIMEOUTS_V2
-  int mSec=(int)((SystemTime+Offset)%1000);
-  Cnt001=mSec%10;
-  Cnt010=mSec/10%10;
-  Cnt100=mSec/100;
-#endif
   _enable();
   TimeOk = TRUE;
 }
@@ -763,23 +749,10 @@ void _fast SYS::addTimeout(TIMEOUTOBJ *pto,TIMEOUT Timeout)
     {
         case toTypeNext:
         {
-#ifdef __TIMEOUTS_V2
             TIME NetTime = SystemTime + NetTimeOffset + 1;
             Timeout &= ~toTypeMask;
             Timeout -= NetTime % Timeout;
             break;
-#else
-            switch(Timeout)
-            {
-                case toNextSecond:
-                    Tmp->add(TN1E3,pto); break;
-                case toNext100ms:
-                    Tmp->add(TN1E2,pto); break;
-                case toNext10ms:
-                    Tmp->add(TN1E1,pto); break;
-            }
-            return;
-#endif
         }
         case toTypeMs:
             Timeout &= ~toTypeMask;

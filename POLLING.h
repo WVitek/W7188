@@ -146,9 +146,10 @@ void THREAD_TMR::execute(){
     for(int i=1; i<=4; i++){
       STRUCT_COMPERF CP;
       GetCom(i).GetPerf(&CP);
-      ConPrintf(" %d:%02d R%04d/%02d T%04d/%02d",
-        i,CP.ISRMs,CP.RBytes,CP.RCalls,CP.TBytes,CP.TCalls
-      );
+      if(i<=2)
+        ConPrintf(" %d:%02d R%04d T%04d",i,CP.ISRMs,CP.RBytes,CP.TBytes);
+      else ConPrintf(" %d:%02d",i,CP.ISRMs);
+//      ConPrintf(" %d:%02d R%04d/%02d T%04d/%02d",i,CP.ISRMs,CP.RBytes,CP.RCalls,CP.TBytes,CP.TCalls);
     }
 #endif
 #else //UNDEFINED

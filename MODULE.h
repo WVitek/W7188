@@ -567,9 +567,9 @@ class PU_GPS_721 : public PU_ADC
     U16 ChSum;
     U8  ChCnt;
     U8  ChFlg;
-    U16 year,month,day,prevSec;
+    U16 year,month,day,prevHour,prevSec;
     U16 prevPPS;
-    U16 cntSomeWrong;
+    U16 tmp;
     U8 A;
 public:
     U16 LatchedSum;
@@ -612,16 +612,20 @@ public:
         switch(state)
         {
             case updateDate:
+                tmp = (U16)SYS::SystemTime;
                 state = getDate;
                 //dbg((const char*)Resp);
                 break;
             case getDate:
-                day = (U16)FromDecStr(Resp+3,2);
-                month = (U16)FromDecStr(Resp+5,2);
-                year = (U16)FromDecStr(Resp+7,2) + 2000u;
-                if(1<=day && day<=31 && 1<=month && month<=12)
-                    state = getTime;
-                else ChFlg|=flgEDataFormat;
+                if((U16)SYS::SystemTime - tmp > 2000)
+                {
+                    day = (U16)FromDecStr(Resp+3,2);
+                    month = (U16)FromDecStr(Resp+5,2);
+                    year = (U16)FromDecStr(Resp+7,2) + 2000u;
+                    if(1<=day && day<=31 && 1<=month && month<=12)
+                        state = getTime;
+                    else ChFlg|=flgEDataFormat;
+                }
                 //ConPrintf("\n\r%s = %d-%d-%d",Resp,year,month,day);
                 break;
             case getTime:
@@ -635,6 +639,13 @@ public:
                     prevSec = sec;
                     U16 hour = (U16)FromDecStr(Resp+3,2);
                     U16 min = (U16)FromDecStr(Resp+5,2);
+                    U16 ph = prevHour;
+                    prevHour = hour;
+                    if(ph > hour) // start of new day
+                    {
+                        state = updateDate;
+                        break;
+                    }
                     //ConPrintf("\n\r%s = %d:%d:%d",Resp,hour,min,sec);
                     TIME timeGPS;
                     if(!SYS::TryEncodeTime(year,month,day,hour,min,sec,timeGPS))
@@ -646,16 +657,15 @@ public:
                     TIME sysTimeOfPPS = GetCom(1).TimeOfHiCTS();;
                     if((U16)sysTimeOfPPS == prevPPS)
                     {
-                        if(++cntSomeWrong>32)
+                        if(++tmp>32)
                         {
-                            cntSomeWrong = 0;
+                            tmp = 0;
                             ConPrint("\n\rGPS: No PPS pulse detected");
                             ChFlg|=flgEComm;
                         }
                     }
                     else
                     {
-                        cntSomeWrong = 0;
                         prevPPS = (U16)sysTimeOfPPS;
                         TIME offs = timeGPS - sysTimeOfPPS;
                         if(offs>0 || !SYS::TimeOk)
@@ -663,7 +673,7 @@ public:
                             TIME change = abs64(offs - SYS::NetTimeOffset);
                             if(900<change && change<1100)
                             {
-                                if(++cntSomeWrong<4)
+                                if(++tmp<4)
                                 {
                                     state = getNSats;
                                     break;
@@ -673,13 +683,13 @@ public:
                                 Event.Channel=255;
                                 Event.ChangedTo=5;
                                 PU_DI::Instance->EventDigitalInput(Event);
-                                ConPrintf( "\n\r%02d:%02d:%02d GPS: second jitter BUG", hour, min, sec);
+                                ConPrintf( "\n\rGPS: second jitter (%dms)", (U16)change);
                             }
                             SYS::setNetTimeOffset(offs);
                             state = getNSats;
-                            cntSomeWrong = 0;
+                            tmp = 0;
                         }
-                        else state = getDate;
+                        else state = updateDate;
                     }
                 }
                 break;
