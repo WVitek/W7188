@@ -455,7 +455,9 @@ public:
     return FALSE;
   }
   BOOL response(const U8 *Resp){
-    if(Resp && Resp[0]=='>' && (Resp[5]==0)){
+    if(Resp && Resp[0]=='>' && (Resp[5]==0))
+    {
+      //ConPrint((char*)Resp);
       U16 NewStatus=ChMask & (U16)FromHexStr(&(Resp[1]),4);
       cs.enter();
       ChangedTo0|=Status & ~NewStatus;
@@ -624,7 +626,11 @@ public:
                     year = (U16)FromDecStr(Resp+7,2) + 2000u;
                     if(1<=day && day<=31 && 1<=month && month<=12)
                         state = getTime;
-                    else ChFlg|=flgEDataFormat;
+                    else
+                    {
+                        state = updateDate;
+                        ChFlg|=flgEDataFormat;
+                    }
                 }
                 //ConPrintf("\n\r%s = %d-%d-%d",Resp,year,month,day);
                 break;

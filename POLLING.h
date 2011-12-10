@@ -1,97 +1,11 @@
 #pragma once
 
-int __CntPollQuery=0, __CntPollAnswer=0;
-inline void PollStatAdd(int Qry, int Ans) {
-  SYS::cli();
-  __CntPollQuery +=Qry;
-  __CntPollAnswer+=Ans;
-  SYS::sti();
-}
-inline void PollStatRead(int &Qry, int &Ans) {
-  SYS::cli();
-  Qry=__CntPollQuery;  __CntPollQuery =0;
-  Ans=__CntPollAnswer; __CntPollAnswer=0;
-  SYS::sti();
-}
-
 #ifdef __MTU
 #include "MTU05.h"
 #endif
 
 #ifdef __I7K
-#include "Module.h"
-#include "WHrdware.hpp"
-
-class THREAD_POLL_I7K : public THREAD {
-  U16 pollPort;
-  U32 baudRate;
-  MODULES *modules;
-  PU_LIST *pollList;
-public:
-  THREAD_POLL_I7K(U16 pollPort=0, U32 baudRate=38400)
-  {
-    if(pollPort==0)
-#ifdef __PollPort
-      this->pollPort=__PollPort;
-#else
-      this->pollPort=2;
-#endif
-    else this->pollPort=pollPort;
-    this->baudRate=baudRate;
-    modules = ctx_I7K.Modules;
-    pollList = ctx_I7K.PollList;
-  }
-  void execute();
-};
-
-void THREAD_POLL_I7K::execute(){
-  COMPORT& RS485=GetCom(pollPort);
-  RS485.install(baudRate);
-  dbg3("\n\rPOLL_I7K started @ COM%d:%ld",pollPort,baudRate);
-  U8 Query[16];
-  U8 Resp[256];
-  POLL_UNIT *pu,*pu_;
-  int i0=0, i;
-  //Realtime=TRUE;
-  //dbg2("\n\rModulesCount=%d",modules->Count());
-  // Configure modules
-  while(TRUE){
-    BOOL Quit=TRUE;
-    for(i=modules->Count()-1; i>=0; i--){
-      if((*modules)[i]->GetConfigCmd(Query)){
-        RS485.sendCmdTo7000(Query,TRUE);
-        RS485.receiveLine(Resp,100,TRUE);
-        Quit=FALSE;
-      }
-    }
-    if(Quit)break;
-  }
-  //dbg2("\n\rPollListCount=%d",pollList->Count());
-  pu_=(*pollList)[i0];
-  // send first command
-  if(!pu_->GetPollCmd(Query)) if(--i0<0) i0=pollList->Count()-1;;
-  RS485.sendCmdTo7000(Query,TRUE);
-  // polling loop
-  while(!Terminated){
-    // prepare next command
-    pu=(*pollList)[i0];
-    if(!pu->GetPollCmd(Query)) if(--i0<0) i0=pollList->Count()-1;
-    // wait response
-    Resp[0]=0;
-    RS485.RxEvent().waitFor(50);
-    // send next commnad
-    RS485.sendCmdTo7000(Query,TRUE);
-    // process response string
-    int R=RS485.receiveLine(Resp,0,TRUE);
-    U8* Tmp = (R==0) ? Resp : NULL;
-    int Ans = (pu_->response(Tmp)) ? 1: 0;
-    //PollStatAdd(1,Ans);
-    S(0x04);
-    pu_=pu;
-  }
-  S(0x00);
-  dbg("\n\rPOLL_I7K stopped");
-}
+#include "POLL_I7K.h"
 #endif
 
 #if !defined(__NO_TMR)
@@ -110,13 +24,20 @@ void THREAD_TMR::execute(){
     switchLed();
     //int C0=0,C1=0;
     SYS::sleep(toNextSecond);
-    int Qry,Ans;
-    PollStatRead(Qry,Ans);
+#ifdef __I7K
+    int I7K_Qry, I7K_Ans;
+    I7K_StatRead(I7K_Qry,I7K_Ans);
+#endif
+#ifdef __MTU
+    int MTU_Qry, MTU_Ans;
+    MTU_StatRead(MTU_Qry,MTU_Ans);
+#endif
     TIME Time;
 #ifdef __MTU
     SYS::getNetTime(Time);
     SYS::sleep(1);
-#else
+#endif
+#ifdef q__I7K
     for(int i=ADC_Freq-1; i>=0; i--)
     {
       SYS::getNetTime(Time);
@@ -139,9 +60,26 @@ void THREAD_TMR::execute(){
     //SYS::getNetTime(Time);
     SYS::DecodeDate(Time, year, month, day);
     SYS::DecodeTime(Time, hour, min, sec, msec);
-    ConPrintf( "\n\r%d%02d%02d_%02d%02d%02d.%03d  Q:%03d A:%03d SYS:%03d %02d",
-        year, month, day, hour, min, sec, msec,
-        Qry, Ans, SYS::GetCPUIdleMs(), SYS::GetTimerISRMs() );
+
+#if defined( __MTU )
+  #ifdef __I7K
+    #define fmt "\n\r%d%02d%02d_%02d%02d%02d.%03d  MTU:%03d/%03d I7K:%03d/%03d SYS:%03d %02d"
+    #define arg MTU_Qry, MTU_Ans, I7K_Qry, I7K_Ans
+  #else
+    #define fmt "\n\r%d%02d%02d_%02d%02d%02d.%03d  MTU:%03d/%03d SYS:%03d %02d"
+    #define arg MTU_Qry, MTU_Ans
+  #endif
+#elif defined( __I7K )
+    #define fmt "\n\r%d%02d%02d_%02d%02d%02d.%03d  I7K:%03d/%03d SYS:%03d %02d"
+    #define arg I7K_Qry, I7K_Ans
+#else
+    #define fmt "\n\r%d%02d%02d_%02d%02d%02d.%03d  SYS:%03d %02d"
+    #define arg
+#endif
+    ConPrintf(fmt, year, month, day, hour, min, sec, msec, arg, SYS::GetCPUIdleMs(), SYS::GetTimerISRMs() );
+#undef fmt
+#undef arg
+
 #ifdef __UsePerfCounters
     for(int i=1; i<=4; i++){
       STRUCT_COMPERF CP;

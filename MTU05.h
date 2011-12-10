@@ -1,3 +1,17 @@
+int __CntMTU_Query=0, __CntMTU_Answer=0;
+inline void MTU_StatAdd(int Qry, int Ans) {
+  SYS::cli();
+  __CntMTU_Query +=Qry;
+  __CntMTU_Answer+=Ans;
+  SYS::sti();
+}
+inline void MTU_StatRead(int &Qry, int &Ans) {
+  SYS::cli();
+  Qry=__CntMTU_Query;  __CntMTU_Query =0;
+  Ans=__CntMTU_Answer; __CntMTU_Answer=0;
+  SYS::sti();
+}
+
 #include "WCRCs.hpp"
 
 class THREAD_POLL_MTU : public THREAD
@@ -427,7 +441,7 @@ void THREAD_POLL_MTU::execute()
             cnt = RS485.read(Rsp_MTU+1,size,1);
             if(cnt == size)
             {
-                PollStatAdd(0,ans);
+                MTU_StatAdd(0,ans);
                 Rsp_MTU[0]=ans;
             }
         }
@@ -440,7 +454,7 @@ void THREAD_POLL_MTU::execute()
             // send MTU data request
             int num = mtu->BusNum;
             RS485.writeChar(0xE0 | num);
-            PollStatAdd(1,0);
+            MTU_StatAdd(1,0);
         }
         // process previous MTU response
         {
