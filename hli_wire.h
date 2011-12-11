@@ -19,7 +19,7 @@ void execute(){
 //#endif
   HLI.install(__HLI_BaudRate);
   PRT_LINER prt(&HLI);
-  dbg3("\n\rHLI_WIRE started (COM%d, %ld)", comNum, (U32)__HLI_BaudRate);
+  dbg3("\n\rSTART HLI_Wire (COM%d, %ld)", comNum, (U32)__HLI_BaudRate);
   prt.Open();
   TIMEOUTOBJ toutLink, toutTx;
   U8 TxCnt=0, RxCnt=0;
@@ -72,7 +72,7 @@ void execute(){
   prt.Close();
   HLI.uninstall();
   S(0x00);
-  dbg("\n\rHLI stopped");
+  dbg("\n\rSTOP HLI");
 }
 
 };

@@ -32,8 +32,8 @@
 					<Add option="-dq__NO_HLI" />
 					<Add option="-dq__NO_TMR" />
 					<Add option="-d__I7K" />
-					<Add option="-d__GPS_TIME_GPS721" />
 					<Add option="-d__MTU" />
+					<Add option="-d__GPS_TIME_GPS721" />
 					<Add option="-dq__COM_STATUS_BUF" />
 				</Compiler>
 				<Linker>
@@ -90,6 +90,7 @@
 		<Unit filename="POLLING.h">
 			<Option virtualFolder="DataAcquisition\" />
 		</Unit>
+		<Unit filename="POLL_I7K.h" />
 		<Unit filename="PROG_SVC.h">
 			<Option virtualFolder="HLI\" />
 		</Unit>

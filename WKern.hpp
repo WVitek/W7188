@@ -131,12 +131,14 @@ public:
   inline static void enable_sti(){__IntrLockCnt=0;}
   inline static void disable_sti(){__IntrLockCnt=1;}
   inline static BOOL sti_disabled(){ return __IntrLockCnt; }
-  inline static U8 readThreadSafe(U8& x){
-    cli(); U8 tmp=x; sti(); return tmp;
-  }
-  inline static void writeThreadSafe(U8& x, U8 value){
-    cli(); x=value; sti();
-  }
+  inline static U8 readThreadSafe(U8& x)
+  { cli(); U8 tmp=x; sti(); return tmp; }
+  inline static void writeThreadSafe(U8& x, U8 value)
+  { cli(); x=value; sti(); }
+//  inline static void getSysTime(TIME& Time)
+//  { _disable(); Time=SystemTime; _enable(); }
+//  inline static void getNetTime(TIME& Time)
+//  { _disable(); Time=SystemTime+NetTimeOffset; _enable(); }
 #ifdef __UsePerfCounters
   inline static void startCounting(){
     __StartTicks=inpw(TMR_T1CNT);
@@ -163,13 +165,14 @@ public:
 //  static U16        pppfcs16(const void *data, int len);
 //  static BOOL       FCS_is_OK(const void *Packet, int len);
 //  static void       FCS_write(void *Packet, int len);
-  static void       getSysTime(TIME& Time);
-  static void       getNetTime(TIME& Time);
+  static void _fast getSysTime(TIME& Time);
+  static void _fast getNetTime(TIME& Time);
   static void       reset();
   static void       setNetTime(const TIME& Time);
   static void       setNetTimeOffset(const TIME& Offset);
   static void       checkNetTime(TIME &Time);
   static void _fast sleep(TIMEOUT Timeout);
+  static void _fast switchThread();
   static int  _fast waitFor(TIMEOUT Timeout,SYNCOBJ *SO);
   static int  _fast waitForAny(TIMEOUT Timeout,int nCount,SYNCOBJ **SO);
   static BOOL       FlashErase(U16 Seg);

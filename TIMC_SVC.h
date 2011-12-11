@@ -91,7 +91,8 @@ void TIMECLIENT_SVC::receiveData(U8 From,const void* Data,int Size){
   //descramble data
   for(int i=0; i<Size; i++) ((U8*)Data)[i]^=i;
   _RESYNCPACKET &RP=*((_RESYNCPACKET*)Data);
-  if(FLastReqNetTime!=RP.TQTx){
+  if(FLastReqNetTime!=RP.TQTx)
+  {
     ConPrint("\n\rExtraordinary timepacket received");
     return;
   }
@@ -110,7 +111,8 @@ void TIMECLIENT_SVC::receiveData(U8 From,const void* Data,int Size){
     toutResync.setSignaled(); // urgent time request
 }
 
-void TIMECLIENT_SVC::processTimeData(){
+void TIMECLIENT_SVC::processTimeData()
+{
   static S16 StatOfs=0;
   TIME D1 = SD[0][0] + SD[0][1]; // (QRx-QTx)+(ARx-ATx) = (ARx-QTx)-(ATx-QRx) = total delay in channel
   TIME D2 = SD[0][2] + SD[0][3];
@@ -129,10 +131,9 @@ void TIMECLIENT_SVC::processTimeData(){
   );
 #endif
 //*/
-  if(Err < abs64(TOfs) && Err<TIME(__MaxTimeError)){
-    TIME CurTime;
-    SYS::getNetTime(CurTime);
-    SYS::setNetTime(CurTime+TOfs);
+  if(Err < abs64(TOfs) && Err<TIME(__MaxTimeError))
+  {
+    SYS::setNetTimeOffset(SYS::NetTimeOffset+TOfs);
     if(abs64(TOfs)<TIME(18000)) StatOfs=StatOfs+(S16)TOfs;
     RDCnt=0;
     TryCnt=0;
@@ -141,6 +142,7 @@ void TIMECLIENT_SVC::processTimeData(){
       ConPrintf("+++Time sync OK. Err=%d",(U16)Err);
     }
     else{
+      TIME CurTime;
       SYS::getSysTime(CurTime);
 #ifdef __WATCOMC__
       ConPrintf("+++Time sync OK. StatOfs=%d/%Ld\n\r",
@@ -158,7 +160,7 @@ void TIMECLIENT_SVC::processTimeData(){
       ConPrint("---Ne v etot raz :-)");
       RDCnt=0;
       TryCnt=0;
-      
+
     }
     else{
       ConPrint("---Time sync oblom");

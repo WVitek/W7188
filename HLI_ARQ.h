@@ -112,7 +112,7 @@ void THREAD_HLI::execute(){
   PRT_ARQ prtarq(&prtcom);
   prtarq.TimeClient=&TimeSvc;
   prtarq.Acknowledged=FALSE;
-  dbg("\n\rTHREAD_HLI started");
+  dbg("\n\rSTART HLI");
   U8 iNextSvc=0;
   U8 RxCnt=0, TxCnt=0;
 #ifdef __HLIControlCD
@@ -256,7 +256,7 @@ void THREAD_HLI::execute(){
   }
   HLI.uninstall();
   S(0x00);
-  dbg("\n\rTHREAD_HLI stopped");
+  dbg("\n\rSTOP HLI");
 }
 
 

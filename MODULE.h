@@ -62,11 +62,14 @@ public:
     MODULES* Modules;
     PU_LIST* PollList;
     ADC_LIST* ADCsList;
+    int Period;
+
     CONTEXT()
     {
         Modules = _ctx.Modules;
         PollList = _ctx.PollList;
         ADCsList = _ctx.ADCsList;
+        Period = _ctx.PeriodADC;
     }
 };
 
@@ -359,7 +362,6 @@ public:
       else ChFlg|=flgEResponse;
     }
     else ChFlg|=flgEComm;
-//    ConPrint(" AIERR");
     return FALSE;
   }
 
@@ -457,7 +459,6 @@ public:
   BOOL response(const U8 *Resp){
     if(Resp && Resp[0]=='>' && (Resp[5]==0))
     {
-      //ConPrint((char*)Resp);
       U16 NewStatus=ChMask & (U16)FromHexStr(&(Resp[1]),4);
       cs.enter();
       ChangedTo0|=Status & ~NewStatus;
@@ -466,10 +467,11 @@ public:
       cs.leave();
       return TRUE;
     }
-//    ConPrint(" DIERR");
     return FALSE;
   }
-  void EventDigitalInput(const EVENT_DI &Event){
+
+  void EventDigitalInput(const EVENT_DI &Event)
+  {
     cs.enter();
     if(IsFull()) get(NULL);
     put(&Event);
@@ -478,8 +480,6 @@ public:
     ConPrintf("\n\rValue at IN%d changed to %d",Event.Channel,Event.ChangedTo);
     setNeedConnection(TRUE);
   }
-  void doSample(TIME Time);
-  void getData(void* Data,int Cnt);
 
   int readArchive(TIME &FromTime, U8 *Buf, U16 BufSize)
   {
@@ -514,52 +514,60 @@ public:
     cs.leave();
     return r;
   }
+    #if defined(__ARQ)
+    void getData(void* Data,int Cnt){
+      EVENT_DI* pED = (EVENT_DI*)Data;
+      getn(Data,Cnt);
+      while(Cnt-- > 0) {
+        SYS::checkNetTime( (pED++)->Time );
+      }
+    }
+    #endif
+
+    void doSample(TIME Time)
+    {
+        cs.enter();
+        U16 CT[2]={ChangedTo0, ChangedTo1};
+        U16 St=Status;
+        ChangedTo0=ChangedTo1=0;
+        cs.leave();
+        if((CT[0] | CT[1]) == 0) return;
+        U16 bit=1;
+        EVENT_DI Event;
+        Event.Time=Time;
+        for(int i=0; i<=15; i++,bit<<=1)
+        {
+            Event.Channel=i;
+            if((PrevStatus ^ St) & bit)
+            {
+                // DI status changed
+                Event.ChangedTo=(St & bit) ? 1 : 0;
+                EventDigitalInput(Event);
+                Event.Time++;
+            }
+            else
+            {
+                // Previous DI status == current status, but changing
+                // might occured 2n times between sampling
+                int j=(CT[0] & St & bit) ? 0 : 1;
+                int k=j;
+                do
+                {
+                    if(CT[k] & bit)
+                    {
+                        Event.ChangedTo=k;
+                        EventDigitalInput(Event);
+                        Event.Time++;
+                    }
+                    k^=1;
+                }while(k!=j);
+            }
+        }
+        PrevStatus=St;
+    }
 };
 static PU_DI* PU_DI::Instance = NULL;
 
-#if defined(__ARQ)
-void PU_DI::getData(void* Data,int Cnt){
-  EVENT_DI* pED = (EVENT_DI*)Data;
-  getn(Data,Cnt);
-  while(Cnt-- > 0) {
-    SYS::checkNetTime( (pED++)->Time );
-  }
-}
-#endif
-
-void PU_DI::doSample(TIME Time){
-  cs.enter();
-  U16 CT[2]={ChangedTo0, ChangedTo1};
-  U16 St=Status;
-  ChangedTo0=ChangedTo1=0;
-  cs.leave();
-  if((CT[0] | CT[1]) == 0) return;
-  U8 bit=1;
-  EVENT_DI Event;
-  Event.Time=Time;
-  for(int i=0; i<=15; i++,bit<<=1){
-    Event.Channel=i;
-    if((PrevStatus ^ St) & bit){
-      // DI status changed
-      Event.ChangedTo=(St & bit) ? 1 : 0;
-      EventDigitalInput(Event);
-    }
-    else{
-      // Previous DI status == current status, but changing
-      // might occured 2n times between sampling
-      int j=(CT[0] & St & bit) ? 0 : 1;
-      int k=j;
-      do{
-        if(CT[k] & bit){
-          Event.ChangedTo=k;
-          EventDigitalInput(Event);
-        }
-        k^=1;
-      }while(k!=j);
-    }
-  }
-  PrevStatus=St;
-}
 
 #ifdef __GPS_TIME_GPS721
 // GPS-721 module
@@ -572,20 +580,19 @@ class PU_GPS_721 : public PU_ADC
     U16 year,month,day,prevHour,prevSec;
     U16 prevPPS;
     U16 tmp;
-    U8 A;
 public:
     U16 LatchedSum;
     U8  LatchedCnt;
     U8  LatchedFlg;
 public:
-    PU_GPS_721(U8 Addr):PU_ADC()
+    PU_GPS_721():PU_ADC()
     {
         state = updateDate;
-        A = Addr;
     }
 
     BOOL GetPollCmd(U8 *Buf)
     {
+        U8 A = Module->GetAddress();
         Buf[1]=hex_to_ascii[A >> 4];
         Buf[2]=hex_to_ascii[A & 0xF];
         switch(state)

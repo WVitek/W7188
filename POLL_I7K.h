@@ -16,16 +16,43 @@ inline void I7K_StatRead(int &Qry, int &Ans) {
   SYS::sti();
 }
 
+class THREAD_I7K_SAMPLER : public THREAD {
+public:
+void execute()
+{
+    dbg("\n\rSTART I7K_Sampler");
+    int n1=ctx_I7K.Modules->Count()-1;
+    while(!Terminated)
+    {
+        SYS::sleep(toTypeNext | ctx_I7K.Period);
+        TIME Time;
+        SYS::getNetTime(Time);
+        // latch
+        for(int j=n1; j>=0; j--)
+            (*ctx_I7K.PollList)[j]->latchPollData();
+        // free CPU
+        //SYS::sleep(1);
+        SYS::switchThread();
+        //dbg(".!.");
+        // sample latched data
+        for(int j=n1; j>=0; j--)
+            (*ctx_I7K.PollList)[j]->doSample(Time);
+    }
+    dbg("\n\rSTOP I7K_Sampler");
+}
+};
+
+
 #include "Module.h"
 #include "WHrdware.hpp"
 
-class THREAD_POLL_I7K : public THREAD {
+class THREAD_I7K_POLL : public THREAD {
   U16 pollPort;
   U32 baudRate;
   MODULES *modules;
   PU_LIST *pollList;
 public:
-  THREAD_POLL_I7K(U16 pollPort=0, U32 baudRate=38400)
+  THREAD_I7K_POLL(U16 pollPort=0, U32 baudRate=38400)
   {
     if(pollPort==0)
 #ifdef __PollPort
@@ -41,10 +68,10 @@ public:
   void execute();
 };
 
-void THREAD_POLL_I7K::execute(){
+void THREAD_I7K_POLL::execute(){
   COMPORT& RS485=GetCom(pollPort);
   RS485.install(baudRate);
-  dbg3("\n\rPOLL_I7K started @ COM%d:%ld",pollPort,baudRate);
+  dbg3("\n\rSTART I7K_Poll @ COM%d:%ld",pollPort,baudRate);
   U8 Query[16];
   U8 Resp[256];
   POLL_UNIT *pu,*pu_;
@@ -83,12 +110,12 @@ void THREAD_POLL_I7K::execute(){
     U8* Tmp = (R==0) ? Resp : NULL;
     int Ans = (pu_->response(Tmp)) ? 1: 0;
     I7K_StatAdd(1,Ans);
-    //SYS::sleep(500);
+    SYS::sleep(17);
     S(0x04);
     pu_=pu;
   }
   S(0x00);
-  dbg("\n\rPOLL_I7K stopped");
+  dbg("\n\rSTOP I7K_Poll");
 }
 
 

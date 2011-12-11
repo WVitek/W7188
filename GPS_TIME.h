@@ -19,7 +19,7 @@ void THREAD_GPS::execute()
     EVENT& evtRx = com.RxEvent();
     com.install(9600);
     U8 buf[256];
-    dbg("\n\rGPS sync started");
+    dbg("\n\rSTART GPS_Time");
     U8 cnt=0;
     TIME sysTimeOfNMEA;
     U16 prevPPS = 0;
@@ -131,7 +131,7 @@ void THREAD_GPS::execute()
             prevSec = sec;
         }
     }
-    dbg("\n\rGPS sync stopped");
+    dbg("\n\rSTOP GPS_Sync");
 }
 
 #endif // GPS_TIME_H_INCLUDED

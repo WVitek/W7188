@@ -328,7 +328,7 @@ void interrupt far TimerISR(void){
   SYS::TimerProc();
 }
 
-void switchThread(){
+void SYS::switchThread(){
   _disable();
   HardwareTimerIntr=FALSE;
   _asm{ int 0x12 };
@@ -489,32 +489,20 @@ void SYS::printThreadsState(){
 }
 #endif
 
-void SYS::setRealtime(BOOL Realtime){
-  CurThread->Realtime=Realtime;
-}
+//void SYS::setRealtime(BOOL Realtime)
+//{ CurThread->Realtime=Realtime; }
 
-void SYS::getSysTime(TIME& Time){
-  _disable();
-  Time=SystemTime;
-  _enable();
-}
 
-void SYS::getNetTime(TIME& Time){
-  _disable();
-  Time=SystemTime+NetTimeOffset;
-  _enable();
-}
+void SYS::checkNetTime(TIME &Time)
+{ if(Time<NetTimeOffset) Time=NetTimeOffset+Time; }
 
-void SYS::checkNetTime(TIME &Time){
-  if(Time<NetTimeOffset) Time=NetTimeOffset+Time;
-}
-
-void SYS::setNetTime(const TIME& Time){
-  _disable();
-  NetTimeOffset=Time-SystemTime;
-  _enable();
-  TimeOk = TRUE;
-}
+//void SYS::setNetTime(const TIME& Time)
+//{
+//  _disable();
+//  NetTimeOffset=Time-SystemTime;
+//  _enable();
+//  TimeOk = TRUE;
+//}
 
 void SYS::setNetTimeOffset(const TIME& Offset)
 {
@@ -523,6 +511,12 @@ void SYS::setNetTimeOffset(const TIME& Offset)
   _enable();
   TimeOk = TRUE;
 }
+
+static void _fast SYS::getSysTime(TIME& Time)
+{ _disable(); Time=SystemTime; _enable(); }
+
+static void _fast SYS::getNetTime(TIME& Time)
+{ _disable(); Time=SystemTime+NetTimeOffset; _enable(); }
 
 void SYS::dbgLed(U32 Val){
   for(int i=5; 0<i; i--,Val>>=4) Show5DigitLed(i,(int)(Val & 0xF));
@@ -945,7 +939,7 @@ void THREAD::run(){
     S(0xDE);
     CurThread->stop();
     S(0xDD);
-    switchThread();
+    SYS::switchThread();
   }
   else{
     // we are in MainThread

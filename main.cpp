@@ -19,10 +19,10 @@ U32 __HLI_BaudRate;
 
 #if !defined(__NO_HLI)
     #define _HLI_HDR
-    #if !defined(__ARQ)
-        #include "HLI.h"
-    #else
+    #if defined(__ARQ)
         #include "HLI_ARQ.h"
+    #else
+        #include "HLI.h"
     #endif
 #else
     #define HLI_linkCheck()
@@ -32,7 +32,7 @@ U32 __HLI_BaudRate;
 #include "Module.h"
 
 #ifdef __I7K
-    CONTEXT_CREATOR _cc_I7K(1000, 13);
+    CONTEXT_CREATOR _cc_I7K(1000, 12);
 
 //    I7017 i7017a(0x01); // ( Address )
 //    ////*
@@ -41,17 +41,18 @@ U32 __HLI_BaudRate;
 //        puAD1(1),
 //        puAD2(2);
 
-    MODULE moduleDIO(0xFF);
-    PU_DI puDI(0x00FF);
-
     #ifdef __GPS_TIME_GPS721
         #ifndef __I7K
             #error Need __I7K for enable polling of GPS721
         #endif
         #define __GPS_TIME
         MODULE moduleGPS(0xF0);
-        PU_GPS_721 pu_gps(0xF0);
+        PU_GPS_721 pu_gps();
     #endif
+
+    MODULE moduleDIO(0xFF);
+    PU_DI puDI(0x3FFF);
+
 
     CONTEXT ctx_I7K;
 #endif
@@ -69,10 +70,10 @@ U32 __HLI_BaudRate;
 
 #if !defined(__NO_HLI)
     #undef _HLI_HDR
-    #if !defined(__ARQ)
-        #include "HLI.h"
-    #else
+    #if defined(__ARQ)
         #include "HLI_ARQ.h"
+    #else
+        #include "HLI.h"
     #endif
 #endif
 
@@ -162,21 +163,21 @@ bool GetComParams(char *prefix, COM_PARAMS *res)
 
 cdecl main()
 {
-#if   defined(__7188XA)
-    ConPrint("\n\rW.I7188XA(D)");
-#elif defined(__7188XB)
-    ConPrint("\n\rW.I7188XB(D)");
-#elif defined(__7188)
-    ConPrint("\n\rW.I7188(D)");
-#endif
-#if defined(__BORLANDC__)
-    ConPrint("\n\rCompiler: Borland C++\n\r");
-#elif defined(__WATCOMC__)
-    ConPrint("\n\rCompiler: Open Watcom C++\n\r");
-#endif
+//#if   defined(__7188XA)
+//    ConPrint("\n\rW.I7188XA(D)");
+//#elif defined(__7188XB)
+//    ConPrint("\n\rW.I7188XB(D)");
+//#elif defined(__7188)
+//    ConPrint("\n\rW.I7188(D)");
+//#endif
+//#if defined(__BORLANDC__)
+//    ConPrint("\n\rCompiler: Borland C++\n\r");
+//#elif defined(__WATCOMC__)
+//    ConPrint("\n\rCompiler: Open Watcom C++\n\r");
+//#endif
     SYS::startKernel();
     //SYS::sleep(2000); // need to avoid bug when very fast start from autoexec :-(
-    dbg("\n\rMAIN started\n\r");
+    dbg("\n\rSTART Main\n\r");
 
 #if __MTU
     THREAD_POLL_MTU* ThdPM;
@@ -193,14 +194,17 @@ cdecl main()
 #endif
 
 #if __I7K
-    THREAD_POLL_I7K* ThdP;
+    THREAD_I7K_POLL* ThdP;
+    THREAD_I7K_SAMPLER* ThdS;
     {
         COM_PARAMS cp;
         cp.com = 2;
         cp.speed = 38400;
         GetComParams(" i7k=",&cp);
-        ThdP = new THREAD_POLL_I7K(cp.com, cp.speed);
+        ThdP = new THREAD_I7K_POLL(cp.com, cp.speed);
+        ThdS = new THREAD_I7K_SAMPLER();
         ThdP->run();
+        ThdS->run();
     }
 #endif
 
@@ -221,8 +225,8 @@ cdecl main()
 #ifdef __GPS_TIME_NMEA
     THREAD_GPS* ThdGPS =new THREAD_GPS();  ThdGPS->run();
 #endif
-#if !defined(__NO_TMR)
-    THREAD_TMR* ThdTmr =new THREAD_TMR();  ThdTmr->run();
+#if !defined(__NO_STAT)
+    THREAD_STAT* ThdStat =new THREAD_STAT();  ThdStat->run();
 #endif
 
     // 'RESTART' event
@@ -249,11 +253,17 @@ cdecl main()
 #ifdef __GPS_TIME_NMEA
     delete ThdGPS;
 #endif
+#if __I7K
+    delete ThdS;
     delete ThdP;
-#if !defined(__NO_TMR)
-    delete ThdTmr;
 #endif
-    dbg("\n\rMAIN stopped\n\r");
+#if __MTU
+    delete ThdPM;
+#endif
+#if !defined(__NO_STAT)
+    delete ThdStat;
+#endif
+    dbg("\n\rSTOP Main\n\r");
     SYS::DelayMs(100);
     return 0;
 }

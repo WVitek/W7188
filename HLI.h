@@ -14,7 +14,7 @@
 
 #define setNeedConnection(x)
 
-#if !defined(__GPS_TIME)
+#ifndef __GPS_TIME
     #include "TIMC_Svc.h"
     TIMECLIENT_SVC TimeSvc;
 #endif
@@ -22,7 +22,12 @@
 void HLI_linkCheck();
 
 
+
+
+
 #else // !defined(_HLI_HDR)
+
+
 
 
 
