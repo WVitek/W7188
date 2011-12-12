@@ -32,14 +32,17 @@ U32 __HLI_BaudRate;
 #include "Module.h"
 
 #ifdef __I7K
-    CONTEXT_CREATOR _cc_I7K(1000, 12);
+    CONTEXT_CREATOR _cc_I7K(1000, 13);
 
-//    I7017 i7017a(0x01); // ( Address )
-//    ////*
-//    PU_ADC_7K
-//        puAD0(0), // ( Module, AIN, ArchNum )
-//        puAD1(1),
-//        puAD2(2);
+    I7017 i7017a(0x01); // ( Address )
+    PU_ADC_7K
+        puAD0(0), // ( Analog IN number )
+        puAD1(1),
+        puAD2(2),
+        puAD3(3),
+        puAD4(4),
+        puAD5(5),
+        puAD6(6);
 
     #ifdef __GPS_TIME_GPS721
         #ifndef __I7K
@@ -47,7 +50,7 @@ U32 __HLI_BaudRate;
         #endif
         #define __GPS_TIME
         MODULE moduleGPS(0xF0);
-        PU_GPS_721 pu_gps();
+        PU_GPS_721 pu_gps(0);
     #endif
 
     MODULE moduleDIO(0xFF);
@@ -188,7 +191,6 @@ cdecl main()
         GetComParams(" mtu=",&cp);
         ThdPM = new THREAD_POLL_MTU(cp.com, cp.speed);
         ThdPM->count = GetU8ArrParam(" MTUs=",ThdPM->addrs,16);
-        ConPrintHex(ThdPM->addrs, ThdPM->count);
         ThdPM->run();
     }
 #endif

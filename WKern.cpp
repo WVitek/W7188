@@ -358,14 +358,10 @@ void __dbgPrintf(const char* Fmt, ...)
     __dbgCom->install(ConsoleBaudRate);
   }
   if(__pDbgBuf==NULL) __pDbgBuf=(char*)SYS::malloc(1996);
-#ifdef __BORLANDC__
-  vsprintf(__pDbgBuf,Fmt,...);
-#else
   va_list args;
   va_start(args,Fmt);
-  vsprintf(__pDbgBuf,Fmt,args);
+  vsnprintf(__pDbgBuf,1996,Fmt,args);
   va_end(args);
-#endif
   __dbgCom->print(__pDbgBuf);
   csDbgCom.leave();
 }
@@ -669,7 +665,10 @@ void* _fast SYS::malloc(size_t Size){
   MemMngr.enter();
   U16 Seg;
   if( _dos_allocmem((Size+15)>>4,&Seg) != 0 )
-    Seg=0;
+  {
+      Seg=0;
+      dbg2("\n\r!malloc(%d)",(U16)Size);
+  }
   MemMngr.leave();
   return MK_FP(Seg,0);
 }

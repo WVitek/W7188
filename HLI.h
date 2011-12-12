@@ -36,8 +36,8 @@ void HLI_linkCheck();
 DI_SVC DI_Svc;
 #include "PROG_Svc.h"
 PROG_SVC PROG_Svc;
-#include "DUMP_Svc.h"
-DUMP_SVC DUMP_Svc;
+//#include "DUMP_Svc.h"
+//DUMP_SVC DUMP_Svc;
 
 SERVICE* Service[]=
 {
@@ -52,7 +52,7 @@ SERVICE* Service[]=
     new ADC_SVC(ctx_I7K, 2);
 #endif
     &PROG_Svc,
-    &DUMP_Svc,
+//    &DUMP_Svc,
     NULL
 };
 
@@ -93,7 +93,7 @@ void HLI_linkCheck()
         DIO::SetDO1(POWERON_DO1); // modem power up
         modemPower = modemPowerOn;
         toutLink.start(TOUT_LINK_AFTER_PWR_OFF);
-        ConPrint("\n\rModem powering ON\n\r");
+        ConPrint("\n\rHLI: DO1=1 (mdm pwr ON)\n\r");
         break;
       case modemPowerOn:
         if(toutLink.IsSignaled())
@@ -101,7 +101,7 @@ void HLI_linkCheck()
             DIO::SetDO1(!POWERON_DO1); // modem power down
             modemPower = modemPowerOff;
             toutLink.start(TOUT_LINK_POWER_OFF_TIME);
-            ConPrint("\n\rModem powering OFF\n\r");
+            ConPrint("\n\rHLI: DO1=0 (mdm pwr OFF)\n\r");
         }
         break;
   }

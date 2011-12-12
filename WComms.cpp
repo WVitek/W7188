@@ -186,7 +186,7 @@ void COMPORT::printf(const char* Fmt, ...){
 #else
   va_list args;
   va_start(args,Fmt);
-  vsprintf(StrBuf,Fmt,args);
+  vsnprintf(StrBuf,1996,Fmt,args);
   va_end(args);
   print(StrBuf);
 #endif

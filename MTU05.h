@@ -38,11 +38,12 @@ void THREAD_POLL_MTU::execute()
 
     U8 Qry_MTU[16];
     U8 Rsp_MTU[64];
-    dbg3("\n\rSTART MTU_Poll @ COM%d:%ld", pollPort, baudRate);
+    dbg3("\n\rSTART MTU_Poll @ COM%d:%ld\n\rMTUs: ", pollPort, baudRate);
+    ConPrintHex(addrs, count);
 #define use_mtu_crc TRUE
     //***** Scan RS-485 bus
     U16 detectedMTU = 0;
-    dbg("\n\rSearch MTUs...");
+    dbg("\n\rMTU: search...");
     while(!Terminated)
     {
         // scan all possible MTUs twice
@@ -60,7 +61,7 @@ void THREAD_POLL_MTU::execute()
                 U16 bit = 1<<i;
                 bits |= bit;
                 if((detectedMTU & bit) == 0)
-                    dbg2("\n\rMTU-05: #%d detected", i);
+                    dbg2("\n\rMTU: #%d detected", i);
                 SYS::sleep(20);
             }
         }
@@ -88,7 +89,7 @@ void THREAD_POLL_MTU::execute()
         noCoeffMTU |= 1<<addrs[i];
         MTUs[i] = new PU_ADC_MTU(addrs[i]);
     }
-    ConPrintf("\n\rnMTU = %d",ctx_MTU.ADCsList->Count());
+    //ConPrintf("\n\rMTU: n=%d",ctx_MTU.ADCsList->Count());
     noCoeffMTU &= detectedMTU;
     {
         Qry_MTU[1] = 0x04;

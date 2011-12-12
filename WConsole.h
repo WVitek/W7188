@@ -62,7 +62,7 @@ void ConPrintf(const char* Fmt, ...)
 #else
   va_list args;
   va_start(args,Fmt);
-  vsprintf(pConBuf,Fmt,args);
+  vsnprintf(pConBuf,1996,Fmt,args);
   va_end(args);
 #endif
   Console().print(pConBuf);

@@ -44,8 +44,10 @@ template <class T> void TLIST<T>::remove(int Pos) {
   if(Pos<FCount) memcpy(PtrAt(Pos),PtrAt(Pos+1),sizeof(T)*(FCount-Pos));
 }
 
-template <class T> void TLIST<T>::setCapacity(int NewCap) {
+template <class T> void TLIST<T>::setCapacity(int NewCap)
+{
   if(NewCap==FCapacity) return;
+  if(NewCap<8) NewCap=8;
   T *nv=NULL;
   if(NewCap) nv=(T*)SYS::realloc(v,sizeof(T)*NewCap);
   v=nv;

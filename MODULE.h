@@ -70,6 +70,7 @@ public:
         PollList = _ctx.PollList;
         ADCsList = _ctx.ADCsList;
         Period = _ctx.PeriodADC;
+        //dbg3("\n\rnMods=%d; nPoll=%d",Modules->Count(),PollList->Count());
     }
 };
 
@@ -82,7 +83,7 @@ public:
   MODULE(int Addr=1)
   {
     Address=Addr;
-    if(Addr>0) _ctx.Modules->addLast(this);
+    if(Addr!=0) _ctx.Modules->addLast(this);
     _ctx.Module = this;
   }
   U8 inline GetAddress()const{ return Address; }
@@ -129,12 +130,13 @@ public:
 class POLL_UNIT : public CYCL_BUF {
 protected:
   MODULE *Module;
+  POLL_UNIT():CYCL_BUF(0,0){}
 public:
   CRITICALSECTION cs;
   POLL_UNIT(int ItSz,U8 Lg2Cp):CYCL_BUF(ItSz,Lg2Cp)
   {
       Module = _ctx.Module;
-      if(Module->GetAddress()>0)
+      if(Module->GetAddress()!=0)
         _ctx.PollList->addLast(this);
   }
   int inline SafeCount()
@@ -465,6 +467,7 @@ public:
       ChangedTo1|=~Status & NewStatus;
       Status=NewStatus;
       cs.leave();
+      //dbg((const char*)Resp);
       return TRUE;
     }
     return FALSE;
@@ -477,7 +480,7 @@ public:
     put(&Event);
     FLastEventTime=Event.Time;
     cs.leave();
-    ConPrintf("\n\rValue at IN%d changed to %d",Event.Channel,Event.ChangedTo);
+    ConPrintf("\n\rEVENTS: Channel[%d]=%d",Event.Channel,Event.ChangedTo);
     setNeedConnection(TRUE);
   }
 
@@ -585,7 +588,7 @@ public:
     U8  LatchedCnt;
     U8  LatchedFlg;
 public:
-    PU_GPS_721():PU_ADC()
+    PU_GPS_721(U16 dummy):PU_ADC()
     {
         state = updateDate;
     }
