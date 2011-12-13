@@ -1,10 +1,10 @@
 #pragma once
 
-#define I7K_Period 1000
-#define I7K_Log2BufSize 13
-
-#define MTU_Period 40
-#define MTU_Log2BufSize 14
+//#define I7K_Period 1000
+//#define I7K_Log2BufSize 13
+//
+//#define MTU_Period 40
+//#define MTU_Log2BufSize 14
 
 #ifndef __STRING_H
   #include <string.h>

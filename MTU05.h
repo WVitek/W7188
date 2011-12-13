@@ -161,11 +161,12 @@ void THREAD_POLL_MTU::execute()
     // disable modbus mode
     SYS::sleep(3000);
     // polling
+#ifndef __MTU_Old
     int iMTU=0;
     Realtime=TRUE;
     while(!Terminated)
     {
-        SYS::sleep(toTypeNext | MTU_Period);
+        SYS::sleep(toTypeNext | ctx_MTU.Period);
         // start new measurement
         RS485.writeChar(0xF0);
         TIME netTime;// = SYS::SystemTime;
@@ -203,10 +204,54 @@ void THREAD_POLL_MTU::execute()
         {
             PU_ADC_MTU *pm = MTUs[iMTU];
             pm->response(Rsp_MTU);
-            pm->doSample(netTime-MTU_Period);
+            pm->doSample(netTime-ctx_MTU.Period);
         }
         iMTU = iM;
     }
+#else
+    // polling
+    int i=count-1;
+    Realtime=TRUE;
+    U16 Period = ctx_MTU.Period;
+    while(!Terminated)
+    {
+        SYS::sleep(toTypeNext | Period);
+        // start new measurement
+        RS485.writeChar(0xF0);
+        TIME netTime;
+        SYS::getNetTime(netTime);
+        // wait while measure in process
+        SYS::sleep(19);
+        MTU_StatAdd(1,0);
+        RS485.clearRxBuf();
+        for(int i=0; i<count; i++)
+        {
+            // archiving previous
+            PU_ADC_MTU *mtu = MTUs[i];
+            int num = mtu->BusNum;
+            // read buffer with values
+            RS485.writeChar(0xE0 | num);
+            mtu->doSample(netTime - Period);
+            U8 ans = 0xFF;
+            U16 cnt = RS485.read(&ans,1,3);
+            if(cnt!=1 || ans>10)
+            {
+                dbg3("\n\rMTU #%X : Buffer reading FAILED (nRes=%X)",num,ans);
+                continue;
+            }
+            U16 size = ans*4+1;
+            cnt = RS485.read(Rsp_MTU+1,size,size);
+            if(cnt != size)
+            {
+                ConPrintf("\n\rMTU #%X : Buffer reading FAILED (wrong answer size, %d!=%d)",num,cnt,size);
+                continue;
+            }
+            MTU_StatAdd(0,ans);
+            Rsp_MTU[0]=ans;
+            mtu->response(Rsp_MTU);
+        }
+    }
+#endif
     dbg("\n\rSTOP MTU_Poll");
 }
 
