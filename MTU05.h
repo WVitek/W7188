@@ -5,7 +5,8 @@ inline void MTU_StatAdd(int Qry, int Ans) {
   __CntMTU_Answer+=Ans;
   SYS::sti();
 }
-inline void MTU_StatRead(int &Qry, int &Ans) {
+inline void MTU_StatRead(int &Qry, int &Ans)
+{
   SYS::cli();
   Qry=__CntMTU_Query;  __CntMTU_Query =0;
   Ans=__CntMTU_Answer; __CntMTU_Answer=0;

@@ -27,13 +27,13 @@
 					<Add option="-bt=dos" />
 					<Add option="-we -e10 -s -zq -os -oi -oa -zdf -zu -1 -bt=dos -mc" />
 					<Add option="-d__7188XA" />
-					<Add option="-dq__TNGP" />
 					<Add option="-d__WIRE" />
 					<Add option="-dq__NO_HLI" />
 					<Add option="-dq__NO_TMR" />
 					<Add option="-d__I7K" />
 					<Add option="-d__MTU" />
-					<Add option="-d__GPS_TIME_GPS721" />
+					<Add option="-dq__MTU_Old" />
+					<Add option="-dq__GPS_TIME_GPS721" />
 					<Add option="-dq__COM_STATUS_BUF" />
 				</Compiler>
 				<Linker>

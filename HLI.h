@@ -47,9 +47,11 @@ SERVICE* Service[]=
     &DI_Svc,
 #ifdef __MTU
     new ADC_SVC(ctx_MTU.ADCsList, 2),
+    #ifdef __I7K
     new ADC_SVC(ctx_I7K.ADCsList, 6),
+    #endif
 #else
-    new ADC_SVC(ctx_I7K, 2);
+    new ADC_SVC(ctx_I7K.ADCsList, 2),
 #endif
     &PROG_Svc,
 //    &DUMP_Svc,

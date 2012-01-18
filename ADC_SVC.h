@@ -37,11 +37,11 @@ int getDataToTransmit(U8 /*To*/,void* Data,int MaxSize)
     P->readArchive(FromTime,NULL,0); // correct time value
   }
   // determine correct recsize
-  U16 RecSize = (MaxSize-sizeof(TIME)-1) / nADC;
+  U16 BytesPerCh = (MaxSize-sizeof(TIME)-1) / nADC;
   for(int i=0; i<nADC; i++)
   {
     PU_ADC* P = (*plADC)[i];
-    RecSize = P->readArchive(FromTime,NULL,RecSize); // correct time value
+    BytesPerCh = P->readArchive(FromTime,NULL,BytesPerCh); // correct time value
   }
   // reading
   U8 *Dst = (U8*)Data;
@@ -50,13 +50,13 @@ int getDataToTransmit(U8 /*To*/,void* Data,int MaxSize)
   for(int i=0; i<nADC; i++)
   {
     PU_ADC* P = (*plADC)[i];
-    P->readArchive(FromTime,Dst,RecSize);
-    Dst+=RecSize;
+    P->readArchive(FromTime,Dst,BytesPerCh);
+    Dst+=BytesPerCh;
     P->cs.leave();
   }
-  //ConPrintf("\n\r\ADC answer [Recs=%d FromTime: Q=%lld; A=%lld]\n\r", RecSize>>1, tmpTime, FromTime);
-  if(RecSize)
-    return sizeof(TIME)+1+RecSize*nADC;
+  ConPrintf("\n\r\ADC answer [Recs=%d FromTime: Q=%lld; A=%lld]\n\r", BytesPerCh>>1, tmpTime, FromTime);
+  if(BytesPerCh)
+    return sizeof(TIME)+1+BytesPerCh*nADC;
   else
     return 0;
 }

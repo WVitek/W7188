@@ -32,6 +32,20 @@ U32 __HLI_BaudRate;
 #include "Module.h"
 
 #ifdef __I7K
+//*
+    CONTEXT_CREATOR _cc_I7K(40, 14);
+
+    I7017 i7017a(0x01); // ( Address )
+    PU_ADC_7K
+        puAD0(0), // ( Analog IN number )
+        puAD1(1),
+        puAD2(2),
+        puAD3(3),
+        puAD4(4),
+        puAD5(5),
+        puAD6(6);
+/*/
+  #ifdef __MTU
     CONTEXT_CREATOR _cc_I7K(1000, 13);
 
     I7017 i7017a(0x01); // ( Address )
@@ -43,6 +57,13 @@ U32 __HLI_BaudRate;
         puAD4(4),
         puAD5(5),
         puAD6(6);
+  #else
+    CONTEXT_CREATOR _cc_I7K(200, 14);
+
+    I7017 i7017a(0x01); // ( Address )
+    PU_ADC_7K puAD0(0); // ( Analog IN number )
+  #endif
+//*/
 
     #ifdef __GPS_TIME_GPS721
         #ifndef __I7K
@@ -53,11 +74,15 @@ U32 __HLI_BaudRate;
         PU_GPS_721 pu_gps(0);
     #endif
 
-    MODULE moduleDIO(0xFF);
+    //MODULE moduleDIO(0xFF);
+    MODULE none(0);
     PU_DI puDI(0x3FFF);
 
 
     CONTEXT ctx_I7K;
+#else
+    MODULE none(0);
+    PU_DI puDI(0);
 #endif
 
 #ifdef __MTU
@@ -186,7 +211,7 @@ cdecl main()
     THREAD_POLL_MTU* ThdPM;
     {
         COM_PARAMS cp;
-        cp.com = 1;
+        cp.com = 2;
         cp.speed = 19200;
         GetComParams(" mtu=",&cp);
         ThdPM = new THREAD_POLL_MTU(cp.com, cp.speed);
@@ -200,7 +225,11 @@ cdecl main()
     THREAD_I7K_SAMPLER* ThdS;
     {
         COM_PARAMS cp;
+    #if __MTU
+        cp.com = 1;
+    #else
         cp.com = 2;
+    #endif
         cp.speed = 38400;
         GetComParams(" i7k=",&cp);
         ThdP = new THREAD_I7K_POLL(cp.com, cp.speed);
@@ -215,8 +244,13 @@ cdecl main()
     THREAD_HLI* ThdHLI1;
     {
         COM_PARAMS cp;
+#if __MTU
         cp.com = 3;
-        cp.speed = 38400;
+        cp.speed = 19200;
+#else
+        cp.com = 1;
+        cp.speed = 19200;
+#endif
         GetComParams(" hli=",&cp);
         __HLI_BaudRate = cp.speed;
         ThdHLI1 = new THREAD_HLI(cp.com);

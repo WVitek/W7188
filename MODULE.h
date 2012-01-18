@@ -239,6 +239,7 @@ class PU_ADC_MTU : public PU_ADC
     U16 cnt;
     U16 buf[20];
 public:
+    U16 nCrcErrors;
     U8  BusNum;
     //static TLIST<PU_ADC_MTU*> all;
     MTU_Coeffs coeffs;
@@ -259,8 +260,10 @@ public:
         cnt = Resp[0];
         if(cnt>10)
         { cnt = 0; return FALSE; }
-        Resp++;
         int n=cnt<<1;
+        if(CRC8_CCITT_get(Resp,n+1)!=Resp[n+1])
+            nCrcErrors++;
+        Resp++;
         for(int i=0; i<n; i++, Resp+=2)
             buf[i] = swap2bytes(*(U16*)Resp);
         return FALSE;
@@ -268,8 +271,10 @@ public:
 
     void latchPollData(){}
 
-    //const static F32 fMaxP = 0x41C80000;
-    const static F32 fMaxPto32K = 0x44A3D5C3; // 32767/25
+    //const static F32 fMaxPto32K = 0x44A3D5C3; // 32767/25
+    const static F32 fMaxPto32K = 0x449D889E; // 32767/(25+1)
+    const static S32 RawOffsetOfP0 = 32767 / (25+1);
+    const static F32 fSampleValue = 0x41C40000; // 24.5
 
     static U8 quant;
     static const U16 noDataErrCode = flgEComm << 8;
@@ -282,7 +287,8 @@ public:
             U16 p = buf[i<<1];
             U16 t = buf[(i<<1)+1];
             F32 fP = coeffs.calc(p,t);
-            S32 raw = F32_to_S32(fmul(fP,fMaxPto32K));
+            //F32 fP = fSampleValue;
+            S32 raw = F32_to_S32(fmul(fP,fMaxPto32K)) + RawOffsetOfP0;
             if(raw<32767)
                 ps[i] = (raw<0) ? 0 :(U16)raw;
             else ps[i] = flgEADCRange<<8;
@@ -689,7 +695,7 @@ public:
                             TIME change = abs64(offs - SYS::NetTimeOffset);
                             if(900<change && change<1100)
                             {
-                                if(++tmp<4)
+                                if(++tmp<45)
                                 {
                                     state = getNSats;
                                     break;

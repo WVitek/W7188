@@ -104,7 +104,7 @@ class THREAD_I7K_POLL : public THREAD
             if(!pu->GetPollCmd(Query)) if(--i0<0) i0=nPoll-1;
             // wait response
             Resp[0]=0;
-            RS485.RxEvent().waitFor(49);
+            RS485.RxEvent().waitFor(19);
             // send next commnad
             RS485.sendCmdTo7000(Query,TRUE);
             // process response string
@@ -112,7 +112,7 @@ class THREAD_I7K_POLL : public THREAD
             U8* Tmp = (R==0) ? Resp : NULL;
             int Ans = (pu_->response(Tmp)) ? 1: 0;
             I7K_StatAdd(1,Ans);
-            SYS::sleep(17);
+            //SYS::sleep(17);
             S(0x04);
             pu_=pu;
         }
