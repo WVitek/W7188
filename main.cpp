@@ -32,7 +32,7 @@ U32 __HLI_BaudRate;
 #include "Module.h"
 
 #ifdef __I7K
-//*
+/*
     CONTEXT_CREATOR _cc_I7K(40, 14);
 
     I7017 i7017a(0x01); // ( Address )
@@ -74,8 +74,8 @@ U32 __HLI_BaudRate;
         PU_GPS_721 pu_gps(0);
     #endif
 
-    //MODULE moduleDIO(0xFF);
-    MODULE none(0);
+    MODULE moduleDIO(0xFF);
+    //MODULE none(0);
     PU_DI puDI(0x3FFF);
 
 
@@ -206,12 +206,11 @@ cdecl main()
     SYS::startKernel();
     //SYS::sleep(2000); // need to avoid bug when very fast start from autoexec :-(
     dbg("\n\rSTART Main\n\r");
-
 #if __MTU
     THREAD_POLL_MTU* ThdPM;
     {
         COM_PARAMS cp;
-        cp.com = 2;
+        cp.com = 1;
         cp.speed = 19200;
         GetComParams(" mtu=",&cp);
         ThdPM = new THREAD_POLL_MTU(cp.com, cp.speed);
@@ -226,7 +225,7 @@ cdecl main()
     {
         COM_PARAMS cp;
     #if __MTU
-        cp.com = 1;
+        cp.com = 2;
     #else
         cp.com = 2;
     #endif
@@ -246,7 +245,7 @@ cdecl main()
         COM_PARAMS cp;
 #if __MTU
         cp.com = 3;
-        cp.speed = 19200;
+        cp.speed = 9600;
 #else
         cp.com = 1;
         cp.speed = 19200;

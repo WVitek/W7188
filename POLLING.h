@@ -14,7 +14,7 @@ public:
 void execute()
 {
   dbg("\n\rSTART Stat");
-  U16 prevMin = 0;
+  U16 prevMin = 60;
   while(!Terminated){
     //S(0x01);
     switchLed();
@@ -40,23 +40,28 @@ void execute()
     SYS::DecodeDate(Time, year, month, day);
     SYS::DecodeTime(Time, hour, min, sec, msec);
 
-    char buf[100];
-    int pos = 0;
 #if defined( __MTU )
-    U16 pm = prevMin;
-    for(int i=ctx_MTU.ADCsList->Count()-1; i>=0; i--)
+    if(prevMin!=min)
     {
-        PU_ADC_MTU* mtu = (PU_ADC_MTU*)((*ctx_MTU.ADCsList)[i]);
-        int nErrs = mtu->nCrcErrors;
-        if(nErrs==0 || pm==min) continue;
-        prevMin=min;
-        mtu->nCrcErrors = 0;
-        ConPrintf("\n\rMTU[%d] #%d, %d CRC error(s)", i, mtu->BusNum, nErrs);
         EVENT_DI Event;
         Event.Time = Time;
-        Event.Channel=254; Event.ChangedTo=i;
-        Events.EventDigitalInput(Event);
+        for(int i=ctx_MTU.ADCsList->Count()-1; i>=0; i--)
+        {
+            PU_ADC_MTU* mtu = (PU_ADC_MTU*)((*ctx_MTU.ADCsList)[i]);
+            int nErrs = mtu->nCrcErrors;
+            if(nErrs==0) continue;
+            prevMin=min;
+            mtu->nCrcErrors = 0;
+            ConPrintf("\n\rMTU[%d] #%d, %d CRC error(s)", i, mtu->BusNum, nErrs);
+            Event.Channel=200+i;
+            Event.ChangedTo=nErrs;
+            Events.EventDigitalInput(Event);
+            Event.Time++;
+        }
     }
+
+    char buf[100];
+    int pos = 0;
   #ifdef __I7K
     #define fmt "\n\r%d%02d%02d_%02d%02d%02d.%03d  MTU:%03d/%03d I7K:%03d/%03d SYS:%03d %02d"
     #define arg MTU_Qry, MTU_Ans, I7K_Qry, I7K_Ans

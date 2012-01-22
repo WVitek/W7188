@@ -54,7 +54,7 @@ int getDataToTransmit(U8 /*To*/,void* Data,int MaxSize)
     Dst+=BytesPerCh;
     P->cs.leave();
   }
-  ConPrintf("\n\r\ADC answer [Recs=%d FromTime: Q=%lld; A=%lld]\n\r", BytesPerCh>>1, tmpTime, FromTime);
+  //ConPrintf("\n\r\ADC answer [Recs=%d FromTime: Q=%lld; A=%lld]\n\r", BytesPerCh>>1, tmpTime, FromTime);
   if(BytesPerCh)
     return sizeof(TIME)+1+BytesPerCh*nADC;
   else

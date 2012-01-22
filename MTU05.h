@@ -161,10 +161,12 @@ void THREAD_POLL_MTU::execute()
     }
     // disable modbus mode
     SYS::sleep(3000);
+    RS485.clearRxBuf();
     // polling
 #ifndef __MTU_Old
     int iMTU=0;
     Realtime=TRUE;
+    Rsp_MTU[1]=0;
     while(!Terminated)
     {
         SYS::sleep(toTypeNext | ctx_MTU.Period);
@@ -194,9 +196,10 @@ void THREAD_POLL_MTU::execute()
         RS485.clearRxBuf();
         int iM=iMTU-1;
         if(iM<0) iM=count-1;
+        // send MTU data request
         {
             PU_ADC_MTU *mtu = MTUs[iM];
-            // send MTU data request
+
             int num = mtu->BusNum;
             RS485.writeChar(0xE0 | num);
             MTU_StatAdd(1,0);
@@ -210,7 +213,7 @@ void THREAD_POLL_MTU::execute()
         iMTU = iM;
     }
 #else
-    // polling
+    // old polling of MTUs with old firmware
     int i=count-1;
     Realtime=TRUE;
     U16 Period = ctx_MTU.Period;

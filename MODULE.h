@@ -261,7 +261,8 @@ public:
         if(cnt>10)
         { cnt = 0; return FALSE; }
         int n=cnt<<1;
-        if(CRC8_CCITT_get(Resp,n+1)!=Resp[n+1])
+        int size=1+(n<<1);
+        if(CRC8_CCITT_get(Resp,size)!=Resp[size])
             nCrcErrors++;
         Resp++;
         for(int i=0; i<n; i++, Resp+=2)
@@ -446,6 +447,7 @@ protected:
   U16 ChMask,PrevStatus,Status,ChangedTo0,ChangedTo1;
   TIME FLastEventTime;
   BOOL TimeOk;
+  CRITICALSECTION csPoll;
 public:
   static PU_DI* Instance;
 
@@ -465,15 +467,15 @@ public:
     return FALSE;
   }
   BOOL response(const U8 *Resp){
-    if(Resp && Resp[0]=='>' && (Resp[5]==0))
+    if(Resp && Resp[0]=='>' && Resp[5]==0)
     {
       U16 NewStatus=ChMask & (U16)FromHexStr(&(Resp[1]),4);
-      cs.enter();
+      csPoll.enter();
       ChangedTo0|=Status & ~NewStatus;
       ChangedTo1|=~Status & NewStatus;
       Status=NewStatus;
-      cs.leave();
-      //dbg((const char*)Resp);
+      csPoll.leave();
+      dbg((const char*)Resp);
       return TRUE;
     }
     return FALSE;
@@ -535,11 +537,11 @@ public:
 
     void doSample(TIME Time)
     {
-        cs.enter();
+        csPoll.enter();
         U16 CT[2]={ChangedTo0, ChangedTo1};
         U16 St=Status;
         ChangedTo0=ChangedTo1=0;
-        cs.leave();
+        csPoll.leave();
         if((CT[0] | CT[1]) == 0) return;
         U16 bit=1;
         EVENT_DI Event;
