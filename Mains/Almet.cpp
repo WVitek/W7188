@@ -32,38 +32,21 @@ U32 __HLI_BaudRate;
 #include "Module.h"
 
 #ifdef __I7K
-/*
-    CONTEXT_CREATOR _cc_I7K(40, 14);
+    CONTEXT_CREATOR _cc_I7K(1000, 14);
 
     I7017 i7017a(0x01); // ( Address )
     PU_ADC_7K
         puAD0(0), // ( Analog IN number )
         puAD1(1),
         puAD2(2),
-        puAD3(3),
-        puAD4(4),
-        puAD5(5),
-        puAD6(6);
-/*/
-  #ifdef __MTU
-    CONTEXT_CREATOR _cc_I7K(1000, 13);
+        puAD3(3);
 
-    I7017 i7017a(0x01); // ( Address )
+    I7017 i7017b(0x02); // ( Address )
     PU_ADC_7K
-        puAD0(0), // ( Analog IN number )
-        puAD1(1),
-        puAD2(2),
-        puAD3(3),
-        puAD4(4),
-        puAD5(5),
-        puAD6(6);
-  #else
-    CONTEXT_CREATOR _cc_I7K(100, 14);
-
-    I7017 i7017a(0x01); // ( Address )
-    PU_ADC_7K puAD0(0); // ( Analog IN number )
-  #endif
-//*/
+        puAD4(0), // ( Analog IN number )
+        puAD5(1),
+        puAD6(2),
+        puAD7(3);
 
     #ifdef __GPS_TIME_GPS721
         #ifndef __I7K
@@ -74,8 +57,8 @@ U32 __HLI_BaudRate;
         PU_GPS_721 pu_gps(0);
     #endif
 
-    MODULE moduleDIO(0xFF);
-    //MODULE none(0);
+    //MODULE moduleDIO(0xFF);
+    MODULE none(0);
     PU_DI puDI(0x3FFF);
 
 

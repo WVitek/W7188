@@ -192,7 +192,7 @@ void COMPORT::printf(const char* Fmt, ...){
 #endif
 }
 
-void COMPORT::sendCmdTo7000(U8 *Cmd,BOOL Checksum){
+void COMPORT::sendCmdTo7000(U8 *Cmd, BOOL Checksum, BOOL ClearRxBuf){
   U8 Buf[32];
   int i=0;
   if(Checksum){
@@ -207,6 +207,7 @@ void COMPORT::sendCmdTo7000(U8 *Cmd,BOOL Checksum){
   else
     while(Cmd[i]) Buf[i] = Cmd[i++];
   Buf[i++] = '\r';
+  if(ClearRxBuf) clearRxBuf();
   write(Buf,i);
   setExpectation(0xFF,'\r');
 }

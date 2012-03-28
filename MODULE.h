@@ -475,7 +475,7 @@ public:
       ChangedTo1|=~Status & NewStatus;
       Status=NewStatus;
       csPoll.leave();
-      dbg((const char*)Resp);
+      //dbg((const char*)Resp);
       return TRUE;
     }
     return FALSE;

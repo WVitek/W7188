@@ -104,12 +104,13 @@ class THREAD_I7K_POLL : public THREAD
             if(!pu->GetPollCmd(Query)) if(--i0<0) i0=nPoll-1;
             // wait response
             Resp[0]=0;
-            BOOL rcvd = RS485.RxEvent().waitFor(29);
-            if(!rcvd) RS485.clearRxBuf();
+            BOOL rcvd = RS485.RxEvent().waitFor(50);
+            if(!rcvd)
+                RS485.clearRxBuf();
             // send next commnad
             RS485.sendCmdTo7000(Query,TRUE);
             // process response string
-            U8* Tmp = (rcvd && RS485.receiveLine(Resp,0,TRUE)==0) ? Resp : NULL;
+            U8* Tmp = (RS485.receiveLine(Resp,0,TRUE)==0) ? Resp : NULL;
             int Ans = (pu_->response(Tmp)) ? 1: 0;
             I7K_StatAdd(1,Ans);
         #ifdef __MTU

@@ -40,6 +40,8 @@ void execute()
     SYS::DecodeDate(Time, year, month, day);
     SYS::DecodeTime(Time, hour, min, sec, msec);
 
+    char buf[100];
+    int pos = 0;
 #if defined( __MTU )
     if(prevMin!=min)
     {
@@ -59,9 +61,6 @@ void execute()
             Event.Time++;
         }
     }
-
-    char buf[100];
-    int pos = 0;
   #ifdef __I7K
     #define fmt "\n\r%d%02d%02d_%02d%02d%02d.%03d  MTU:%03d/%03d I7K:%03d/%03d SYS:%03d %02d"
     #define arg MTU_Qry, MTU_Ans, I7K_Qry, I7K_Ans

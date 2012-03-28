@@ -114,7 +114,7 @@ public:
   void         printHex(void const * Buf,int Cnt);
   void         printf(const char* Fmt, ...);
   void         reset();
-  void         sendCmdTo7000(U8 *Cmd,BOOL Checksum);
+  void         sendCmdTo7000(U8 *Cmd,BOOL Checksum,BOOL ClearRxBuf=FALSE);
   int          receiveLine(U8 *Buf,int Timeout,BOOL Checksum, U8 endChar='\r');
   void         waitTransmitOver();
   virtual void setDtr(bool high)=0;
