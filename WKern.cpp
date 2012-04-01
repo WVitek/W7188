@@ -992,7 +992,7 @@ BOOL _fast SYNCOBJ::p(int Timeout){
     return TRUE;
   }
   SYS::sti();
-  return SYS::waitFor(Timeout,this);
+  return SYS::waitFor(Timeout,this)==1;
 }
 
 void SYNCOBJ::v(){

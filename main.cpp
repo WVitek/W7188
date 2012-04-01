@@ -62,6 +62,8 @@ U32 __HLI_BaudRate;
 
     I7017 i7017a(0x01); // ( Address )
     PU_ADC_7K puAD0(0); // ( Analog IN number )
+    I7017 i7017b(0x02); // ( Address )
+    PU_ADC_7K puAD1(0); // ( Analog IN number )
   #endif
 //*/
 

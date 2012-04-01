@@ -207,42 +207,46 @@ void COMPORT::sendCmdTo7000(U8 *Cmd, BOOL Checksum, BOOL ClearRxBuf){
   else
     while(Cmd[i]) Buf[i] = Cmd[i++];
   Buf[i++] = '\r';
-  if(ClearRxBuf) clearRxBuf();
   write(Buf,i);
+  if(ClearRxBuf) clearRxBuf();
   setExpectation(0xFF,'\r');
 }
 
 int COMPORT::receiveLine(U8 *Buf,int Timeout,BOOL Checksum, U8 endChar){
-  if(Timeout && !RxEvent().waitFor(Timeout)) return -1;
-  int Pos=0, Res=0, Sum=0;
-  while(1){
-    if(!BytesInRxB()){
-      Res=-1; break;
+    int Pos=0, Res;
+    if(Timeout && SYS::waitFor(Timeout,&RxEvent())!=1)
+    {} // Res=-1;
+    //else
+    {
+        int Sum=0;
+        while(1)
+        {
+            if(!BytesInRxB()) { Res=-2; break; }
+            U8 c = readChar();
+            if(c==endChar) { Res=0; break; }
+            Buf[Pos]=c;
+            Sum+=c;
+            if(++Pos==128) { Res=-3; break;}
+        }
+        Buf[Pos]=0;
+        if(Res==0 && Checksum)
+        {
+            if(Pos<2) Res=-4;
+            else
+            {
+                Pos-=2;
+                Sum -= Buf[Pos]+Buf[Pos+1];
+                U8 CS = (U8)FromHexStr(&(Buf[Pos]),2);
+                if((Sum & 0xFF) != CS)
+                {
+                    Res=-5;
+                    //ConPrintf("Buf=%s Sum=%02X CS=%02X\n\r",Buf,Sum & 0xFF,CS);
+                }
+            }
+        }
     }
-    else {
-      U8 c = readChar();
-      if(c==endChar)
-          break;
-      Buf[Pos]=c;
-      Sum+=c;
-      if(++Pos==128){ Res=-2; break;}
-    }
-  }
-  Buf[Pos]=0;
-  if(Res==0 && Checksum){
-    if(Pos<2) Res=-3;
-    else{
-      Pos-=2;
-      Sum -= Buf[Pos]+Buf[Pos+1];
-      U8 CS = (U8)FromHexStr(&(Buf[Pos]),2);
-      if((Sum & 0xFF) != CS){
-        Res=-4;
-//        ConPrintf("Buf=%s Sum=%02X CS=%02X\n\r",Buf,Sum & 0xFF,CS);
-      }
-    }
-  }
-  Buf[Pos]=0;
-  return Res;
+    Buf[Pos]=0;
+    return Res;
 }
 
 void COMPORT::reset(){

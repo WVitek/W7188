@@ -114,7 +114,7 @@ do{
       LSR=inpb(COMBASE+Lsr);
     };
     // check Rx trigger
-    if(!SignalRxEvent && (COM.RxB.WrP-COM.RxB.RdP)& COMBUF_WRAPMASK > COMBUF_RXLIMIT )
+    if(!SignalRxEvent && (((COM.RxB.WrP-COM.RxB.RdP)& COMBUF_WRAPMASK) > COMBUF_RXLIMIT) )
       SignalRxEvent=TRUE;
     if(SignalRxEvent && !COM.RxB.Event.IsSignaled()) {
       SYS::disable_sti();

@@ -451,7 +451,7 @@ protected:
 public:
   static PU_DI* Instance;
 
-  PU_DI(U16 ChMask):POLL_UNIT(AlarmEventSize,8)
+  PU_DI(U16 ChMask):POLL_UNIT(AlarmEventSize,10)
   {
     PrevStatus=Status=this->ChMask=ChMask;
     if(!Instance)

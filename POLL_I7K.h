@@ -76,14 +76,13 @@ class THREAD_I7K_POLL : public THREAD
         U8 Query[16];
         U8 Resp[256];
         POLL_UNIT *pu,*pu_;
-        int i0=0, i;
         //Realtime=TRUE;
         // Configure modules
         while(TRUE)
         {
             BOOL Quit=TRUE;
-            for(i=ctx_I7K.Modules->Count()-1; i>=0; i--)
-                if((*ctx_I7K.Modules)[i]->GetConfigCmd(Query))
+            for(int j=ctx_I7K.Modules->Count()-1; j>=0; j--)
+                if((*ctx_I7K.Modules)[j]->GetConfigCmd(Query))
                 {
                     RS485.sendCmdTo7000(Query,TRUE);
                     RS485.receiveLine(Resp,100,TRUE);
@@ -91,34 +90,66 @@ class THREAD_I7K_POLL : public THREAD
                 }
             if(Quit)break;
         }
-        //dbg2("\n\rPollListCount=%d",pollList->Count());
-        pu_=(*ctx_I7K.PollList)[i0];
+        int i=0;
+/*
+        while(!Terminated)
+        {
+            pu=(*ctx_I7K.PollList)[i];
+            BOOL more = pu->GetPollCmd(Query);
+
+            //RS485.clearRxBuf();
+            RS485.sendCmdTo7000(Query,TRUE);
+            Resp[0]=0;
+            //SYS::sleep(20);
+            int r = RS485.receiveLine(Resp,30,TRUE);
+            if(r!=0)
+            {
+                SYS::sleep(33);
+                ConPrintf("\r\n%d:%d %s ? %s|",i,r,Query,Resp);
+                r = RS485.receiveLine(Resp,0,TRUE);
+                ConPrint((char*)Resp);
+            }
+            int Ans = pu->response((r==0)?Resp:NULL) ? 1: 0;
+            I7K_StatAdd(1,Ans);
+
+            if(!more && --i<0)
+                i=nPoll-1;
+        }
+/*/
+        pu_=(*ctx_I7K.PollList)[i];
         // send first command
-        if(!pu_->GetPollCmd(Query)) if(--i0<0) i0=nPoll-1;;
+        int i0=i;
+        if(!pu_->GetPollCmd(Query)) if(--i<0) i=nPoll-1;;
         RS485.sendCmdTo7000(Query,TRUE);
         // polling loop
         while(!Terminated)
         {
             // prepare next command
-            pu=(*ctx_I7K.PollList)[i0];
-            if(!pu->GetPollCmd(Query)) if(--i0<0) i0=nPoll-1;
+            pu=(*ctx_I7K.PollList)[i];
+            if(!pu->GetPollCmd(Query))
+                if(--i<0)
+                    i=nPoll-1;
             // wait response
-            Resp[0]=0;
-            BOOL rcvd = RS485.RxEvent().waitFor(50);
-            if(!rcvd)
-                RS485.clearRxBuf();
+            //Resp[0]=0;
+            BOOL rcvd = RS485.RxEvent().waitFor(30);
+            //if(!rcvd)
+            //    RS485.clearRxBuf();
             // send next commnad
             RS485.sendCmdTo7000(Query,TRUE);
             // process response string
-            U8* Tmp = (RS485.receiveLine(Resp,0,TRUE)==0) ? Resp : NULL;
-            int Ans = (pu_->response(Tmp)) ? 1: 0;
+            int r = RS485.receiveLine(Resp,0,TRUE);
+            if(r!=0)
+                dbg3("\r\nNOANS: %d,%d",i0,r);
+            int Ans = (r==0 && pu_->response(Resp)) ? 1: 0;
             I7K_StatAdd(1,Ans);
         #ifdef __MTU
             SYS::sleep(17);
         #endif
             S(0x04);
+            i0=i;
             pu_=pu;
         }
+//*/
         S(0x00);
         dbg("\n\rSTOP I7K_Poll");
     }
