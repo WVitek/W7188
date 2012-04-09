@@ -45,37 +45,40 @@ void THREAD_POLL_MTU::execute()
     //***** Scan RS-485 bus
     U16 detectedMTU = 0;
     dbg("\n\rMTU: search...");
-    while(!Terminated)
     {
-        // scan all possible MTUs twice
-        U16 detected[2];
-        RS485.clearRxBuf();
-        U16 bits = 0;
-        for(int i=0; i<=15; i++)
+        U16 k = count ? 2 : 65535;
+        while(!Terminated && k-- > 0)
         {
-            // Check presence and set modbus mode
-            RS485.writeChar(0xC0 | i);
-            U8 ans;
-            U16 cnt = RS485.read(&ans,1,10);
-            if(cnt==1 && ans==0xAA)
+            // scan all possible MTUs twice
+            //U16 detected[2];
+            RS485.clearRxBuf();
+            U16 bits = 0;
+            for(int i=0; i<=15; i++)
             {
-                U16 bit = 1<<i;
-                bits |= bit;
-                if((detectedMTU & bit) == 0)
-                    dbg2("\n\rMTU: #%d detected", i);
-                SYS::sleep(20);
+                // Check presence and set modbus mode
+                RS485.writeChar(0xC0 | i);
+                U8 ans;
+                U16 cnt = RS485.read(&ans,1,10);
+                if(cnt==1 && ans==0xAA)
+                {
+                    U16 bit = 1<<i;
+                    bits |= bit;
+                    if((detectedMTU & bit) == 0)
+                        dbg2("\n\rMTU: #%d detected", i);
+                    SYS::sleep(20);
+                }
             }
+            if(bits==0)
+            {
+                SYS::sleep(3000);
+                continue;
+            }
+            if(detectedMTU==bits)
+                break;
+            detectedMTU = bits;
         }
-        if(bits==0)
-        {
-            SYS::sleep(3000);
-            continue;
-        }
-        if(detectedMTU==bits)
-            break;
-        detectedMTU = bits;
     }
-    if(Terminated || detectedMTU==0)
+    if(Terminated)
         return;
     if(count==0)
         for(int i=0; i<=15; i++)

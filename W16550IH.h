@@ -16,28 +16,33 @@ do{
         Status = inpb(COMBASE+Msr);
         if(Status & 0x01 == 0) // CTS is changed?
             break;
-        if(Status & 0x10){
+        if(Status & 0x10)
+        {
             if(COM.Flags & CF_HWFLOWCTRL) {
                 COM.TxPaused=FALSE;
                 outp(COMBASE+Ier, 0x0B); // enable TX | RX interrupt
             }
             COM.timeOfHiCTS = SYS::SystemTime;
-            if(!COM.EvtHiCTS.IsSignaled()){
-                SYS::disable_sti();
-                COM.EvtHiCTS.set();
-                SYS::enable_sti();
-            }
+//            if(!COM.EvtHiCTS.IsSignaled())
+//            {
+//                SYS::disable_sti();
+//                COM.EvtHiCTS.set();
+//                SYS::enable_sti();
+//            }
         }
-        else{
+        else
+        {
+            COM.timeOfLoCTS = SYS::SystemTime;
             if(COM.Flags & CF_HWFLOWCTRL){
                 COM.TxPaused=TRUE;
                 outp(COMBASE+Ier, 0x09); // enable RX interrupt only
             }
-            if(!COM.EvtLoCTS.IsSignaled()){
-                SYS::disable_sti();
-                COM.EvtLoCTS.set();
-                SYS::enable_sti();
-            }
+//            if(!COM.EvtLoCTS.IsSignaled())
+//            {
+//                SYS::disable_sti();
+//                COM.EvtLoCTS.set();
+//                SYS::enable_sti();
+//            }
         }
         break;
 

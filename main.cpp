@@ -15,6 +15,13 @@
 static BOOL LedIsOn=FALSE;
 #define switchLed() SYS::led(LedIsOn=!LedIsOn)
 
+#ifdef __GPS_TIME_GPS721
+    #ifndef __I7K
+        #error Need __I7K for enable polling of GPS721
+    #endif
+    #define __GPS_TIME
+#endif
+
 U32 __HLI_BaudRate;
 
 #if !defined(__NO_HLI)
@@ -46,7 +53,7 @@ U32 __HLI_BaudRate;
         puAD6(6);
 /*/
   #ifdef __MTU
-    CONTEXT_CREATOR _cc_I7K(1000, 13);
+    CONTEXT_CREATOR _cc_I7K(1000, 11);
 
     I7017 i7017a(0x01); // ( Address )
     PU_ADC_7K
@@ -68,10 +75,6 @@ U32 __HLI_BaudRate;
 //*/
 
     #ifdef __GPS_TIME_GPS721
-        #ifndef __I7K
-            #error Need __I7K for enable polling of GPS721
-        #endif
-        #define __GPS_TIME
         MODULE moduleGPS(0xF0);
         PU_GPS_721 pu_gps(0);
     #endif

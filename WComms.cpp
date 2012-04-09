@@ -34,12 +34,12 @@ COMPORT::~COMPORT(){
 
 #ifdef __UsePerfCounters
 void COMPORT::GetPerf(STRUCT_COMPERF *P){
-  _disable();
+  SYS::cli();
   U32 Ticks = ISRTicks;  ISRTicks=0;
   P->RCalls=_RC; P->RBytes=_RB;
   P->TCalls=_TC; P->TBytes=_TB;
   _RC=_RB=_TC=_TB=0;
-  _enable();
+  SYS::sti();
   P->ISRMs=(U16)(Ticks/SysTicksInMs);
 }
 #endif

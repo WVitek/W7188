@@ -13,12 +13,9 @@ THREAD *CurThread=NULL;
 THREAD MainThread;
 
 //*** timeouts lists
-_BDLI *TO001=NULL,*TO010=NULL,*TO100=NULL,*TOSec=NULL; // "sleep some time" timeouts
+_BDLI *TOs1=NULL, *TOs2=NULL;
 
-//*** time counters
-U8 Cnt001=0,Cnt010=0,Cnt100=0; // 1ms, 10ms, 100ms
 TIME SYS::SystemTime;
-//TIME SystemTime;
 TIME SYS::NetTimeOffset=0;
 BOOL SYS::TimeOk=FALSE;
 
@@ -186,71 +183,40 @@ void _fast SYS::TimerProc(){
     static BOOL Hard;
     Hard = HardwareTimerIntr;
 #ifdef __UsePerfCounters
-    if(Hard)startSysTicksCount();
+    //if(Hard)startSysTicksCount();
 #endif
     BOOL DoThSw=!Hard;
     if(Hard)
     {
         //***** Period = SysTimerInterval ms
         SystemTime+=SysTimerInterval;
-        _BDLI *Tmp=TO001;
+        U16 SysT=(U16)SystemTime;
+        // millisecond-scale timeouts
+        _BDLI *Tmp=TOs1;
         while(Tmp)
         {
-            _BDLI *Next=Tmp->Next;
             TIMEOUTOBJ* pto = *(Tmp->TOPtr());
-            if( pto->Timeout < SysTimerInterval )
-            {
-                pto->setReady();
-                DoThSw=TRUE;
-            }
-            else pto->Timeout -= SysTimerInterval;
-            Tmp=Next;
+            if(pto->Timeout != SysT)
+                break;
+            Tmp=Tmp->Next;
+            pto->setReady();
+            DoThSw=TRUE;
         }
-        if((Cnt001+=SysTimerInterval)>=10)
+        if((SysT & 0x3)==0)
         {
-            //***** Period = 10ms
-            Cnt001-=10;
-            DoThSw=TRUE; // default thread switching interval = 10ms (100 switches/sec)
-            // Check 10ms timeouts
-            _BDLI *Tmp=TO010;
-            while(Tmp)
+            DoThSw=TRUE;
+            if((SysT & 0x3FF)==0)
             {
-                _BDLI *Next=Tmp->Next;
-                TIMEOUTOBJ* pto = *(Tmp->TOPtr());
-                if((pto->Timeout-=10)<10+SysTimerInterval)
-                    Tmp->mov(TO001);
-                Tmp=Next;
-            }
-            if(++Cnt010==10)
-            {
-                //***** Period = 100ms
-                Cnt010=0;
-                RefreshWDT();
-                // Check 100ms timeouts
-                Tmp=TO100;
+                // second-scale timeouts
+                SysT=(U16)((U32)SystemTime>>10);
+                _BDLI *Tmp=TOs2;
                 while(Tmp)
                 {
-                    _BDLI *Next=Tmp->Next;
                     TIMEOUTOBJ* pto = *(Tmp->TOPtr());
-                    if((pto->Timeout-=100)<110+SysTimerInterval)
-                        Tmp->mov(TO010);
-                    Tmp=Next;
-                }
-                if(++Cnt100==10)
-                {
-                    //***** Period = 1000ms
-                    // "Wait next second" timeouts
-                    Cnt100=0;
-                    // Check long timeouts (in seconds)
-                    Tmp=TOSec;
-                    while(Tmp)
-                    {
-                        _BDLI *Next=Tmp->Next;
-                        TIMEOUTOBJ* pto = *(Tmp->TOPtr());
-                        if( pto->Timeout-- <= 1 )
-                            pto->setReady();
-                        Tmp=Next;
-                    }
+                    if(pto->Timeout != SysT)
+                        break;
+                    Tmp=Tmp->Next;
+                    pto->setReady();
                 }
             }
         }
@@ -264,13 +230,13 @@ void _fast SYS::TimerProc(){
     }
     HardwareTimerIntr=TRUE;
 #ifdef __UsePerfCounters
-    if(Hard)stopSysTicksCount(TimerISRTicks);
+    //if(Hard)stopSysTicksCount(TimerISRTicks);
 #endif
     static BOOL InProcess=FALSE;
     if(DoThSw && !InProcess)
     {
 #ifdef __UsePerfCounters
-        if(Hard)startSysTicksCount();
+        //if(Hard)startSysTicksCount();
 #endif
         InProcess=TRUE;
         // if CurThread is not active "realtime" thread, then ...
@@ -283,7 +249,7 @@ void _fast SYS::TimerProc(){
             else // no active threads.
             {
 #ifdef __UsePerfCounters
-                if(Hard)stopSysTicksCount(TimerISRTicks);
+//                if(Hard)stopSysTicksCount(TimerISRTicks);
 #endif
                 TIME IdleStart=SystemTime;
     //        U16 BegTicks=inpw(TMR_T1CNT);
@@ -300,7 +266,7 @@ void _fast SYS::TimerProc(){
     //        if(EndTicks<BegTicks) IdleTicks+=SysTimerMaxcount-BegTicks
                 IdleMsCnt += (U16)(SystemTime-IdleStart);
 #ifdef __UsePerfCounters
-                if(Hard)startSysTicksCount();
+//                if(Hard)startSysTicksCount();
 #endif
                 NewCur = *(Threads->ThdPtr());
             }
@@ -317,7 +283,7 @@ void _fast SYS::TimerProc(){
         }
         InProcess=FALSE;
 #ifdef __UsePerfCounters
-        if(Hard)stopSysTicksCount(TimerISRTicks);
+//        if(Hard)stopSysTicksCount(TimerISRTicks);
 #endif
     }
     enable_sti();
@@ -449,17 +415,16 @@ void SYS::startKernel(){
 }
 
 void SYS::stopKernel(){
-  SystemStopped=TRUE;
-  BOOL Wait=TRUE;
-  while(Wait){
-    sleep(250);
-    _disable();
-    Wait = Threads->Next!=NULL || TO001!=NULL || TO010!=NULL || TO100!=NULL;
-    _enable();
-  }
-  DisableWDT();
-  SYS::TimerClose();
-  DelayMs(100);
+    SystemStopped=TRUE;
+    while(true)
+    {
+        if(Threads->Next==NULL && TOs1==NULL)
+            break;
+        sleep(250);
+    }
+    DisableWDT();
+    SYS::TimerClose();
+    DelayMs(100);
 }
 
 #ifdef __DebugThreadState
@@ -737,45 +702,56 @@ BOOL SYS::NVRAM_Write(U8 Addr,U8 Data){
 
 void _fast SYS::addTimeout(TIMEOUTOBJ *pto,TIMEOUT Timeout)
 {
-    _BDLI *Tmp=&(pto->SysRef);
+    _BDLI **TOs;
+    U16 offs;
     switch(Timeout & toTypeMask)
     {
         case toTypeNext:
         {
-            TIME NetTime = SystemTime + NetTimeOffset + 1;
+            TIME NetTime = SystemTime + NetTimeOffset;// + 1;
             Timeout &= ~toTypeMask;
             Timeout -= NetTime % Timeout;
+            SYS::disable_sti();
+            TOs=&TOs1;
+            offs = (U16)SystemTime;
             break;
         }
         case toTypeMs:
             Timeout &= ~toTypeMask;
+            SYS::disable_sti();
+            TOs=&TOs1;
+            offs = (U16)SystemTime;
             break;
         case toTypeSec:
-            pto->Timeout = Timeout & ~toTypeMask;
-            Tmp->add(TOSec,pto);
-            return;
+            Timeout &= ~toTypeMask;
+            SYS::disable_sti();
+            TOs=&TOs2;
+            offs = (U16)((U32)SystemTime>>10);
+            break;
         default:
             return;
     }
-    // SetTimeoutMs
-    if(Timeout>=10+SysTimerInterval)
+    //dbg2("at:%d ",Timeout);
+    if(Timeout==0)
+        Timeout=1;
+    else if(Timeout>32767)
+        Timeout=32767;
+    pto->Timeout = offs+Timeout;
+    _BDLI *Tmp = *TOs;
+    while(true)
     {
-        if (Timeout>=110+SysTimerInterval)
-        {
-            pto->Timeout = Timeout + Cnt010*10 + Cnt001;
-            Tmp->add(TO100,pto);
-        }
-        else
-        {
-            pto->Timeout = Timeout + Cnt001;
-            Tmp->add(TO010,pto);
-        }
+        if(!Tmp)
+            break;
+        TIMEOUTOBJ* to = *(Tmp->TOPtr());
+        U16 left = to->Timeout - offs;
+        if(left>=Timeout)
+            break;
+        TOs = &(Tmp->Next);
+        Tmp = Tmp->Next;
     }
-    else if(Timeout>0)
-    {
-        pto->Timeout = Timeout;
-        Tmp->add(TO001,pto);
-    }
+    Tmp=&(pto->SysRef);
+    Tmp->add(*TOs,pto);
+    SYS::enable_sti();
 }
 
 void _fast SYS::addThreadTimeout(TIMEOUT Timeout){

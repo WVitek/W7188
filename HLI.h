@@ -14,10 +14,10 @@
 
 #define setNeedConnection(x)
 
-#ifndef __GPS_TIME
+//#ifndef __GPS_TIME
     #include "TIMC_Svc.h"
     TIMECLIENT_SVC TimeSvc;
-#endif
+//#endif
 
 void HLI_linkCheck();
 
@@ -41,9 +41,9 @@ PROG_SVC PROG_Svc;
 
 SERVICE* Service[]=
 {
-#ifndef __GPS_TIME
+//#ifndef __GPS_TIME
     &TimeSvc,
-#endif
+//#endif
     &DI_Svc,
 #ifdef __MTU
     new ADC_SVC(ctx_MTU.ADCsList, 2),

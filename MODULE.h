@@ -660,9 +660,19 @@ public:
                         state = getNSats;
                         break;
                     }
-                    prevSec = sec;
+
+                    TIME sysTimeNow, timeGPS;
+                    SYS::getSysTime(sysTimeNow);
+
+                    TIME sysTimeOfHiPPS, sysTimeOfLoPPS;
+                    GetCom(1).TimeOfCTS(sysTimeOfHiPPS, sysTimeOfLoPPS);
+
+                    ConPrintf( "    GPS> %04d, %03d, %03d",
+                        (S16)(sysTimeOfHiPPS - prevPPS),
+                        (S16)(sysTimeOfLoPPS-sysTimeOfHiPPS),
+                        (S16)(sysTimeNow-sysTimeOfHiPPS)
+                    );
                     U16 hour = (U16)FromDecStr(Resp+3,2);
-                    U16 min = (U16)FromDecStr(Resp+5,2);
                     U16 ph = prevHour;
                     prevHour = hour;
                     if(ph > hour) // start of new day
@@ -670,16 +680,16 @@ public:
                         state = updateDate;
                         break;
                     }
+                    prevSec = sec;
+                    U16 min = (U16)FromDecStr(Resp+5,2);
                     //ConPrintf("\n\r%s = %d:%d:%d",Resp,hour,min,sec);
-                    TIME timeGPS;
                     if(!SYS::TryEncodeTime(year,month,day,hour,min,sec,timeGPS))
                     {
                         ChFlg|=flgEADCRange;
                         state = updateDate;
                         break;
                     }
-                    TIME sysTimeOfPPS = GetCom(1).TimeOfHiCTS();;
-                    if((U16)sysTimeOfPPS == prevPPS)
+                    if((U16)sysTimeOfHiPPS == prevPPS)
                     {
                         if(++tmp>32)
                         {
@@ -690,8 +700,8 @@ public:
                     }
                     else
                     {
-                        prevPPS = (U16)sysTimeOfPPS;
-                        TIME offs = timeGPS - sysTimeOfPPS;
+                        prevPPS = (U16)sysTimeOfHiPPS;
+                        TIME offs = timeGPS - sysTimeOfHiPPS;
                         if(offs>0 || !SYS::TimeOk)
                         {
                             TIME change = abs64(offs - SYS::NetTimeOffset);

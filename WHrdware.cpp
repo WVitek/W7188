@@ -94,6 +94,7 @@ class COM_16550 : public COMPORT {
   U32 ISR;
   BOOL TxPaused;
   TIME timeOfHiCTS;
+  TIME timeOfLoCTS;
   void enableTx(){
 //    outp(Base+Lcr,inp(Base+Lcr)&0x7f);
     if(!TxPaused) outp(Base+Ier,0x0B); // enable UART interrupts: Rx, Tx, Modem Status change
@@ -119,13 +120,13 @@ public:
   void uninstall();
   BOOL setSpeed(U32 Baud);
 
-  TIME TimeOfHiCTS()
+  BOOL TimeOfCTS(TIME &ToHi, TIME &ToLo)
   {
-      TIME result;
-      SYS::cli();
-      result = timeOfHiCTS;
-      SYS::sti();
-      return result;
+      _disable();
+      ToHi = timeOfHiCTS;
+      ToLo = timeOfLoCTS;
+      _enable();
+      return TRUE;
   }
 
   void setDataFormat(U8 nDataBits, PARITY_KIND parity, U8 nStopBits)
@@ -138,9 +139,9 @@ public:
   }
 
   BOOL IsTxOver(){
-    _disable();
+    SYS::cli();
     BOOL Res=(TxB.WrP==TxB.RdP) && (inp(Base+Lsr) & 0x40);
-    _enable();
+    SYS::sti();
     return Res;
   }
   BOOL CarrierDetected(){

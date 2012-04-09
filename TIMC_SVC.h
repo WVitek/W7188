@@ -11,7 +11,12 @@
 #ifdef __WIRE
 
 #define TOUT_TimeRequest (toTypeSec | 5)
+
+#ifdef __MTU
+#define TOUT_ResyncInterval (toTypeSec | 10)
+#else
 #define TOUT_ResyncInterval (toTypeSec | 30)
+#endif
 
 #else
 
@@ -113,68 +118,70 @@ void TIMECLIENT_SVC::receiveData(U8 From,const void* Data,int Size){
 
 void TIMECLIENT_SVC::processTimeData()
 {
-  static S16 StatOfs=0;
-  TIME D1 = SD[0][0] + SD[0][1]; // (QRx-QTx)+(ARx-ATx) = (ARx-QTx)-(ATx-QRx) = total delay in channel
-  TIME D2 = SD[0][2] + SD[0][3];
-  TIME TOfs0 = (SD[0][0] - SD[0][1]); // ( (QRx-QTx)-(ARx-ATx) ) = 2x time offset
-  TIME TOfs1 = (SD[0][2] - SD[0][3]);
-  TIME Err = ( abs64(TOfs0-TOfs1)+abs64(D1-D2) ) >> 1;
-  TIME TOfs = (TOfs0+TOfs1)>>2;
-//*
+    static S16 StatOfs=0;
+    TIME D1 = SD[0][0] + SD[0][1]; // (QRx-QTx)+(ARx-ATx) = (ARx-QTx)-(ATx-QRx) = total delay in channel
+    TIME D2 = SD[0][2] + SD[0][3];
+    TIME TOfs0 = (SD[0][0] - SD[0][1]); // ( (QRx-QTx)-(ARx-ATx) ) = 2x time offset
+    TIME TOfs1 = (SD[0][2] - SD[0][3]);
+    TIME Err = ( abs64(TOfs0-TOfs1)+abs64(D1-D2) ) >> 1;
+    TIME TOfs = (TOfs0+TOfs1)>>2;
 #ifdef __WATCOMC__
-  ConPrintf("\n\rTime sync [D1=%dms D2=%dms Err=%d TOfs=%Ld] ",
-    (int)D1,(int)D2,(int)Err,TOfs
-  );
+    ConPrintf("\n\rTime sync [D1=%dms D2=%dms Err=%d TOfs=%Ld] ",
+        (int)D1,(int)D2,(int)Err,TOfs
+    );
 #else
-  ConPrintf("\n\rD1=%dms D2=%dms Err=%d TOfs=%p:%p\n\r",
-    (int)D1.Lo(),(int)D2.Lo(),(int)Err.Lo(),TOfs.Hi(),TOfs.Lo()
-  );
+    ConPrintf("\n\rD1=%dms D2=%dms Err=%d TOfs=%p:%p\n\r",
+        (int)D1.Lo(),(int)D2.Lo(),(int)Err.Lo(),TOfs.Hi(),TOfs.Lo()
+    );
 #endif
-//*/
-  if(Err < abs64(TOfs) && Err<TIME(__MaxTimeError))
-  {
-    SYS::setNetTimeOffset(SYS::NetTimeOffset+TOfs);
-    if(abs64(TOfs)<TIME(18000)) StatOfs=StatOfs+(S16)TOfs;
+
+#ifdef __GPS_TIME
     RDCnt=0;
     TryCnt=0;
-    if(!FTimeOk){
-      FTimeOk = TRUE;
-      ConPrintf("+++Time sync OK. Err=%d",(U16)Err);
-    }
-    else{
-      TIME CurTime;
-      SYS::getSysTime(CurTime);
-#ifdef __WATCOMC__
-      ConPrintf("+++Time sync OK. StatOfs=%d/%Ld\n\r",
-        StatOfs,CurTime
-      );
-#else
-      ConPrintf("+++Time sync OK. StatOfs=%d/%p:%p\n\r",
-        StatOfs,CurTime.Hi(),CurTime.Lo()
-      );
-#endif
-    }
-  }
-  else{
-    if(++TryCnt>=2 && FTimeOk){
-      ConPrint("---Ne v etot raz :-)");
-      RDCnt=0;
-      TryCnt=0;
-
-    }
-    else{
-      ConPrint("---Time sync oblom");
-//*
-//      if(D2<D1){
-        SD[0][0]=SD[0][2];
-        SD[0][1]=SD[0][3];
-//      }
-//*/
-      RDCnt=2;
-    }
-  }
-  if(FTimeOk)
     toutResync.start(TOUT_ResyncInterval);
-  else
-    toutResync.setSignaled(); // urgent time request
+#else
+    if(Err < abs64(TOfs) && Err<TIME(__MaxTimeError))
+    {
+        RDCnt=0;
+        TryCnt=0;
+        SYS::setNetTimeOffset(SYS::NetTimeOffset+TOfs);
+        if(abs64(TOfs)<TIME(18000))
+            StatOfs=StatOfs+(S16)TOfs;
+        if(!FTimeOk)
+        {
+            FTimeOk = TRUE;
+            ConPrintf("+++Time sync OK. Err=%d",(U16)Err);
+        }
+        else
+        {
+            TIME CurTime;
+            SYS::getSysTime(CurTime);
+            #ifdef __WATCOMC__
+            ConPrintf("+++Time sync OK. StatOfs=%d/%Ld\n\r", StatOfs,CurTime);
+            #else
+            ConPrintf("+++Time sync OK. StatOfs=%d/%p:%p\n\r", StatOfs,CurTime.Hi(),CurTime.Lo());
+            #endif
+        }
+    }
+    else
+    {
+        if(++TryCnt>=2 && FTimeOk)
+        {
+            ConPrint("---Ne v etot raz :-)");
+            RDCnt=0;
+            TryCnt=0;
+        }
+        else
+        {
+            ConPrint("---Time sync oblom");
+            SD[0][0]=SD[0][2];
+            SD[0][1]=SD[0][3];
+            RDCnt=2;
+        }
+    }
+    if(!FTimeOk)
+        toutResync.setSignaled(); // urgent time request
+    else
+        toutResync.start(TOUT_ResyncInterval);
+#endif
 }
