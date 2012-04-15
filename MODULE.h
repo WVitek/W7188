@@ -667,10 +667,11 @@ public:
                     TIME sysTimeOfHiPPS, sysTimeOfLoPPS;
                     GetCom(1).TimeOfCTS(sysTimeOfHiPPS, sysTimeOfLoPPS);
 
+                    S16 delta = (S16)(sysTimeNow-sysTimeOfHiPPS);
                     ConPrintf( "    GPS> %04d, %03d, %03d",
                         (S16)(sysTimeOfHiPPS - prevPPS),
                         (S16)(sysTimeOfLoPPS-sysTimeOfHiPPS),
-                        (S16)(sysTimeNow-sysTimeOfHiPPS)
+                        delta
                     );
                     U16 hour = (U16)FromDecStr(Resp+3,2);
                     U16 ph = prevHour;
@@ -704,6 +705,11 @@ public:
                         TIME offs = timeGPS - sysTimeOfHiPPS;
                         if(offs>0 || !SYS::TimeOk)
                         {
+                            if(delta<500 || delta>900)
+                            {
+                                state = getNSats;
+                                break;
+                            }
                             TIME change = abs64(offs - SYS::NetTimeOffset);
                             if(900<change && change<1100)
                             {

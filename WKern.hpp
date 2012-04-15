@@ -35,7 +35,7 @@ class CRITICALSECTION;
 
 //***** Constanst
 #define SysTicksInMs 10000 //10001
-#define SysTimerInterval 1
+#define SysTimerInterval 2
 #define SysTimerMaxcount (SysTicksInMs*SysTimerInterval)
 #define dt100MSec 100
 #define dtOneSecond 1000
@@ -84,7 +84,7 @@ extern U16 Heap16Avail,Heap16Used;
 extern U8 hex_to_ascii[17];
 
 #ifdef __UsePerfCounters
-  extern U16 __StartTicks,__StopTicks;
+  extern U16 __StartTicks;//,__StopTicks;
   #define startSysTicksCount() SYS::startCounting()
   #define stopSysTicksCount(_Cntr) SYS::stopCounting(_Cntr)
   #define ASMPERFINC(_Cnt) inc _Cnt
@@ -140,16 +140,19 @@ public:
 //  inline static void getNetTime(TIME& Time)
 //  { _disable(); Time=SystemTime+NetTimeOffset; _enable(); }
 #ifdef __UsePerfCounters
-  inline static void startCounting(){
-    __StartTicks=inpw(TMR_T1CNT);
-  }
-  inline static void stopCounting(U32& Counter){
-    __StopTicks=inpw(TMR_T1CNT);
-    if(__StopTicks<__StartTicks)
-      Counter+=SysTimerMaxcount-__StartTicks+__StopTicks;
-    else
-      Counter+=__StopTicks-__StartTicks;
-  }
+    inline static void startCounting()
+    {
+        __StartTicks=inpw(TMR_T1CNT);
+    }
+
+    inline static void stopCounting(U32& Counter)
+    {
+        S16 delta = inpw(TMR_T1CNT) - __StartTicks;
+        if(delta<0)
+            Counter+=SysTimerMaxcount+delta;
+        else
+            Counter+=delta;
+    }
 #endif
 public:
   static void       dbgLed(U32 Val);
@@ -203,7 +206,7 @@ private:
   static void       TimerClose();
   static void _fast addTimeout(TIMEOUTOBJ* pto,TIMEOUT Timeout);
   static void _fast addThreadTimeout(TIMEOUT Timeout);
-  static void _fast TimerProc();
+  static void _fast TimerProc(BOOL Hw);
   friend void interrupt far TimerISR(void);
   friend class TIMEOUTOBJ;
 };

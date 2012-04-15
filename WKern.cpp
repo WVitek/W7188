@@ -34,7 +34,7 @@ volatile U8 __IntrLockCnt;
 U16 IdleMsCnt;
 U32 IdleTicks;
 #ifdef __UsePerfCounters
-  U16 __StartTicks,__StopTicks;
+  U16 __StartTicks;//,__StopTicks;
   U32 TimerISRTicks;
 #endif
 
@@ -178,13 +178,12 @@ void resumeAll(_BDLI *_TN) {
 
 //******************** class SYS
 
-void _fast SYS::TimerProc(){
-    disable_sti();
-    static BOOL Hard;
-    Hard = HardwareTimerIntr;
+void _fast SYS::TimerProc(BOOL Hard)
+{
 #ifdef __UsePerfCounters
-    //if(Hard)startSysTicksCount();
+    if(Hard)startSysTicksCount();
 #endif
+    disable_sti();
     BOOL DoThSw=!Hard;
     if(Hard)
     {
@@ -196,7 +195,7 @@ void _fast SYS::TimerProc(){
         while(Tmp)
         {
             TIMEOUTOBJ* pto = *(Tmp->TOPtr());
-            if(pto->Timeout != SysT)
+            if((S16)(SysT - pto->Timeout) < 0)
                 break;
             Tmp=Tmp->Next;
             pto->setReady();
@@ -213,7 +212,7 @@ void _fast SYS::TimerProc(){
                 while(Tmp)
                 {
                     TIMEOUTOBJ* pto = *(Tmp->TOPtr());
-                    if(pto->Timeout != SysT)
+                    if((S16)(SysT - pto->Timeout) < 0)
                         break;
                     Tmp=Tmp->Next;
                     pto->setReady();
@@ -228,7 +227,7 @@ void _fast SYS::TimerProc(){
         NewThread->SavedSP=_SP;
         NewThread=NULL;
     }
-    HardwareTimerIntr=TRUE;
+    //HardwareTimerIntr=TRUE;
 #ifdef __UsePerfCounters
     //if(Hard)stopSysTicksCount(TimerISRTicks);
 #endif
@@ -245,28 +244,30 @@ void _fast SYS::TimerProc(){
             // ... do switching to next thread
             THREAD *NewCur;
             _BDLI *Tmp=CurThread->SysRef.Next;
-            if(Tmp!=NULL) NewCur = *(Tmp->ThdPtr());
+            if(Tmp!=NULL)
+                NewCur = *(Tmp->ThdPtr());
             else // no active threads.
             {
 #ifdef __UsePerfCounters
-//                if(Hard)stopSysTicksCount(TimerISRTicks);
+                if(Hard)stopSysTicksCount(TimerISRTicks);
 #endif
                 TIME IdleStart=SystemTime;
     //        U16 BegTicks=inpw(TMR_T1CNT);
                 // Let's have a rest :)
                 enable_sti();
                 while(Threads==NULL)
-                  _asm{
-                    sti
-                    hlt
-                    cli
-                  }
+                    _asm
+                    {
+                        sti
+                        hlt
+                        cli
+                    }
                 disable_sti();
     //        U16 EndTicks=inpw(TMR_T1CNT);
     //        if(EndTicks<BegTicks) IdleTicks+=SysTimerMaxcount-BegTicks
                 IdleMsCnt += (U16)(SystemTime-IdleStart);
 #ifdef __UsePerfCounters
-//                if(Hard)startSysTicksCount();
+                if(Hard)startSysTicksCount();
 #endif
                 NewCur = *(Threads->ThdPtr());
             }
@@ -282,16 +283,19 @@ void _fast SYS::TimerProc(){
             }
         }
         InProcess=FALSE;
-#ifdef __UsePerfCounters
-//        if(Hard)stopSysTicksCount(TimerISRTicks);
-#endif
     }
     enable_sti();
+#ifdef __UsePerfCounters
+        if(Hard)stopSysTicksCount(TimerISRTicks);
+#endif
 }
 
-void interrupt far TimerISR(void){
-  if(HardwareTimerIntr) outpw(INT_EOI,INT_TMREOI);
-  SYS::TimerProc();
+void interrupt far TimerISR(void)
+{
+    BOOL Hw = HardwareTimerIntr;
+    if(Hw) outpw(INT_EOI,INT_TMREOI);
+    else HardwareTimerIntr = TRUE;
+    SYS::TimerProc(Hw);
 }
 
 void SYS::switchThread(){

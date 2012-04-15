@@ -32,7 +32,7 @@
 					<Add option="-dq__NO_HLI" />
 					<Add option="-dq__NO_TMR" />
 					<Add option="-d__I7K" />
-					<Add option="-dq__MTU" />
+					<Add option="-d__MTU" />
 					<Add option="-dq__MTU_Old" />
 					<Add option="-d__GPS_TIME_GPS721" />
 					<Add option="-dq__COM_STATUS_BUF" />
