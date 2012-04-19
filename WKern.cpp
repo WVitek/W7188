@@ -396,6 +396,7 @@ U16 SYS::GetTimerISRMs(){
 #endif
 
 void SYS::startKernel(){
+  SYS::DelayMs(500);
 #ifdef __USESTDMEMMAN
   U16 Tmp;
   exploreHeap(Heap16Used,Heap16Avail,Tmp);
@@ -454,8 +455,8 @@ void SYS::printThreadsState(){
 }
 #endif
 
-//void SYS::setRealtime(BOOL Realtime)
-//{ CurThread->Realtime=Realtime; }
+void SYS::setRealtime(BOOL Realtime)
+{ CurThread->Realtime=Realtime; }
 
 
 void SYS::checkNetTime(TIME &Time)
@@ -712,7 +713,7 @@ void _fast SYS::addTimeout(TIMEOUTOBJ *pto,TIMEOUT Timeout)
     {
         case toTypeNext:
         {
-            TIME NetTime = SystemTime + NetTimeOffset;// + 1;
+            TIME NetTime = SystemTime + NetTimeOffset;// + SysTimerInterval;
             Timeout &= ~toTypeMask;
             Timeout -= NetTime % Timeout;
             SYS::disable_sti();

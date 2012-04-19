@@ -212,6 +212,23 @@ class MTU_Coeffs
 {
 public:
     F32 C[9];
+
+#ifdef __MTU_VAL_EMUL
+    MTU_Coeffs()
+    {
+        C[0] = 0x095207C0ul;
+        C[1] = 0xAA5FC5B7ul;
+        C[2] = 0xC57DD0B0ul;
+        C[3] = 0xE4A3D639ul;
+        C[4] = 0xF18D0330ul;
+        C[5] = 0xEAB69D29ul;
+        C[6] = 0x7A3D4BB0ul;
+        C[7] = 0x75811029ul;
+        C[8] = 0x0606A5A0ul;
+    }
+#endif
+
+
     void setCoeff(int i, U32 srcFloat)
     {
         C[i] = srcFloat;
@@ -277,22 +294,35 @@ public:
     const static S32 RawOffsetOfP0 = 32767 / (25+1);
     const static F32 fSampleValue = 0x41C40000; // 24.5
 
-    static U8 quant;
     static const U16 noDataErrCode = flgEComm << 8;
 
     void doSample(TIME Time)
     {
         U16 ps[10];
+#ifdef __MTU_VAL_EMUL
+        static U8 mix;
+        cnt=7;
+#endif
         for(int i=0; i<cnt; i++)
         {
+#ifdef __MTU_VAL_EMUL
+            U16 bits = mix++ & 0x0F;
+            U16 p = 0x2D31 ^ bits;
+            U16 t = 0xC2F2 ^ bits;
+#else
             U16 p = buf[i<<1];
             U16 t = buf[(i<<1)+1];
+#endif
             F32 fP = coeffs.calc(p,t);
             //F32 fP = fSampleValue;
             S32 raw = F32_to_S32(fmul(fP,fMaxPto32K)) + RawOffsetOfP0;
+#ifdef __MTU_VAL_EMUL
+            ps[i] = (U16)(RawOffsetOfP0 + mix);
+#else
             if(raw<32767)
                 ps[i] = (raw<0) ? 0 :(U16)raw;
             else ps[i] = flgEADCRange<<8;
+#endif
         }
         TIME timeA = GetLastTime();
         TIME timeB = Time - smul(ADC_Period, cnt);
@@ -667,12 +697,14 @@ public:
                     TIME sysTimeOfHiPPS, sysTimeOfLoPPS;
                     GetCom(1).TimeOfCTS(sysTimeOfHiPPS, sysTimeOfLoPPS);
 
+                    S16 betweenPPS = (S16)(sysTimeOfHiPPS - prevPPS);
                     S16 delta = (S16)(sysTimeNow-sysTimeOfHiPPS);
                     ConPrintf( "    GPS> %04d, %03d, %03d",
-                        (S16)(sysTimeOfHiPPS - prevPPS),
+                        betweenPPS,
                         (S16)(sysTimeOfLoPPS-sysTimeOfHiPPS),
                         delta
                     );
+
                     U16 hour = (U16)FromDecStr(Resp+3,2);
                     U16 ph = prevHour;
                     prevHour = hour;
@@ -705,7 +737,8 @@ public:
                         TIME offs = timeGPS - sysTimeOfHiPPS;
                         if(offs>0 || !SYS::TimeOk)
                         {
-                            if(delta<500 || delta>900)
+//                            S16 delta = (S16)(sysTimeNow-sysTimeOfHiPPS);
+                            if(betweenPPS<900 || betweenPPS>1100 || delta<500 || delta>900)
                             {
                                 state = getNSats;
                                 break;

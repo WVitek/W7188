@@ -29,13 +29,14 @@
 					<Add option="-d__7188XA" />
 					<Add option="-d__WIRE" />
 					<Add option="-dq__RS485" />
-					<Add option="-dq__NO_HLI" />
-					<Add option="-dq__NO_TMR" />
 					<Add option="-d__I7K" />
 					<Add option="-d__MTU" />
-					<Add option="-dq__MTU_Old" />
+					<Add option="-d__MTU_VAL_EMUL" />
 					<Add option="-d__GPS_TIME_GPS721" />
+					<Add option="-dq__NO_STAT" />
+					<Add option="-dq__NO_HLI" />
 					<Add option="-dq__COM_STATUS_BUF" />
+					<Add option="-dq__MTU_Old" />
 				</Compiler>
 				<Linker>
 					<Add option="name w d all SYS dos op m op maxe=25" />

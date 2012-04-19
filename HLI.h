@@ -19,7 +19,11 @@
     TIMECLIENT_SVC TimeSvc;
 //#endif
 
+#if defined(__7188XA) || defined(__7188XB)
 void HLI_linkCheck();
+#else
+#define HLI_linkCheck()
+#endif
 
 
 
@@ -78,6 +82,8 @@ struct PACKET
 #define TOUT_LINK_POWER_OFF_TIME (toTypeSec | 5)
 static TIMEOUTOBJ toutLink;
 
+#ifdef __7188X
+
 #if !defined(POWERON_DO1)
 #define POWERON_DO1 true
 #endif
@@ -108,6 +114,7 @@ void HLI_linkCheck()
         break;
   }
 }
+#endif
 
 BOOL HLI_receive(void const * Buf, int BufSize)
 {

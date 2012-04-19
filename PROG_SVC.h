@@ -157,7 +157,7 @@ int getDataToTransmit(U8 /*To*/, void* Data,int /*MaxSize*/)
     if(TOCnt<3)
       *(U32*)Data=fd.size;
     else {
-      fd.size=0; Offset=0; 
+      fd.size=0; Offset=0;
       tout.stop();
     }
   }
@@ -172,7 +172,7 @@ void receiveData(U8 /*From*/, const void* Data,int Size){
   TOCnt=0;
   //
   S32 Ofs=*(S32*)Data;
-  if(Ofs<0) 
+  if(Ofs<0)
   { // some special features
     switch(Ofs)
     {

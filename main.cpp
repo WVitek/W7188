@@ -256,6 +256,7 @@ cdecl main()
             if(c==27) Quit=TRUE;
         }
         if(Quit) break;
+        SYS::WDT_Refresh();
         SYS::sleep(333);
     }
     SYS::stopKernel();
