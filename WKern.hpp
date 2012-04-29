@@ -68,13 +68,14 @@ class CRITICALSECTION;
 #endif
 
 #ifdef __DebugThreadState
-  #define S(x) MCS(x);
-  #define MTS(x) setMainThreadState(x);
-  #define MCS(x) setCurrThreadState(x);
+    #define S(x) setCurrThreadState(x);
+    #define MTS(x) setMainThreadState(x);
+    extern U8 LastThreadStates[8];
+    void setMainThreadState(U8 State);
+    void setCurrThreadState(U8 State);
 #else
-  #define S(x)
-  #define MTS(x)
-  #define MCS(x)
+    #define S(x)
+    #define MTS(x)
 #endif
 
 #include "WInlines.h"
@@ -96,8 +97,6 @@ extern U8 hex_to_ascii[17];
   #define PERFINC(_Cnt)
 #endif
 
-void setMainThreadState(U8 State);
-void setCurrThreadState(U8 State);
 U32 _fast FromHexStr(const U8* Hex, int Digits);
 U32 _fast FromDecStr(const U8* Dec, int Digits);
 

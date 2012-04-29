@@ -298,6 +298,7 @@ public:
 
     void doSample(TIME Time)
     {
+        S(0x41);
         U16 ps[10];
 #ifdef __MTU_VAL_EMUL
         static U8 mix;
@@ -324,6 +325,7 @@ public:
             else ps[i] = flgEADCRange<<8;
 #endif
         }
+        S(0x42);
         TIME timeA = GetLastTime();
         TIME timeB = Time - smul(ADC_Period, cnt);
         cs.enter();
@@ -341,6 +343,7 @@ public:
         FirstTime=Time-smul(Count()-1,ADC_Period);
         cnt=0;
         cs.leave();
+        S(0x43);
     }
 
 }; // PU_ADC_MTU
@@ -649,6 +652,7 @@ public:
 
   BOOL response(const U8 *Resp)
   {
+        S(0x51);
         if(!Resp)
         {
             ChFlg|=flgEComm;
@@ -662,11 +666,13 @@ public:
         switch(state)
         {
             case updateDate:
+                S(0x52);
                 tmp = (U16)SYS::SystemTime;
                 state = getDate;
                 //dbg((const char*)Resp);
                 break;
             case getDate:
+                S(0x53);
                 if((U16)SYS::SystemTime - tmp > 2000)
                 {
                     day = (U16)FromDecStr(Resp+3,2);
@@ -683,6 +689,7 @@ public:
                 //ConPrintf("\n\r%s = %d-%d-%d",Resp,year,month,day);
                 break;
             case getTime:
+                S(0x54);
                 {
                     U16 sec = (U16)FromDecStr(Resp+7,2);
                     if(prevSec==sec)
@@ -699,6 +706,7 @@ public:
 
                     S16 betweenPPS = (S16)(sysTimeOfHiPPS - prevPPS);
                     S16 delta = (S16)(sysTimeNow-sysTimeOfHiPPS);
+                    S(0x55);
                     ConPrintf( "    GPS> %04d, %03d, %03d",
                         betweenPPS,
                         (S16)(sysTimeOfLoPPS-sysTimeOfHiPPS),
@@ -716,16 +724,19 @@ public:
                     prevSec = sec;
                     U16 min = (U16)FromDecStr(Resp+5,2);
                     //ConPrintf("\n\r%s = %d:%d:%d",Resp,hour,min,sec);
+                    S(0x56);
                     if(!SYS::TryEncodeTime(year,month,day,hour,min,sec,timeGPS))
                     {
                         ChFlg|=flgEADCRange;
                         state = updateDate;
                         break;
                     }
+                    S(0x57);
                     if((U16)sysTimeOfHiPPS == prevPPS)
                     {
                         if(++tmp>32)
                         {
+                            S(0x58);
                             tmp = 0;
                             ConPrint("\n\rGPS: No PPS pulse detected");
                             ChFlg|=flgEComm;
@@ -733,19 +744,23 @@ public:
                     }
                     else
                     {
+                        S(0x59);
                         prevPPS = (U16)sysTimeOfHiPPS;
                         TIME offs = timeGPS - sysTimeOfHiPPS;
                         if(offs>0 || !SYS::TimeOk)
                         {
+                            S(0x5A);
 //                            S16 delta = (S16)(sysTimeNow-sysTimeOfHiPPS);
                             if(betweenPPS<900 || betweenPPS>1100 || delta<500 || delta>900)
                             {
                                 state = getNSats;
                                 break;
                             }
+                            S(0x5B);
                             TIME change = abs64(offs - SYS::NetTimeOffset);
                             if(900<change && change<1100)
                             {
+                                S(0x5C);
                                 if(++tmp<45)
                                 {
                                     state = getNSats;
@@ -758,6 +773,7 @@ public:
                                 PU_DI::Instance->EventDigitalInput(Event);
                                 ConPrintf( "\n\rGPS: second jitter (%dms)", (U16)change);
                             }
+                            S(0x5D);
                             SYS::setNetTimeOffset(offs);
                             state = getNSats;
                             tmp = 0;
@@ -767,6 +783,7 @@ public:
                 }
                 break;
             case getNSats:
+                S(0x5E);
                 U16 value = Resp[3]-'0';
                 state = getTime;
                 cs.enter();
@@ -775,6 +792,7 @@ public:
                 cs.leave();
                 break;
         }
+        S(0x5F);
         return TRUE;
     }
 

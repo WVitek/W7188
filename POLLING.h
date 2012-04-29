@@ -16,10 +16,11 @@ void execute()
   dbg("\n\rSTART Stat");
   U16 prevMin = 60;
   while(!Terminated){
-    //S(0x01);
+    S(0x01);
     switchLed();
     //int C0=0,C1=0;
     SYS::sleep(toNextSecond);
+    S(0x02);
     TIME Time;
     SYS::getNetTime(Time);
 #ifdef __I7K
@@ -32,7 +33,7 @@ void execute()
 #endif
     SYS::switchThread();
     //SYS::sleep(1);
-    //S(0x04);
+    S(0x03);
 #define __UNDEFINED
 #ifdef __UNDEFINED
     U16 year,month,day,hour,min,sec,msec;
@@ -47,6 +48,7 @@ void execute()
     {
         EVENT_DI Event;
         Event.Time = Time;
+        S(0x04);
         for(int i=ctx_MTU.ADCsList->Count()-1; i>=0; i--)
         {
             PU_ADC_MTU* mtu = (PU_ADC_MTU*)((*ctx_MTU.ADCsList)[i]);
@@ -61,6 +63,7 @@ void execute()
             Event.Time++;
         }
     }
+    S(0x05);
   #ifdef __I7K
     #define fmt "\n\r%d%02d%02d_%02d%02d%02d.%03d  MTU:%03d/%03d I7K:%03d/%03d SYS:%03d %02d"
     #define arg MTU_Qry, MTU_Ans, I7K_Qry, I7K_Ans

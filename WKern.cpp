@@ -396,7 +396,6 @@ U16 SYS::GetTimerISRMs(){
 #endif
 
 void SYS::startKernel(){
-  SYS::DelayMs(500);
 #ifdef __USESTDMEMMAN
   U16 Tmp;
   exploreHeap(Heap16Used,Heap16Avail,Tmp);
@@ -406,9 +405,6 @@ void SYS::startKernel(){
 #ifdef __7188X
   OS7FileSystemOptimize();
 #endif
-#ifdef __DebugThreadState
-  printThreadsState();
-#endif // __DebugThreadState
   MainThread.SysRef.Prev=&Threads;
   *(MainThread.SysRef.ThdPtr()) = &MainThread;
   MainThread.SysRef.Next=NULL;
@@ -416,6 +412,7 @@ void SYS::startKernel(){
   Threads=&(MainThread.SysRef);
   SystemStopped=FALSE;
   SYS::TimerOpen();
+  SYS::DelayMs(500);
   EnableWDT();
 }
 
@@ -433,6 +430,8 @@ void SYS::stopKernel(){
 }
 
 #ifdef __DebugThreadState
+U8 LastThreadStates[8];
+
 void SYS::printThreadsState(){
 //*
   ConPrint("\n\rActive thread: #");
@@ -440,14 +439,16 @@ void SYS::printThreadsState(){
   _disable();
   U8 Byte = ReadNVRAM(0);
   _enable();
+  LastThreadStates[0]=Byte;
   ConPrintHex(&Byte,1);
   ConPrint("Threads state: ");
-  for(int i=1; i<=5; i++){
+  for(int i=1; i<8; i++){
     ConPrintf(" #%d:",i);
 //    Byte = NVRAM_Read(i);
     _disable();
     Byte = ReadNVRAM(i);
     _enable();
+    LastThreadStates[i]=Byte;
     ConPrintHex(&Byte,1);
     NVRAM_Write(i,0x00);
   }
@@ -911,10 +912,10 @@ void THREAD::run(){
   SYS::sleep(1); // SYS::TimerProc will initialize new thread stack
   if(CurThread!=&MainThread){
     // we are in new thread
-    //*** WARNING!!! "this" value is not available!!!
+    //*** WARNING!!! "this" value is not available in changed stack!!!
     // MUST use "CurThread" instead
-    MCS(0xE3);
-    MCS(0xE4);
+    S(0xE3);
+    S(0xE4);
     CurThread->execute();
     S(0xDE);
     CurThread->stop();

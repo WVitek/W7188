@@ -181,8 +181,28 @@ bool GetComParams(char *prefix, COM_PARAMS *res)
 
 cdecl main()
 {
-    SYS::startKernel();
     dbg("\n\rSTART Main\n\r");
+    // 'RESTART' event
+    EVENT_DI Event;
+    SYS::getNetTime(Event.Time);
+    Event.Channel=255;
+    Event.ChangedTo=0;
+    Events.EventDigitalInput(Event);
+#ifdef __DebugThreadState
+    SYS::printThreadsState();
+    for(int i=0; i<8; i++)
+    {
+        U8 s=LastThreadStates[i];
+        if(s!=0)
+        {
+            Event.ChangedTo=s;
+            Event.Time++;
+            Event.Channel=210+i;
+            Events.EventDigitalInput(Event);
+        }
+    }
+#endif
+    SYS::startKernel();
 #if __MTU
     THREAD_POLL_MTU* ThdPM;
     {
@@ -241,12 +261,6 @@ cdecl main()
     THREAD_STAT* ThdStat =new THREAD_STAT();  ThdStat->run();
 #endif
 
-    // 'RESTART' event
-    EVENT_DI Event;
-    SYS::getNetTime(Event.Time);
-    Event.Channel=255;
-    Event.ChangedTo=0;
-    Events.EventDigitalInput(Event);
     //
     BOOL Quit=FALSE;
     while(TRUE){

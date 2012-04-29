@@ -26,20 +26,24 @@ void execute()
     dbg("\n\rSTART I7K_Sampler");
     while(!Terminated)
     {
+        S(0x01);
         SYS::sleep(toTypeNext | ctx_I7K.Period);
         TIME Time;
         SYS::getNetTime(Time);
         // latch
         for(int j=n1; j>=0; j--)
             (*ctx_I7K.PollList)[j]->latchPollData();
+        S(0x02);
         // free CPU
         //SYS::sleep(1);
         SYS::switchThread();
+        S(0x03);
         //dbg(".!.");
         // sample latched data
         for(int j=n1; j>=0; j--)
             (*ctx_I7K.PollList)[j]->doSample(Time);
     }
+    S(0x00);
     dbg("\n\rSTOP I7K_Sampler");
 }
 };
@@ -77,6 +81,7 @@ class THREAD_I7K_POLL : public THREAD
         U8 Resp[256];
         POLL_UNIT *pu,*pu_;
         //Realtime=TRUE;
+        S(0x01);
         // Configure modules
         while(TRUE)
         {
@@ -132,11 +137,13 @@ class THREAD_I7K_POLL : public THREAD
             // wait response
             //Resp[0]=0;
             BOOL rcvd = RS485.RxEvent().waitFor(30);
+            S(0x02);
             //if(!rcvd)
             //    RS485.clearRxBuf();
             // send next commnad
             RS485.sendCmdTo7000(Query,TRUE);
             // process response string
+            S(0x03);
             int r = RS485.receiveLine(Resp,0,TRUE);
             if(r!=0)
                 dbg3("\r\nNOANS: %d,%d",i0,r);

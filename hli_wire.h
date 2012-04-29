@@ -24,6 +24,7 @@ void execute(){
   TIMEOUTOBJ toutLink, toutTx;
   U8 TxCnt=0, RxCnt=0;
   U8 TxBuf[MaxTxSize];
+  S(0x01);
   while(!Terminated){
     U16 R = prt.ProcessIO();
 #if defined(__HLIControlCD)
@@ -35,22 +36,27 @@ void execute(){
       SYS::sleep(73);
       continue;
     }
+    S(0x02);
     BOOL NothingToDo = TRUE;
     if (R & IO_RX)
     {
       int RxSize;
       const void *Rx = prt.GetBuf( RxSize );
+      S(0x03);
       if( RxSize && HLI_receive(Rx,RxSize) )
       {
         toutLink.start(LinkTimeout); // restart link timeout
         RxCnt++;
       }
       prt.Rx(NULL);
+      S(0x04);
       NothingToDo = FALSE;
     }
+    S(0x05);
     if( R & IO_TX )
     {
       int TxSize = HLI_totransmit(TxBuf,MaxTxSize);
+      S(0x06);
       if( TxSize>0 )
       {
         prt.Tx(TxBuf,TxSize);
@@ -60,6 +66,7 @@ void execute(){
       }
       else prt.Tx(TxBuf,0);
     }
+    S(0x07);
 #ifndef __SHOWADCDATA
     SYS::dbgLed( (U32(RxCnt)<<12) | TxCnt );
 #endif
@@ -68,6 +75,7 @@ void execute(){
       HLI.RxEvent().reset();
       HLI.RxEvent().waitFor(53);
     }
+    S(0x08);
   }
   prt.Close();
   HLI.uninstall();
