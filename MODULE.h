@@ -275,7 +275,7 @@ public:
     BOOL response(const U8 *Resp)
     {
         cnt = Resp[0];
-        if(cnt>10)
+        if(cnt>10 || cnt==0)
         { cnt = 0; return FALSE; }
         int n=cnt<<1;
         int size=1+(n<<1);

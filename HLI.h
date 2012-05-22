@@ -101,7 +101,8 @@ void HLI_linkCheck()
         DIO::SetDO1(POWERON_DO1); // modem power up
         modemPower = modemPowerOn;
         toutLink.start(TOUT_LINK_AFTER_PWR_OFF);
-        ConPrint("\n\rHLI: DO1=1 (mdm pwr ON)\n\r");
+        ConPrint("\n\rHLI: mdm pwr ON\n\r");
+        //ConPrint("\n\rHLI: DO1=1 (mdm pwr ON)\n\r");
         break;
       case modemPowerOn:
         if(toutLink.IsSignaled())
@@ -109,7 +110,8 @@ void HLI_linkCheck()
             DIO::SetDO1(!POWERON_DO1); // modem power down
             modemPower = modemPowerOff;
             toutLink.start(TOUT_LINK_POWER_OFF_TIME);
-            ConPrint("\n\rHLI: DO1=0 (mdm pwr OFF)\n\r");
+            ConPrint("\n\rHLI: mdm pwr OFF\n\r");
+//            ConPrint("\n\rHLI: DO1=0 (mdm pwr OFF)\n\r");
         }
         break;
   }
@@ -133,7 +135,7 @@ BOOL HLI_receive(void const * Buf, int BufSize)
   }
   else {
     dbg2("\n\rHLI: CRC error:",BufSize);
-    dump(Buf,BufSize);
+    //dump(Buf,BufSize);
     return FALSE; //dododo
   }
 }
