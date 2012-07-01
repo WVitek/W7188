@@ -411,9 +411,9 @@ void SYS::startKernel(){
   CurThread=&MainThread;
   Threads=&(MainThread.SysRef);
   SystemStopped=FALSE;
-  SYS::TimerOpen();
   SYS::DelayMs(500);
   EnableWDT();
+  SYS::TimerOpen();
 }
 
 void SYS::stopKernel(){

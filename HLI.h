@@ -14,10 +14,8 @@
 
 #define setNeedConnection(x)
 
-//#ifndef __GPS_TIME
-    #include "TIMC_Svc.h"
-    TIMECLIENT_SVC TimeSvc;
-//#endif
+#include "TIMC_Svc.h"
+TIMECLIENT_SVC TimeSvc;
 
 #if defined(__7188XA) || defined(__7188XB)
 void HLI_linkCheck();
@@ -85,7 +83,7 @@ static TIMEOUTOBJ toutLink;
 #ifdef __7188X
 
 #if !defined(POWERON_DO1)
-#define POWERON_DO1 true
+#define POWERON_DO1 1
 #endif
 
 void HLI_linkCheck()
@@ -101,8 +99,7 @@ void HLI_linkCheck()
         DIO::SetDO1(POWERON_DO1); // modem power up
         modemPower = modemPowerOn;
         toutLink.start(TOUT_LINK_AFTER_PWR_OFF);
-        ConPrint("\n\rHLI: mdm pwr ON\n\r");
-        //ConPrint("\n\rHLI: DO1=1 (mdm pwr ON)\n\r");
+        ConPrintf("\n\rHLI: DO1=%d (mdm pwr ON)\n\r",POWERON_DO1);
         break;
       case modemPowerOn:
         if(toutLink.IsSignaled())
@@ -110,8 +107,7 @@ void HLI_linkCheck()
             DIO::SetDO1(!POWERON_DO1); // modem power down
             modemPower = modemPowerOff;
             toutLink.start(TOUT_LINK_POWER_OFF_TIME);
-            ConPrint("\n\rHLI: mdm pwr OFF\n\r");
-//            ConPrint("\n\rHLI: DO1=0 (mdm pwr OFF)\n\r");
+            ConPrintf("\n\rHLI: DO1=%d (mdm pwr OFF)\n\r",!POWERON_DO1);
         }
         break;
   }
