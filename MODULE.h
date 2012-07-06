@@ -697,6 +697,7 @@ public:
                         state = getNSats;
                         break;
                     }
+                    prevSec = sec;
 
                     TIME sysTimeNow, timeGPS;
                     SYS::getSysTime(sysTimeNow);
@@ -742,7 +743,6 @@ public:
                             //state = updateDate;
                             //break;
                         }
-                        prevSec = sec;
                         U16 min = (U16)FromDecStr(Resp+5,2);
                         //ConPrintf("\n\r%s = %d:%d:%d",Resp,hour,min,sec);
                         S(0x56);
