@@ -673,7 +673,7 @@ public:
                 break;
             case getDate:
                 S(0x53);
-                if((U16)SYS::SystemTime - tmp > 2000)
+                if((U16)SYS::SystemTime - tmp > 2000u) // wait 2s after updateDate
                 {
                     day = (U16)FromDecStr(Resp+3,2);
                     month = (U16)FromDecStr(Resp+5,2);
@@ -713,24 +713,6 @@ public:
                         delta
                     );
 
-                    U16 hour = (U16)FromDecStr(Resp+3,2);
-                    U16 ph = prevHour;
-                    prevHour = hour;
-                    if(ph > hour) // start of new day
-                    {
-                        state = updateDate;
-                        break;
-                    }
-                    prevSec = sec;
-                    U16 min = (U16)FromDecStr(Resp+5,2);
-                    //ConPrintf("\n\r%s = %d:%d:%d",Resp,hour,min,sec);
-                    S(0x56);
-                    if(!SYS::TryEncodeTime(year,month,day,hour,min,sec,timeGPS))
-                    {
-                        ChFlg|=flgEADCRange;
-                        state = updateDate;
-                        break;
-                    }
                     S(0x57);
                     if((U16)sysTimeOfHiPPS == prevPPS)
                     {
@@ -746,6 +728,29 @@ public:
                     {
                         S(0x59);
                         prevPPS = (U16)sysTimeOfHiPPS;
+
+                        U16 hour = (U16)FromDecStr(Resp+3,2);
+                        U16 ph = prevHour;
+                        prevHour = hour;
+                        if(ph > hour) // start of new day
+                        {
+                            // update date
+                            TIME time;
+                            SYS::getNetTime(time);
+                            SYS::DecodeDate(time,year,month,day);
+                            //state = updateDate;
+                            //break;
+                        }
+                        prevSec = sec;
+                        U16 min = (U16)FromDecStr(Resp+5,2);
+                        //ConPrintf("\n\r%s = %d:%d:%d",Resp,hour,min,sec);
+                        S(0x56);
+                        if(!SYS::TryEncodeTime(year,month,day,hour,min,sec,timeGPS))
+                        {
+                            ChFlg|=flgEADCRange;
+                            state = updateDate;
+                            break;
+                        }
                         TIME offs = timeGPS - sysTimeOfHiPPS;
                         if(offs>0 || !SYS::TimeOk)
                         {

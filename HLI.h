@@ -75,9 +75,19 @@ struct PACKET
 #define CRC_SIZE 2
 #define HLI_SYSDATASIZE (sizeof(PACKETHEADER)+CRC_SIZE)
 
+#ifdef __RESET_IF_NO_LINK
+
+#define TOUT_LINK_AFTER_DATA_RX (toTypeSec | 240)
+#define TOUT_LINK_AFTER_PWR_OFF (toTypeSec | 900)
+
+#else
+
 #define TOUT_LINK_AFTER_DATA_RX (toTypeSec | 600)
 #define TOUT_LINK_AFTER_PWR_OFF (toTypeSec | 600)
 #define TOUT_LINK_POWER_OFF_TIME (toTypeSec | 5)
+
+#endif
+
 static TIMEOUTOBJ toutLink;
 
 #ifdef __7188X
@@ -104,15 +114,21 @@ void HLI_linkCheck()
       case modemPowerOn:
         if(toutLink.IsSignaled())
         {
+#ifdef __RESET_IF_NO_LINK
+            SYS::reset();
+#else
             DIO::SetDO1(!POWERON_DO1); // modem power down
             modemPower = modemPowerOff;
             toutLink.start(TOUT_LINK_POWER_OFF_TIME);
             ConPrintf("\n\rHLI: DO1=%d (mdm pwr OFF)\n\r",!POWERON_DO1);
+#endif
         }
         break;
   }
 }
-#endif
+
+#endif // __7188X
+
 
 BOOL HLI_receive(void const * Buf, int BufSize)
 {
