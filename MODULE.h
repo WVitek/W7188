@@ -714,7 +714,10 @@ public:
                     );
 
                     S(0x57);
-                    if((U16)sysTimeOfHiPPS == prevPPS)
+                    BOOL NoPPS = (U16)sysTimeOfHiPPS == prevPPS;
+                    prevPPS = (U16)sysTimeOfHiPPS;
+
+                    if(NoPPS)
                     {
                         if(++tmp>32)
                         {
@@ -727,8 +730,6 @@ public:
                     else
                     {
                         S(0x59);
-                        prevPPS = (U16)sysTimeOfHiPPS;
-
                         U16 hour = (U16)FromDecStr(Resp+3,2);
                         U16 ph = prevHour;
                         prevHour = hour;
