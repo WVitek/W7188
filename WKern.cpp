@@ -411,7 +411,7 @@ void SYS::startKernel(){
   CurThread=&MainThread;
   Threads=&(MainThread.SysRef);
   SystemStopped=FALSE;
-  SYS::DelayMs(500);
+  //SYS::DelayMs(500);
   EnableWDT();
   SYS::TimerOpen();
 }
@@ -909,7 +909,7 @@ void THREAD::run(){
   changeStack(FP_SEG(SPtr)+((FP_OFF(SPtr)>0)?1:0),StackSize-2,StackSize-2);
   MTS(0xE2);
   SYS::sti();
-  SYS::sleep(1); // SYS::TimerProc will initialize new thread stack
+  SYS::sleep(10); // SYS::TimerProc will initialize new thread stack
   if(CurThread!=&MainThread){
     // we are in new thread
     //*** WARNING!!! "this" value is not available in changed stack!!!
