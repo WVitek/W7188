@@ -292,8 +292,8 @@ void THREAD_POLL_MTU::execute()
             detectedMTU = bits;
         }
     }
-    if(Terminated)
-        return;
+//    if(Terminated)
+//        return;
     S(0x06);
     if(count==0)
         for(int i=0; i<=15; i++)
@@ -329,7 +329,7 @@ void THREAD_POLL_MTU::execute()
             }
             // Query coeffs for transformation raw (p,t) values to physical P value
             S(0x09);
-            for(int k = 0; k<count; k++)
+            for(int k = 0; k<count && !Terminated; k++)
             {
                 PU_ADC_MTU *mtu = MTUs[k];
                 int i = mtu->BusNum;
@@ -340,12 +340,10 @@ void THREAD_POLL_MTU::execute()
                 // Get pressure calculation coeffs
                 //BOOL ok = TRUE;
                 Qry_MTU[0] = i;
-                for(int j=0; j<9;)
+                for(int j=0; j<9 && !Terminated;)
                 {
                     if(mtu->coeffs.C[j]!=0)
                     { j++; continue; }
-                    if(Terminated)
-                        return;
                     S(0x0B);
                     Qry_MTU[3] = 0x0C + (j<<2);
                     {
@@ -388,7 +386,8 @@ void THREAD_POLL_MTU::execute()
     }
     S(0x10);
     // disable modbus mode
-    SYS::sleep(3000);
+    if(!Terminated)
+        SYS::sleep(3000);
     RS485.clearRxBuf();
     S(0x11);
     // polling

@@ -119,6 +119,9 @@ class THREAD_I7K_POLL : public THREAD
 
             if(!more && --i<0)
                 i=nPoll-1;
+        #ifdef __MTU
+            SYS::sleep(17);
+        #endif
         }
 /*/
         pu_=(*ctx_I7K.PollList)[i];
@@ -131,22 +134,23 @@ class THREAD_I7K_POLL : public THREAD
         {
             // prepare next command
             pu=(*ctx_I7K.PollList)[i];
-            if(!pu->GetPollCmd(Query))
-                if(--i<0)
-                    i=nPoll-1;
+            if(!pu->GetPollCmd(Query)) if(--i<0) i=nPoll-1;
             // wait response
             //Resp[0]=0;
             BOOL rcvd = RS485.RxEvent().waitFor(30);
             S(0x02);
-            //if(!rcvd)
-            //    RS485.clearRxBuf();
             // send next commnad
             RS485.sendCmdTo7000(Query,TRUE);
             // process response string
             S(0x03);
             int r = RS485.receiveLine(Resp,0,TRUE);
+        #ifdef __I7K_NOANS
             if(r!=0)
-                dbg3("\r\nNOANS: %d,%d",i0,r);
+            {
+                pu_->GetPollCmd(Query);
+                dbg3("\r\nNOANS: %d, %s",r,Query);
+            }
+        #endif
             int Ans = (r==0 && pu_->response(Resp)) ? 1: 0;
             I7K_StatAdd(1,Ans);
         #ifdef __MTU

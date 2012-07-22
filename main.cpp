@@ -182,6 +182,9 @@ bool GetComParams(char *prefix, COM_PARAMS *res)
 cdecl main()
 {
     dbg("\n\rSTART Main\n\r");
+#ifdef __DebugThreadState
+    SYS::printThreadsState();
+#endif
     // 'RESTART' event
     EVENT_DI Event;
     SYS::getNetTime(Event.Time);
@@ -189,7 +192,6 @@ cdecl main()
     Event.ChangedTo=0;
     Events.EventDigitalInput(Event);
 #ifdef __DebugThreadState
-    SYS::printThreadsState();
     for(int i=0; i<8; i++)
     {
         U8 s=LastThreadStates[i];
@@ -202,7 +204,11 @@ cdecl main()
         }
     }
 #endif
+
     SYS::startKernel();
+
+//***** Starting threads
+
 #if __MTU
     THREAD_POLL_MTU* ThdPM;
     {
@@ -257,14 +263,17 @@ cdecl main()
 #ifdef __GPS_TIME_NMEA
     THREAD_GPS* ThdGPS =new THREAD_GPS();  ThdGPS->run();
 #endif
+
 #if !defined(__NO_STAT)
     THREAD_STAT* ThdStat =new THREAD_STAT();  ThdStat->run();
 #endif
 
-    //
+//***** Infinite working loop (until Esc received)
     BOOL Quit=FALSE;
-    while(TRUE){
-        while(ConBytesInRxB()){
+    while(TRUE)
+    {
+        while(ConBytesInRxB())
+        {
             char c=ConReadChar();
             ConWriteChar(c);
             if(c==27) Quit=TRUE;
@@ -273,23 +282,27 @@ cdecl main()
         SYS::WDT_Refresh();
         SYS::sleep(333);
     }
-    SYS::stopKernel();
-#ifdef ThdHLI
-    delete ThdHLI1;
-#endif
-#ifdef __GPS_TIME_NMEA
-    delete ThdGPS;
-#endif
-#if __I7K
-    delete ThdS;
-    delete ThdP;
-#endif
-#if __MTU
-    delete ThdPM;
-#endif
-#if !defined(__NO_STAT)
-    delete ThdStat;
-#endif
+    SYS::stopKernel(); // all threads stopped automatically
+
+//**** deleting threads
+    #ifdef ThdHLI
+        delete ThdHLI1;
+    #endif
+    #ifdef __GPS_TIME_NMEA
+        delete ThdGPS;
+    #endif
+    #if __I7K
+        delete ThdS;
+        delete ThdP;
+    #endif
+    #if __MTU
+        delete ThdPM;
+    #endif
+    #if !defined(__NO_STAT)
+        delete ThdStat;
+    #endif
+
+//***** All done
     dbg("\n\rSTOP Main\n\r");
     SYS::DelayMs(100);
     return 0;

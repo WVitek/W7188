@@ -828,132 +828,150 @@ int _fast SYS::waitForAny(TIMEOUT Timeout,int nCount,SYNCOBJ **SO){
 
 THREAD::THREAD(U16 StackSize){
 #ifdef __DebugThreadState
-  static U8 ThreadNumber=1;
-  StateAddr=ThreadNumber++;
+    static U8 ThreadNumber=1;
+    StateAddr=ThreadNumber++;
 #endif // _DebugThreadState
-  if(this!=&MainThread && StackSize>0){
-    this->StackSize=StackSize;
-    StackPtr=SYS::malloc(StackSize+16);
-    void * SPtr = normalizePtr(StackPtr);
-    memset(StackPtr,0,StackSize+16);
-    SavedSS=FP_SEG(SPtr)+((FP_OFF(SPtr)>0)?1:0);
-  }
-  else{
-    StackPtr=NULL;
-    SavedSS=_SS;
-  }
+    if(this!=&MainThread && StackSize>0)
+    {
+        this->StackSize=StackSize;
+        StackPtr=SYS::malloc(StackSize+16);
+        void * SPtr = normalizePtr(StackPtr);
+        memset(StackPtr,0,StackSize+16);
+        SavedSS=FP_SEG(SPtr)+((FP_OFF(SPtr)>0)?1:0);
+    }
+    else
+    {
+        StackPtr=NULL;
+        SavedSS=_SS;
+    }
 //*/
 }
 
 THREAD::~THREAD(){
-  stop();
-  if(StackPtr){
-    SYS::free(StackPtr);
-    StackPtr=NULL;
-  }
+    stop();
+    if(StackPtr)
+    {
+        SYS::free(StackPtr);
+        StackPtr=NULL;
+    }
 }
 
-void THREAD::suspend(BOOL FromWaitFor){
-  SYS::cli();
-  SysRef.remove();
-  Suspended=Suspended||!FromWaitFor;
-  SYS::sti();
+void THREAD::suspend(BOOL FromWaitFor)
+{
+    SYS::cli();
+    SysRef.remove();
+    Suspended=Suspended||!FromWaitFor;
+    SYS::sti();
 }
 
-void THREAD::stop(){
-  SYS::cli();
-  Terminated=TRUE;
-  suspend();
-  S(0xDA);
-  releaseEventRefs(NULL);
-  SYS::sti();
+void THREAD::stop()
+{
+    SYS::cli();
+    Terminated=TRUE;
+    suspend();
+    S(0xDA);
+    releaseEventRefs(NULL);
+    SYS::sti();
 }
 
 void THREAD::releaseEventRefs(_BDLI *Reason){
-  SYS::cli();
-  TOObj.SysRef.remove();
-  for(int i=0; i<THREAD_MAX_EVENTS; i++){
-    if(&(EventRef[i])==Reason) EventIdx=i;
-    EventRef[i].remove();
-  }
-  SYS::sti();
+    SYS::cli();
+    TOObj.SysRef.remove();
+    for(int i=0; i<THREAD_MAX_EVENTS; i++)
+    {
+        if(&(EventRef[i])==Reason) EventIdx=i;
+        EventRef[i].remove();
+    }
+    SYS::sti();
 }
 
-void THREAD::resume(BOOL FromWaitFor){
-  if(Suspended==FromWaitFor) return;
-  SYS::cli();
-  SysRef.add(Threads,this);
-  Suspended=FALSE;
-  SYS::sti();
+void THREAD::resume(BOOL FromWaitFor)
+{
+    if(Suspended==FromWaitFor) return;
+    SYS::cli();
+    SysRef.add(Threads,this);
+    Suspended=FALSE;
+    SYS::sti();
 }
 
-void THREAD::awake(){
-  resume(TRUE);
-  releaseEventRefs(&(EventRef[0]));
+void THREAD::awake()
+{
+    resume(TRUE);
+    releaseEventRefs(&(EventRef[0]));
 }
 
 void THREAD::run(){
-  if((CurThread!=&MainThread)||SYS::sti_disabled()) return;
-  static void* st;
-  static U16 OldSS,OldSP,OldBP;
-  MTS(0xE0);
-  st=SYS::malloc(StackSize+16); // create temporary stack
-  memset(st,0,StackSize+16);
-  void * SPtr = normalizePtr(st);
-//  ConPrintf("\n\rst=%p, SPtr=%p",st,SPtr);
-  SYS::cli();
-  MTS(0xE1);
-  NewThread=this;
-  OldSS=_SS; OldSP=_SP; OldBP=_BP; // remember main stack state
-  // switch to temporary stack
-  changeStack(FP_SEG(SPtr)+((FP_OFF(SPtr)>0)?1:0),StackSize-2,StackSize-2);
-  MTS(0xE2);
-  SYS::sti();
-  SYS::sleep(10); // SYS::TimerProc will initialize new thread stack
-  if(CurThread!=&MainThread){
-    // we are in new thread
-    //*** WARNING!!! "this" value is not available in changed stack!!!
-    // MUST use "CurThread" instead
-    S(0xE3);
-    S(0xE4);
-    CurThread->execute();
-    S(0xDE);
-    CurThread->stop();
-    S(0xDD);
-    SYS::switchThread();
-  }
-  else{
-    // we are in MainThread
-    MTS(0xE3);
+    static void* st = NULL;
+    if((CurThread!=&MainThread) ||
+        SYS::sti_disabled() ||
+        st!=NULL)
+    {
+        ConPrint("\n\rCan't THREAD::run");
+        return;
+    }
+    static U16 OldSS,OldSP,OldBP;
+    MTS(0xE0);
+    st=SYS::malloc(StackSize+16); // create temporary stack
+    memset(st,0,StackSize+16);
+    void * SPtr = normalizePtr(st);
+    //  ConPrintf("\n\rst=%p, SPtr=%p",st,SPtr);
     SYS::cli();
-    changeStack(OldSS,OldSP,OldBP); // switch back to main stack
+    //MTS(0xE1);
+    NewThread=this;
+    OldSS=_SS; OldSP=_SP; OldBP=_BP; // remember main stack state
+    // switch to temporary stack
+    changeStack(FP_SEG(SPtr)+((FP_OFF(SPtr)>0)?1:0),StackSize-2,StackSize-2);
+    //MTS(0xE2);
     SYS::sti();
-    Suspended=TRUE;
-    Terminated=FALSE;
-    MTS(0xE4);
-    resume();
-    MTS(0xE5);
-#ifdef __DbgThd
-/*
-    MainThread.Realtime=TRUE;
-    printDebugInfo();
-    MainThread.Realtime=FALSE;
-*/
-//    dbg("\n\rHello from main thread!");
-#endif
-    SYS::free(st);
-    MTS(0xE6);
-  }
+    SYS::sleep(5); // SYS::TimerProc will initialize new thread stack
+    if(CurThread!=&MainThread)
+    {
+        // we are in new thread
+        //*** WARNING!!! "this" value is not available in changed stack!!!
+        // MUST use "CurThread" instead
+        //S(0xE3);
+        CurThread->execute();
+        //S(0xDE);
+        CurThread->stop();
+        //S(0xDD);
+        SYS::switchThread();
+    }
+    else
+    {
+        // we are in MainThread
+        MTS(0xE3);
+        SYS::cli();
+        changeStack(OldSS,OldSP,OldBP); // switch back to main stack
+        SYS::sti();
+        Suspended=TRUE;
+        Terminated=FALSE;
+        MTS(0xE4);
+        resume();
+        MTS(0xE5);
+        #ifdef __DbgThd
+        /*
+        MainThread.Realtime=TRUE;
+        printDebugInfo();
+        MainThread.Realtime=FALSE;
+        */
+        //    dbg("\n\rHello from main thread!");
+        #endif
+        SYS::free(st);
+        st = NULL;
+        MTS(0xE6);
+    }
 }
 
-void THREAD::terminate(){
-  Terminated=TRUE;
+void THREAD::terminate()
+{
+    Terminated=TRUE;
 }
 
 #ifdef __DbgThd
-void THREAD::printDebugInfo(){
-  ConPrintf("\n\rSS=%04X SP=%04X BP=%04X Stack dump (SS:SP):",SavedSS,SavedSP,SavedBP);
-  dump(MK_FP(SavedSS,SavedSP),30);
+void THREAD::printDebugInfo()
+{
+    ConPrintf("\n\rSS=%04X SP=%04X BP=%04X Stack dump (SS:SP):",SavedSS,SavedSP,SavedBP);
+    dump(MK_FP(SavedSS,SavedSP),30);
 }
 #endif
 

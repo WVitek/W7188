@@ -15,7 +15,8 @@ void execute()
 {
   dbg("\n\rSTART Stat");
   U16 prevMin = 60;
-  while(!Terminated){
+  while(true)
+  {
     S(0x01);
     switchLed();
     //int C0=0,C1=0;
@@ -32,6 +33,8 @@ void execute()
     MTU_StatRead(MTU_Qry,MTU_Ans);
 #endif
     SYS::switchThread();
+    if(Terminated)
+        break;
     //SYS::sleep(1);
     S(0x03);
 #define __UNDEFINED

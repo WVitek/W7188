@@ -193,21 +193,31 @@ void COMPORT::printf(const char* Fmt, ...){
 }
 
 void COMPORT::sendCmdTo7000(U8 *Cmd, BOOL Checksum, BOOL ClearRxBuf){
-  U8 Buf[32];
+  //U8 Buf[32];
   int i=0;
-  if(Checksum){
+  if(Checksum)
+  {
     U8 Sum=0;
-    while(Cmd[i]) {
-      Buf[i] = Cmd[i];
+    while(Cmd[i])
+    {
+      //Buf[i] = Cmd[i];
       Sum += Cmd[i++];
     }
-    Buf[i++] = hex_to_ascii[Sum>>4];
-    Buf[i++] = hex_to_ascii[Sum&0xF];
+    write(Cmd,i);
+    U8 Buf[3];
+    Buf[0] = hex_to_ascii[Sum>>4];
+    Buf[1] = hex_to_ascii[Sum&0xF];
+    Buf[2] = '\r';
+    write(Buf,3);
   }
   else
-    while(Cmd[i]) Buf[i] = Cmd[i++];
-  Buf[i++] = '\r';
-  write(Buf,i);
+  {
+    while(Cmd[i]) i++;//Buf[i] = Cmd[i++];
+    write(Cmd,i);
+    writeChar('\r');
+  }
+  //Buf[i++] = '\r';
+  //write(Buf,i);
   if(ClearRxBuf) clearRxBuf();
   setExpectation(0xFF,'\r');
 }
@@ -215,7 +225,7 @@ void COMPORT::sendCmdTo7000(U8 *Cmd, BOOL Checksum, BOOL ClearRxBuf){
 int COMPORT::receiveLine(U8 *Buf,int Timeout,BOOL Checksum, U8 endChar){
     int Pos=0, Res;
     if(Timeout && SYS::waitFor(Timeout,&RxEvent())!=1)
-    {} // Res=-1;
+        Res=-1;
     //else
     {
         int Sum=0;
