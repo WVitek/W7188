@@ -252,78 +252,82 @@ void THREAD_POLL_MTU::execute()
     dbg3("\n\rSTART MTU_Poll @ COM%d:%ld\n\rMTUs: ", pollPort, baudRate);
     ConPrintHex(addrs, count);
 #define use_mtu_crc TRUE
-    //***** Scan RS-485 bus
-    U16 detectedMTU = 0;
-    dbg("\n\rMTU: search...");
-    {
-        U16 k = count ? 2 : 65535;
-        while(!Terminated && k-- > 0)
-        {
-            S(0x02);
-            // scan all possible MTUs twice
-            //U16 detected[2];
-            RS485.clearRxBuf();
-            U16 bits = 0;
-            for(int i=0; i<=15; i++)
-            {
-                S(0x03);
-                // Check presence and set modbus mode
-                RS485.writeChar(0xC0 | i);
-                U8 ans;
-                U16 cnt = RS485.read(&ans,1,10);
-                S(0x04);
-                if(cnt==1 && ans==0xAA)
-                {
-                    U16 bit = 1<<i;
-                    bits |= bit;
-                    if((detectedMTU & bit) == 0)
-                        dbg2("\n\rMTU: #%d detected", i);
-                    SYS::sleep(20);
-                }
-            }
-            S(0x05);
-            if(bits==0)
-            {
-                SYS::sleep(3000);
-                continue;
-            }
-            if(detectedMTU==bits)
-                break;
-            detectedMTU = bits;
-        }
-    }
-//    if(Terminated)
-//        return;
-    S(0x06);
     if(count==0)
+    {   //***** detect MTUs
+        U16 detectedMTU = 0;
+        dbg("\n\rMTU: search...");
+        {
+            U16 k = count ? 2 : 65535;
+            while(!Terminated && k-- > 0)
+            {
+                S(0x02);
+                // scan all possible MTUs twice
+                //U16 detected[2];
+                RS485.clearRxBuf();
+                U16 bits = 0;
+                for(int i=0; i<=15; i++)
+                {
+                    S(0x03);
+                    // Check presence and set modbus mode
+                    RS485.writeChar(0xC0 | i);
+                    U8 ans;
+                    U16 cnt = RS485.read(&ans,1,10);
+                    S(0x04);
+                    if(cnt==1 && ans==0xAA)
+                    {
+                        U16 bit = 1<<i;
+                        bits |= bit;
+                        if((detectedMTU & bit) == 0)
+                            dbg2("\n\rMTU: #%d detected", i);
+                        SYS::sleep(20);
+                    }
+                }
+                S(0x05);
+                if(bits==0)
+                {
+                    SYS::sleep(3000);
+                    continue;
+                }
+                if(detectedMTU==bits)
+                    break;
+                detectedMTU = bits;
+            }
+        }
+        S(0x06);
         for(int i=0; i<=15; i++)
             if((detectedMTU & (1<<i))!=0)
                 addrs[count++] = i;
+    }
 
     // create MTU objects
     PU_ADC_MTU *MTUs[16];
     U16 noCoeffMTU = 0;
-    for(int i=0; i<count; i++)
+    char* coeffsFileName = "MTU_#.cfs";
     {
-        noCoeffMTU |= 1<<addrs[i];
-        MTUs[i] = new PU_ADC_MTU(addrs[i]);
+        for(int i=0; i<count; i++)
+        {
+            MTUs[i] = new PU_ADC_MTU(addrs[i]);
+            coeffsFileName[4]=hex_to_ascii[addrs[i]];
+            FILE_DATA* pFD = SYS::FileInfoByName(coeffsFileName);
+            // Try to load saved coeffs
+            if(pFD!=NULL && pFD->size==sizeof(MTU_Coeffs))
+                MTUs[i]->coeffs = *(MTU_Coeffs*)pFD->addr;
+            else noCoeffMTU |= 1<<addrs[i];
+        }
     }
-    //ConPrintf("\n\rMTU: n=%d",ctx_MTU.ADCsList->Count());
     S(0x07);
-    noCoeffMTU &= detectedMTU;
-    {
+    if(noCoeffMTU!=0)
+    {   // Load coeffs from MTUs
         Qry_MTU[1] = 0x04;
         Qry_MTU[2] = 0x00;
         Qry_MTU[4] = 0x00;
         Qry_MTU[5] = 0x02;
         while(noCoeffMTU!=0 && !Terminated)
         {
-            // set modbus mode for present MTUs
+            // set modbus mode for all possible MTUs
             S(0x08);
             for(int i=0; i<=15; i++)
             {
-                if((detectedMTU & (1<<i))==0)
-                    continue;
                 RS485.writeChar(0x40 | i);
                 RS485.read(&Rsp_MTU,1,10);
             }
@@ -379,15 +383,17 @@ void THREAD_POLL_MTU::execute()
                 {
                     ConPrintf("\n\rMTU #%d: coeffs OK", i);
                     noCoeffMTU &= ~(1<<i);
+                    coeffsFileName[4]=hex_to_ascii[i];
+                    SYS::FileWrite(coeffsFileName,&mtu->coeffs,sizeof(MTU_Coeffs));
                 }
             }
             S(0x0F);
         }
+        S(0x10);
+        // disable modbus mode
+        if(!Terminated)
+            SYS::sleep(3000);
     }
-    S(0x10);
-    // disable modbus mode
-    if(!Terminated)
-        SYS::sleep(3000);
     RS485.clearRxBuf();
     S(0x11);
     // polling

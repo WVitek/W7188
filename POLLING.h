@@ -101,10 +101,36 @@ void execute()
     ConPrint(".");
 #endif
     HLI_linkCheck();
+#ifdef __DO2_PERIOD
+    {   // DO2 control
+        static TIMEOUTOBJ toutDO2;
+        static enum {do2Init, do2On, do2Off} do2State = do2Init;
+        switch(do2State)
+        {
+            case do2Off:
+                if(!toutDO2.IsSignaled())
+                    break;
+            case do2Init:
+                DIO::SetDO2(1);
+                do2State = do2On;
+                toutDO2.start(toTypeSec | (__DO2_PERIOD));
+                ConPrint("\n\rDO2=1\n\r");
+                break;
+            case do2On:
+                if(!toutDO2.IsSignaled())
+                    break;
+                DIO::SetDO2(0);
+                do2State = do2Off;
+                toutDO2.start(toTypeSec | 1);
+                ConPrint("\n\rDO2=0\n\r");
+        }
+    }
+#endif
   }
   S(0x00);
   dbg("\n\rSTOP Stat");
 }
+
 
 };
 

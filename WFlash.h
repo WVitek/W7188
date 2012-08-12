@@ -78,9 +78,9 @@ BOOL __waitFlashOp(void* Addr){
     SYS::WDT_Refresh();
     PreData=CurData;
     CurData=*(U8*)Addr;
-    if ( ((PreData ^ CurData) & TOGGLE_STATUS) != TOGGLE_STATUS ) 
+    if ( ((PreData ^ CurData) & TOGGLE_STATUS) != TOGGLE_STATUS )
       return TRUE;
-    else if ( (PreData & TIMEOUT_STATUS) == TIMEOUT_STATUS ) 
+    else if ( (PreData & TIMEOUT_STATUS) == TIMEOUT_STATUS )
       return FALSE;
   }while(--count);
   return FALSE;
@@ -137,11 +137,40 @@ BOOL SYS::FlashErase(U16 Seg)
 
 void* SYS::FlashGetFreePosition()
 {
-  __ReadFlashInfo();
-  FILE_DATA *pFD = (FILE_DATA*)MK_FP(FlashStartSector,0);
-  while(pFD->mark==0x7188)
-    pFD=(FILE_DATA*)U32toFP( FPtoU32(pFD) + sizeof(FILE_DATA) + pFD->size );
-  return (void*)pFD;
+    __ReadFlashInfo();
+    FILE_DATA *pFD = (FILE_DATA*)MK_FP(FlashStartSector,0);
+    while(pFD->mark==0x7188)
+        pFD=(FILE_DATA*)U32toFP( FPtoU32(pFD) + sizeof(FILE_DATA) + pFD->size );
+    return (void*)pFD;
+}
+
+FILE_DATA* SYS::FileInfoByName(char const* name)
+{
+    __ReadFlashInfo();
+    FILE_DATA *result = NULL;
+    FILE_DATA *pFD = (FILE_DATA*)MK_FP(FlashStartSector,0);
+    while(pFD->mark==0x7188)
+    {
+        if( strnicmp( (char const*)pFD->fname, name, 12 )==0 )
+            result=pFD;
+        pFD=(FILE_DATA*)U32toFP( FPtoU32(pFD) + sizeof(FILE_DATA) + pFD->size );
+    }
+    return result;
+}
+
+#include "WCRCs.hpp"
+void SYS::FileWrite(char const* name, void const* data, U16 size)
+{
+    U8* dst=(U8*)FlashGetFreePosition();
+    FILE_DATA fd;
+    memset(&fd,0,sizeof(fd));
+    fd.mark = 0x7188;
+    fd.size = size;
+    strncpy((char*)&fd.fname, name, sizeof(fd.fname));
+    fd.addr = dst+sizeof(fd);
+    fd.CRC = CRC16_get(data,size,CRC16_OS7FS);
+    SYS::FlashWriteBlock(dst,&fd,sizeof(fd),TRUE);
+    SYS::FlashWriteBlock(fd.addr,data,size,TRUE);
 }
 
 #elif defined(__7188)
@@ -174,15 +203,15 @@ void* SYS::FlashGetFreePosition()
 
 #endif
 
-BOOL SYS::FlashWriteBlock(void *Dst, const void* Src, U32 Size, BOOL AutoErase)
+BOOL SYS::FlashWriteBlock(void *Dst, void const* Src, U32 Size, BOOL AutoErase)
 {
   U32 iSrc = FPtoU32(Src), iDst = FPtoU32(Dst);
   U16 SectorNum = ((U16)iDst == 0) ? 0 : hi(iDst); // can set SectorNum=0
   for(; Size>0; Size--, iSrc++, iDst++)
   {
-  #ifdef __7188      
+  #ifdef __7188
     if( (U8)Size & 0x7F == 0 ) // after every 128 bytes writing
-      SYS::WDT_Refresh(); // reset watchdog 
+      SYS::WDT_Refresh(); // reset watchdog
   #endif
     if(AutoErase && SectorNum != hi(iDst))
     { // if new 64K-sector of flash begins, erase it

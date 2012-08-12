@@ -115,6 +115,8 @@ void HLI_linkCheck()
         if(toutLink.IsSignaled())
         {
 #ifdef __RESET_IF_NO_LINK
+            ConPrint("\n\rRESET by NO LINK timeout");
+            SYS::sleep(100);
             SYS::reset();
 #else
             DIO::SetDO1(!POWERON_DO1); // modem power down
@@ -134,6 +136,9 @@ BOOL HLI_receive(void const * Buf, int BufSize)
 {
   if( CRC16_is_OK(Buf,BufSize,CRC16_PPP) )
   {
+#ifdef __HLI_RX_SWITCH_LED
+    switchLed();
+#endif
     PACKET *p = (PACKET*)Buf;
     if(p->Hdr.To != MyAddr) return TRUE;
     U8 SvcID = p->Hdr.ServiceID;

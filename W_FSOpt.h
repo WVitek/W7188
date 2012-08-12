@@ -11,9 +11,9 @@ void printFILEINFOs(FILEINFO *fi, int n)
   {
     void *sa = ((FILE_DATA*)U32toFP(fi[i].Addr))->addr;
     FILE_DATA *fd = &(fi[i].fd);
-    ConPrintf( 
-      "\n\r#%d : Src=%P Dst=%P Size=%05lX CRC=%04X Name=%.12s", 
-      i, sa, fd->addr, fd->size, fd->CRC, fd->fname 
+    ConPrintf(
+      "\n\r#%d : Src=%P Dst=%P Size=%05lX CRC=%04X Name=%.12s",
+      i, sa, fd->addr, fd->size, fd->CRC, fd->fname
     );
   }
 }
@@ -25,7 +25,7 @@ void ImmediateCharMsg(char c)
 }
 
 #define nMAXFILES 512
-#define _32Kb 0x8000
+#define _32K 0x8000
 
 void OS7FileSystemOptimize()
 {
@@ -40,20 +40,20 @@ void OS7FileSystemOptimize()
   BOOL NeedOpt = FALSE;
   do {
     FILE_DATA *pFD = (FILE_DATA*)U32toFP(Addr);
-    if( pFD->mark != 0x7188) 
+    if( pFD->mark != 0x7188)
       break;
-    if( pFD->fname[0]!=0xFF && pFD->fname[0]!=0 ) 
+    if( pFD->fname[0]!=0xFF && pFD->fname[0]!=0 )
     { // do not remember files with invalid names
       // search for FILEINFO with such name
       int i;
       for(i=nFiles-1; i>=0; i--)
-        if( strncmp( (char const*)pFD->fname, (char const*)fi[i].fd.fname, 12 )==0 ) break;
+        if( strnicmp( (char const*)pFD->fname, (char const*)fi[i].fd.fname, 12 )==0 ) break;
       if(i<0){ // first occurrence of file with such name
         if(nFiles==nMAXFILES) break;
         i=nFiles++;
       }
       else NeedOpt = TRUE; // need to delete old versions of files
-      // remember FILEINFO of last file occurrence 
+      // remember FILEINFO of last file occurrence
       fi[i].Addr = Addr;
       fi[i].fd = *pFD;
     }
@@ -61,7 +61,7 @@ void OS7FileSystemOptimize()
     // go to next file
     Addr += sizeof(FILE_DATA) + pFD->size;
   } while( Addr < 0xF0000ul );
-  if(NeedOpt) 
+  if(NeedOpt)
   {
     //***** sort FILEINFOs by Addr & determine new addresses of files
     Addr = (U32)FlashStartSector << 4;
@@ -70,12 +70,12 @@ void OS7FileSystemOptimize()
       // search min. Addr
       int imin=i;
       U32 Min = fi[i].Addr;
-      for(int j=nFiles-1; j>i; j-- ) 
+      for(int j=nFiles-1; j>i; j-- )
       {
         if(fi[j].Addr < Min)
         {
           Min = fi[j].Addr;
-          imin=j; 
+          imin=j;
         }
       }
       // swap fi[i] and fi[imin], if needed
@@ -89,10 +89,10 @@ void OS7FileSystemOptimize()
   { // optimization isn't necessary
     ConPrint("\n\rNOTHING TO DO\n\r");
     SYS::free(fi);
-    return; 
+    return;
   }
-  U8 *Buf1 = (U8*)SYS::malloc(_32Kb);
-  U8 *Buf2 = (U8*)SYS::malloc(_32Kb);
+  U8 *Buf1 = (U8*)SYS::malloc(_32K);
+  U8 *Buf2 = (U8*)SYS::malloc(_32K);
   U32 SrcPos = 0;
   U16 iFI = 0;
   BOOL IsFileData=TRUE;
@@ -119,8 +119,8 @@ void OS7FileSystemOptimize()
         SrcSize = fi[iFI].fd.size;
       }
       U32 Size = SrcSize - SrcPos;
-      if(BufPos+Size > _32Kb)
-        Size = _32Kb-BufPos;
+      if(BufPos+Size > _32K)
+        Size = _32K-BufPos;
       memcpy( Buf+BufPos, U32toFP(Src+SrcPos), (U16)Size );
       BufPos+=(U16)Size;
       SrcPos+=Size;
@@ -131,8 +131,8 @@ void OS7FileSystemOptimize()
         IsFileData = !IsFileData;
         SrcPos = 0;
       }
-      if(BufPos==_32Kb){
-        if(Buf == Buf1) 
+      if(BufPos==_32K){
+        if(Buf == Buf1)
         {
           Buf1Pos = BufPos;
           Buf = Buf2;
@@ -141,13 +141,13 @@ void OS7FileSystemOptimize()
         else break;
       }
     }
-    if(Buf==Buf1) 
+    if(Buf==Buf1)
       Buf1Pos = BufPos;
     else
       Buf2Pos = BufPos;
     void *Dst1 = MK_FP(sector+0x000,0);
     void *Dst2 = MK_FP(sector+0x800,0);
-    if( Buf2Pos==_32Kb && memcmp( Dst1,Buf1,_32Kb )==0 && memcmp( Dst2,Buf2,_32Kb)==0 ) 
+    if( Buf2Pos==_32K && memcmp( Dst1,Buf1,_32K )==0 && memcmp( Dst2,Buf2,_32K)==0 )
     {
       ImmediateCharMsg('s');
       continue;
@@ -175,4 +175,4 @@ void OS7FileSystemOptimize()
   SYS::free(fi);
 }
 
-#undef _32Kb
+#undef _32K

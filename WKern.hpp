@@ -34,11 +34,12 @@ class EVENT;
 class CRITICALSECTION;
 
 //***** Constanst
-#define SysTicksInMs 10000 //10001
-#define SysTimerInterval 2
+#define SysTicksInMs 10000u //10001
+#define SysTimerInterval 2u
+#define SysThreadSwitchIntervalMask 0xFu
 #define SysTimerMaxcount (SysTicksInMs*SysTimerInterval)
-#define dt100MSec 100
-#define dtOneSecond 1000
+#define dt100MSec 100u
+#define dtOneSecond 1000u
 #define FALSE 0
 #define TRUE 1
 #define ThreadDefaultStackSize 2048
@@ -95,6 +96,24 @@ extern U8 hex_to_ascii[17];
   #define stopSysTicksCount(_Cntr)
   #define ASMPERFINC(_Cnt)
   #define PERFINC(_Cnt)
+#endif
+
+#ifndef __FILE_DATA__
+#define __FILE_DATA__
+typedef struct  {
+  unsigned mark;   /* 0x7188 -> is file */
+  unsigned char fname[12];
+  unsigned char year;
+  unsigned char month;
+  unsigned char day;
+  unsigned char hour;
+  unsigned char minute;
+  unsigned char sec;
+  unsigned long size;
+  char far *addr;
+  unsigned CRC;
+  unsigned CRC32;
+} FILE_DATA;
 #endif
 
 U32 _fast FromHexStr(const U8* Hex, int Digits);
@@ -179,8 +198,10 @@ public:
   static int  _fast waitForAny(TIMEOUT Timeout,int nCount,SYNCOBJ **SO);
   static BOOL       FlashErase(U16 Seg);
   static BOOL       FlashWrite(void *Dst,U8 Data);
-  static BOOL       FlashWriteBlock(void *Dst,const void* Src,U32 Size, BOOL AutoErase);
+  static BOOL       FlashWriteBlock(void *Dst, void const* Src, U32 Size, BOOL AutoErase);
   static void*      FlashGetFreePosition();
+  static FILE_DATA* FileInfoByName(char const* name);
+  static void       FileWrite(char const* name, void const* data, U16 size);
   static S16        NVRAM_Read(U8 Addr);
   static BOOL       NVRAM_Write(U8 Addr,U8 Data);
 //  static S16        EEP_Read(U8 Blk,U8 Addr);

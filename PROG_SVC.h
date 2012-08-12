@@ -78,24 +78,6 @@ void PROG_SVC::receiveData(U8 /*From*/,const void* Data,int Size){
 
 #else
 
-#ifndef __FILE_DATA__
-#define __FILE_DATA__
-typedef struct  {
-  unsigned mark;   /* 0x7188 -> is file */
-  unsigned char fname[12];
-  unsigned char year;
-  unsigned char month;
-  unsigned char day;
-  unsigned char hour;
-  unsigned char minute;
-  unsigned char sec;
-  unsigned long size;
-  char far *addr;
-  unsigned CRC;
-  unsigned CRC32;
-} FILE_DATA;
-#endif
-
 #if defined(__7188X)
 #include <string.h>
 #include "WCRCs.hpp"

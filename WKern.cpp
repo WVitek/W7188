@@ -201,7 +201,7 @@ void _fast SYS::TimerProc(BOOL Hard)
             pto->setReady();
             DoThSw=TRUE;
         }
-        if((SysT & 0x3)==0)
+        if((SysT & SysThreadSwitchIntervalMask)==0)
         {
             DoThSw=TRUE;
             if((SysT & 0x3FF)==0)
@@ -923,7 +923,7 @@ void THREAD::run(){
     changeStack(FP_SEG(SPtr)+((FP_OFF(SPtr)>0)?1:0),StackSize-2,StackSize-2);
     //MTS(0xE2);
     SYS::sti();
-    SYS::sleep(5); // SYS::TimerProc will initialize new thread stack
+    SYS::sleep(SysTimerInterval+1); // SYS::TimerProc will initialize new thread stack
     if(CurThread!=&MainThread)
     {
         // we are in new thread

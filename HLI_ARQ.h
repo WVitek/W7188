@@ -226,6 +226,9 @@ void THREAD_HLI::execute(){
 #ifdef __HLIControlCD
 //      NoDataCnt=0;
 #endif
+#ifdef __HLI_RX_SWITCH_LED
+      switchLed();
+#endif
       Size=prtarq.Rx(&PackI);
       for(i=0; i<ServicesCount && Service[i]->ID!=PackI.Hdr.ServiceID; i++);
       if(i<ServicesCount)

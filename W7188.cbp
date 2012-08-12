@@ -22,6 +22,7 @@
 					<Add option="-oa" />
 					<Add option="-mc" />
 					<Add option="-zu" />
+					<Add option="-zm" />
 					<Add option="-zdf" />
 					<Add option="-s" />
 					<Add option="-bt=dos" />
@@ -30,20 +31,24 @@
 					<Add option="-d__WIRE" />
 					<Add option="-dq__RS485" />
 					<Add option="-d__I7K" />
-					<Add option="-dq__MTU" />
+					<Add option="-d__MTU" />
 					<Add option="-dPOWERON_DO1=1" />
+					<Add option="-d__DO2_PERIOD=60" />
 					<Add option="-dq__MTU_VAL_EMUL" />
 					<Add option="-d__GPS_TIME_GPS721" />
 					<Add option="-dq__NO_STAT" />
 					<Add option="-dq__NO_HLI" />
 					<Add option="-dq__COM_STATUS_BUF" />
 					<Add option="-dq__MTU_Old" />
+					<Add option="-d__I7K_NOANS" />
+					<Add option="-d__HLI_RX_SWITCH_LED" />
 					<Add option="-dq__DebugThreadState" />
 				</Compiler>
 				<Linker>
 					<Add option="name w d all SYS dos op m op maxe=25" />
 					<Add option="op symf" />
-					<Add option="op el" />
+					<Add option="op ELIMINATE" />
+					<Add option="op SHOWDEAD" />
 				</Linker>
 				<ExtraCommands>
 					<Add after="d:\work\watcom\binnt\wlink.exe name bin\w.exe d all SYS dos op m op maxe=25 op q op symf op el file obj\WComms.obj,obj\main.obj,obj\WCRCs.obj,obj\WHrdware.obj,obj\wkern.obj" />
