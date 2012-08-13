@@ -167,7 +167,7 @@ void SYS::FileWrite(char const* name, void const* data, U16 size)
     fd.mark = 0x7188;
     fd.size = size;
     strncpy((char*)&fd.fname, name, sizeof(fd.fname));
-    fd.addr = &(dst[sizeof(fd)]);
+    fd.addr = (char*)(dst+sizeof(fd));
     fd.CRC = CRC16_get(data,size,CRC16_OS7FS);
     SYS::FlashWriteBlock(dst,&fd,sizeof(fd),TRUE);
     SYS::FlashWriteBlock(fd.addr,data,size,TRUE);
