@@ -111,18 +111,18 @@ void execute()
                 if(!toutDO2.IsSignaled())
                     break;
             case do2Init:
-                DIO::SetDO2(1);
+                DIO::SetDO2(0);
                 do2State = do2On;
                 toutDO2.start(toTypeSec | (__DO2_PERIOD));
-                ConPrint("\n\rDO2=1\n\r");
+                ConPrint("\n\rDO2=0\n\r");
                 break;
             case do2On:
                 if(!toutDO2.IsSignaled())
                     break;
-                DIO::SetDO2(0);
+                DIO::SetDO2(1);
                 do2State = do2Off;
                 toutDO2.start(toTypeSec | 1);
-                ConPrint("\n\rDO2=0\n\r");
+                ConPrint("\n\rDO2=1\n\r");
         }
     }
 #endif
