@@ -14,7 +14,6 @@
   #else
     #pragma library("lib\7188l.lib");
   #endif
-  #define ConsoleBaudRate 57600
   #define __SoftAutoDir
   #define ComDirPort   PIO_DATA_0
   #define Com1DirBit   0x20
@@ -51,13 +50,13 @@
 #elif defined(__7188XA)
   //*** 7188XA hardware defines
   #define __7188X
+  #define __mOS7
   #include "7188xa.h"
   #if defined(__SMALL__) || defined(__COMPACT__)
     #pragma library ("lib\w7188xas.lib");
   #else
     #pragma library ("lib\w7188xal.lib");
   #endif
-  #define ConsoleBaudRate 115200
   #define Com1Base     0x100
   #define Com1Int      INT_I2INT
   #define Com1Msk      INT_MSKI2
@@ -68,16 +67,22 @@
 #elif defined(__7188XB)
   //*** 7188XB hardware defines
   #define __7188X
+  #define __mOS7
   #include "7188xa.h"
   #if defined(__SMALL__) || defined(__COMPACT__)
     #pragma library ("lib\w7188xas.lib");
   #else
     #pragma library ("lib\w7188xal.lib");
   #endif
-  #define ConsoleBaudRate 115200
   #define Com
 #else
   #error Declare target controller (__7188, __7188XA or __7188XB) in compiler options
+#endif
+
+#ifdef __mOS7
+  #define ConsoleBaudRate 115200
+#else
+  #define ConsoleBaudRate 57600
 #endif
 
   class DIO
@@ -108,7 +113,7 @@
     inline static bool GetDI1() { return false; }
 #endif
   };
-  
+
 #if defined(__X600)
   //*** X600 hardware defines
   #include "x600.h"

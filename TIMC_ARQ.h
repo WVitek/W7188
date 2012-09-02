@@ -37,7 +37,7 @@ class TIMECLIENT_SVC : public SIMPLESERVICE {
 
   typedef TIME _RESYNCDATA[4];
 
-  BOOL FTimeOk;
+//  BOOL FTimeOk;
   TIME FLastReqTime;
   _RESYNCDATA SD[MaxDataCnt];
   BOOL FReplyOk;
@@ -52,14 +52,14 @@ public:
   BOOL HaveDataToTransmit(U8 To);
   int getDataToTransmit(U8 To,void* Data,int MaxSize);
   void receiveData(U8 From,const void* Data,int Size);
-  inline BOOL TimeOk(){return FTimeOk;};
+//  inline BOOL TimeOk(){return FTimeOk;};
 };
 
 TIMECLIENT_SVC::TIMECLIENT_SVC(){
   RDCnt=0;
   IterCnt=0;
   TryCnt=0;
-  FTimeOk=FALSE;
+//  FTimeOk=FALSE;
   FLastReqTime=0;
   FReplyOk=TRUE;
   toutResync.setSignaled();
@@ -149,20 +149,22 @@ void TIMECLIENT_SVC::processTimeData(){
 #endif
 //*/
   if(Err < abs64(TOfs)){
+    SYS::setNetTimeOffset(SYS::NetTimeOffset+TOfs);
     TIME CurTime;
     SYS::getNetTime(CurTime);
-    CurTime += TOfs;
-    SYS::setNetTime(CurTime);
+//    CurTime += TOfs;
+//    SYS::setNetTime(CurTime);
     if(abs64(TOfs)<TIME(18000)) StatOfs=StatOfs+(S16)TOfs;
     //FNeedResync=FALSE;
     RDCnt=0;
     TryCnt=0;
-    if(!FTimeOk){
-      //SYS::StartTime=TOfs;
-      FTimeOk=TRUE;
-      ConPrint("+++Time sync OK.");
-    }
-    else{
+//    if(!FTimeOk){
+//      //SYS::StartTime=TOfs;
+//      FTimeOk=TRUE;
+//      ConPrint("+++Time sync OK.");
+//    }
+//    else
+    {
       //CurTime=CurTime-SYS::StartTime;
 #ifdef __WATCOMC__
       ConPrintf("+++Time sync OK. StatOfs=%d/%Ld\n\r",
@@ -189,7 +191,7 @@ void TIMECLIENT_SVC::processTimeData(){
       RDCnt=2;
     }
   }
-  if(FTimeOk)
+  if(SYS::TimeOk)
     toutResync.start(TOUT_ResyncInterval);
   else
     toutResync.setSignaled(); // urgent time request

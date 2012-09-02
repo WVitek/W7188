@@ -154,7 +154,6 @@ public:
 #define flgEDataFormat (flgError | 0x10)
 #define flgEResponse   (flgError | 0x08)
 #define ASItemSize 2
-//#define ADC_Period (1000/ADC_Freq) // milliseconds
 
 PU_LIST plADC;
 

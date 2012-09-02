@@ -14,7 +14,7 @@ public:
 
 BOOL DI_SVC::HaveDataToTransmit(U8){
   if(Events.SafeCount()>0)
-    return TimeSvc.TimeOk();
+    return SYS::TimeOk;
   else{
     setNeedConnection(FALSE);
     return FALSE;

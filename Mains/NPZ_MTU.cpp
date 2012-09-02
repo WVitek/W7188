@@ -15,6 +15,13 @@
 static BOOL LedIsOn=FALSE;
 #define switchLed() SYS::led(LedIsOn=!LedIsOn)
 
+#ifdef __GPS_TIME_GPS721
+    #ifndef __I7K
+        #error Need __I7K for enable polling of GPS721
+    #endif
+    #define __GPS_TIME
+#endif
+
 U32 __HLI_BaudRate;
 
 #if !defined(__NO_HLI)
@@ -46,7 +53,7 @@ U32 __HLI_BaudRate;
         puAD6(6);
 /*/
   #ifdef __MTU
-    CONTEXT_CREATOR _cc_I7K(1000, 13);
+    CONTEXT_CREATOR _cc_I7K(1000, 11);
 
     I7017 i7017a(0x01); // ( Address )
     PU_ADC_7K
@@ -62,14 +69,12 @@ U32 __HLI_BaudRate;
 
     I7017 i7017a(0x01); // ( Address )
     PU_ADC_7K puAD0(0); // ( Analog IN number )
+    I7017 i7017b(0x02); // ( Address )
+    PU_ADC_7K puAD1(0); // ( Analog IN number )
   #endif
 //*/
 
     #ifdef __GPS_TIME_GPS721
-        #ifndef __I7K
-            #error Need __I7K for enable polling of GPS721
-        #endif
-        #define __GPS_TIME
         MODULE moduleGPS(0xF0);
         PU_GPS_721 pu_gps(0);
     #endif
@@ -176,8 +181,34 @@ bool GetComParams(char *prefix, COM_PARAMS *res)
 
 cdecl main()
 {
-    SYS::startKernel();
     dbg("\n\rSTART Main\n\r");
+#ifdef __DebugThreadState
+    SYS::printThreadsState();
+#endif
+    // 'RESTART' event
+    EVENT_DI Event;
+    SYS::getNetTime(Event.Time);
+    Event.Channel=255;
+    Event.ChangedTo=0;
+    Events.EventDigitalInput(Event);
+#ifdef __DebugThreadState
+    for(int i=0; i<8; i++)
+    {
+        U8 s=LastThreadStates[i];
+        if(s!=0)
+        {
+            Event.ChangedTo=s;
+            Event.Time++;
+            Event.Channel=210+i;
+            Events.EventDigitalInput(Event);
+        }
+    }
+#endif
+
+    SYS::startKernel();
+
+//***** Starting threads
+
 #if __MTU
     THREAD_POLL_MTU* ThdPM;
     {
@@ -232,44 +263,46 @@ cdecl main()
 #ifdef __GPS_TIME_NMEA
     THREAD_GPS* ThdGPS =new THREAD_GPS();  ThdGPS->run();
 #endif
+
 #if !defined(__NO_STAT)
     THREAD_STAT* ThdStat =new THREAD_STAT();  ThdStat->run();
 #endif
 
-    // 'RESTART' event
-    EVENT_DI Event;
-    SYS::getNetTime(Event.Time);
-    Event.Channel=255;
-    Event.ChangedTo=0;
-    Events.EventDigitalInput(Event);
-    //
+//***** Infinite working loop (until Esc received)
     BOOL Quit=FALSE;
-    while(TRUE){
-        while(ConBytesInRxB()){
+    while(TRUE)
+    {
+        while(ConBytesInRxB())
+        {
             char c=ConReadChar();
             ConWriteChar(c);
             if(c==27) Quit=TRUE;
         }
         if(Quit) break;
+        SYS::WDT_Refresh();
         SYS::sleep(333);
     }
-    SYS::stopKernel();
-#ifdef ThdHLI
-    delete ThdHLI1;
-#endif
-#ifdef __GPS_TIME_NMEA
-    delete ThdGPS;
-#endif
-#if __I7K
-    delete ThdS;
-    delete ThdP;
-#endif
-#if __MTU
-    delete ThdPM;
-#endif
-#if !defined(__NO_STAT)
-    delete ThdStat;
-#endif
+    SYS::stopKernel(); // all threads stopped automatically
+
+//**** deleting threads
+    #ifdef ThdHLI
+        delete ThdHLI1;
+    #endif
+    #ifdef __GPS_TIME_NMEA
+        delete ThdGPS;
+    #endif
+    #if __I7K
+        delete ThdS;
+        delete ThdP;
+    #endif
+    #if __MTU
+        delete ThdPM;
+    #endif
+    #if !defined(__NO_STAT)
+        delete ThdStat;
+    #endif
+
+//***** All done
     dbg("\n\rSTOP Main\n\r");
     SYS::DelayMs(100);
     return 0;

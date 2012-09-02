@@ -4,11 +4,26 @@
 #include "SERVICE.h"
 #include "WHrdware.hpp"
 
+#if defined(__mOS7)
+#include <string.h>
+#include "WCRCs.hpp"
+#endif
+
 #if defined(__ARQ)
 
 class PROG_SVC : public SERVICE {
   U32 Offset;
   BOOL NewPacket;
+#ifdef __mOS7
+  U32 Addr;
+  FILE_DATA fd;
+  void writefd(BOOL WithName)
+  {
+    FILE_DATA fd = this->fd;
+    if(!WithName) memset(fd.fname,0xFF,sizeof(fd.fname));
+    SYS::FlashWriteBlock(U32toFP(Addr-sizeof(fd)),&fd,sizeof(fd),TRUE);
+  }
+#endif
 public:
   PROG_SVC();
   BOOL HaveDataToTransmit(U8 /*To*/);
@@ -34,54 +49,68 @@ int PROG_SVC::getDataToTransmit(U8 /*To*/,void* Data,int /*MaxSize*/){
 void PROG_SVC::receiveData(U8 /*From*/,const void* Data,int Size){
   U32 Ofs=*(U32*)Data;
   NewPacket=TRUE;
-//  dbg3("\n\rPROG %X%X",(U16)(Ofs>>16),(U16)Ofs);
 #ifdef __EnableFlashWrite
-  if(Ofs==0) {
+  if(Ofs==0)
+  { // start loading
+#ifdef __mOS7
+    Addr = FPtoU32(SYS::FlashGetFreePosition());
+    ConPrintf("\n\r*** LOADING STARTED (Addr=%05lX)",Addr);
+    Addr += sizeof(FILE_DATA);
+    memset(&fd,0xFF,sizeof(fd));
+    fd.mark = 0x7188;
+    fd.addr = (char*)U32toFP(Addr);
+    fd.size = 0xFFFF;
+    writefd(FALSE);
+#else
+    ConPrint("\n\r*** LOADING STARTED");
     SYS::WDT_Refresh();
     SYS::FlashErase(0xA000);
     SYS::WDT_Refresh();
+#endif
   }
 #endif
   Size-=4;
-  if(Size!=0){
+  if(Size!=0)
+  {
 #ifdef __EnableFlashWrite
     U8* NewData=(U8*)Data+4;
-    //SYS::WDT_Refresh();
+  #ifdef __mOS7
+    SYS::FlashWriteBlock(U32toFP(Addr+Ofs), NewData, Size, TRUE);
+  #else
     SYS::FlashWriteBlock(U32toFP(0xA0000+Ofs),NewData,Size,FALSE);
-    //for(U16 i=0; i<Size; i++,Ofs++)
-    //  SYS::FlashWrite(0xA000+(U16)(Ofs>>4),(U16)Ofs&0xF,NewData[i]);
-#else
-    Ofs+=Size;
+  #endif
 #endif
-    Offset=Ofs;
+    Offset=Ofs+Size;
+    if((Ofs>>11)!=(Offset>>11))
+      ConPrintf("\n\r*** LOADED %03uKiB",U16(Offset>>10));
   }
-  else {
+  else
+  { // loading complete
+    ConPrintf("\n\r*** LOADING COMPLETE %u byte(s)",(U16)Offset);
 #ifdef __EnableFlashWrite
+  #ifdef __mOS7
+    memset(&fd,0,sizeof(fd));
+    fd.mark = 0x7188;
+    fd.size = Offset;
+    fd.addr = (char*)U32toFP(Addr);
+    fd.CRC = CRC16_get(U32toFP(Addr),fd.size,CRC16_OS7FS);
+    strncpy((char*)&fd.fname, "w.exe", sizeof(fd.fname));
+    writefd(TRUE); // write CRC, size and file name to FILE_DATA
+  #else
     SYS::setRealtime(TRUE);
     SYS::WDT_Refresh();
     SYS::FlashErase(0x9000);
     SYS::WDT_Refresh();
-    //U32 Len=0x10000;
     SYS::FlashWriteBlock(U32toFP(0x90000),U32toFP(0xA0000),0x10000,FALSE);
-    //for(Ofs=0; Ofs<Len; Ofs++){
-    //  if(Ofs&0xFF==0) SYS::WDT_Refresh();
-    //  U16 RSeg=(U16)(Ofs>>4);
-    //  U16 ROfs=(U16)Ofs & 0xF;
-    //  SYS::FlashWrite(0x9000+RSeg,ROfs,*(U8*)MK_FP(0xA000+RSeg,ROfs));
-    //}
     SYS::WDT_Refresh();
     SYS::FlashErase(0xA000);
-    SYS::reset();
+  #endif
+    SYS::reset(TRUE);
 #endif
   }
 }
 
 #else
-
-#if defined(__7188X)
-#include <string.h>
-#include "WCRCs.hpp"
-#endif
 
 #define PROG_CANCEL    -1L
 #define PROG_FILEINFO  -2L
@@ -98,7 +127,7 @@ class PROG_SVC : public SERVICE {
   U8 TOCnt;
 protected:
 
-#if defined(__7188X)
+#if defined(__mOS7)
 void writefd(BOOL WithName)
 {
   FILE_DATA fd = this->fd;
@@ -162,14 +191,14 @@ void receiveData(U8 /*From*/, const void* Data,int Size){
       {
         Offset=0;
         FILE_DATA *pFD = (FILE_DATA*)((U8*)Data+4);
-      #ifdef __7188
+      #ifndef __mOS7
         if( strnicmp((char*)pFD->fname,"rom-disk.img",12) != 0 ) {
             fd.size = PROG_ERRNAME;
             return;
         }
       #endif
         U32 ABeg = FPtoU32( SYS::FlashGetFreePosition() );
-      #if defined(__7188X)
+      #if defined(__mOS7)
         U32 FlashFreeSize = FlashEndPos - ABeg;
       #elif defined(__7188)
         // only 1/2 of flash can be used for downloading new rom-disk
@@ -180,7 +209,7 @@ void receiveData(U8 /*From*/, const void* Data,int Size){
           return;
         }
         fd = *pFD;
-      #if defined(__7188X)
+      #if defined(__mOS7)
         Addr = ABeg + sizeof(FILE_DATA);
         fd.addr = (char*)U32toFP(Addr);
         writefd(FALSE);
@@ -210,7 +239,7 @@ void receiveData(U8 /*From*/, const void* Data,int Size){
   {
     if(Offset!=Ofs)
       return; // Not requested part of a file is received
-  #ifdef __7188
+  #if !defined(__mOS7)
     if( !Ofs )
       ((U8*)Data)[4] = 0xFF; // mask 1st byte of rom-disk image (LSB of signature 0x28EB)
   #endif
@@ -222,7 +251,7 @@ void receiveData(U8 /*From*/, const void* Data,int Size){
     Ofs+=Size;
     if(Ofs>=fd.size)
     {
-    #if defined(__7188X)
+    #if defined(__mOS7)
       fd.CRC = CRC16_get(U32toFP(Addr),fd.size,CRC16_OS7FS);
       writefd(TRUE); // write CRC and file name to FILE_DATA
     #elif defined(__7188)

@@ -188,8 +188,8 @@ public:
 //  static void       FCS_write(void *Packet, int len);
   static void _fast getSysTime(TIME& Time);
   static void _fast getNetTime(TIME& Time);
-  static void       reset();
-  static void       setNetTime(const TIME& Time);
+  static void       reset(BOOL needStop);
+//  static void       setNetTime(const TIME& Time);
   static void       setNetTimeOffset(const TIME& Offset);
   static void       checkNetTime(TIME &Time);
   static void _fast sleep(TIMEOUT Timeout);
@@ -220,6 +220,7 @@ public:
 #endif
   static void       printThreadsState();
   static void       startKernel();
+  static bool       Stopping();
   static void       stopKernel();
 private:
   static void       TimerOpen();
