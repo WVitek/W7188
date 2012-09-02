@@ -26,7 +26,7 @@ U16 DbgThd1,DbgThd2;
 #endif
 
 //*** other
-BOOL SystemStopped;
+U8 SystemStopped;
 BOOL HardwareTimerIntr=TRUE;
 volatile U8 __IntrLockCnt;
 
@@ -389,11 +389,11 @@ U16 SYS::GetTimerISRMs(){
 }
 #endif
 
-#include "WFlash.h"
-
-#ifdef __7188X
-#include "W_FSOpt.h"
-#endif
+//#include "WFlash.h"
+//
+//#ifdef __mOS7
+//#include "W_FSOpt.h"
+//#endif
 
 void SYS::startKernel(){
 #ifdef __USESTDMEMMAN
@@ -401,10 +401,14 @@ void SYS::startKernel(){
   exploreHeap(Heap16Used,Heap16Avail,Tmp);
 #endif
   Init5DigitLed();
+#ifdef __SHOWADCDATA
+  Set5DigitLedIntensity(1);
+#else
   Set5DigitLedIntensity(0);
-#ifdef __7188X
-  OS7FileSystemOptimize();
 #endif
+//#ifdef __mOS7
+//  OS7FileSystemOptimize();
+//#endif
   MainThread.SysRef.Prev=&Threads;
   *(MainThread.SysRef.ThdPtr()) = &MainThread;
   MainThread.SysRef.Next=NULL;
@@ -416,8 +420,11 @@ void SYS::startKernel(){
   SYS::TimerOpen();
 }
 
+bool SYS::Stopping(){ return SystemStopped;}
+
 void SYS::stopKernel(){
-    SystemStopped=TRUE;
+    if(!SystemStopped)
+        SystemStopped=TRUE;
     while(true)
     {
         if(Threads->Next==NULL && TOs1==NULL)
@@ -427,6 +434,8 @@ void SYS::stopKernel(){
     DisableWDT();
     SYS::TimerClose();
     DelayMs(100);
+    if(SystemStopped==78)
+        SYS::reset(FALSE);
 }
 
 #ifdef __DebugThreadState
@@ -653,8 +662,13 @@ void*_fast SYS::realloc(void* Block,size_t Size){
 
 #endif //__USESTDMEMMAN
 
-void SYS::reset(){
-  _asm{
+void SYS::reset(BOOL needStop)
+{
+  if(needStop)
+  {
+    SystemStopped=78;
+  }
+  else _asm{
     cli
     push 0xFFFF
     push 0

@@ -39,6 +39,7 @@ void execute()
         SYS::switchThread();
         S(0x03);
         //dbg(".!.");
+        Time -= Time % ctx_I7K.Period;
         // sample latched data
         for(int j=n1; j>=0; j--)
             (*ctx_I7K.PollList)[j]->doSample(Time);

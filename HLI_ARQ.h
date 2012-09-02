@@ -11,6 +11,9 @@
   #if !defined(__ModemInitCmd)
   char* szModemInitCmd="AT &C1 &D2 E0 S0=1 &W\r";
   #endif
+#elif defined(__GSM_TC65)
+  #define _ComSpeedHLI 19200
+  char* szModemInitCmd="AT&D2;&S0;E0;S0=1;+IPR=19200\r";
 #elif defined(__CDMA2000_DTG450)
   #define _ComSpeedHLI 19200
   char* szModemInitCmd="AT &F &D2 &C1 E0 S0=1 +IPR=19200\r";
@@ -22,6 +25,7 @@
   #error !!! Modem type not specified
 #endif
 
+char* szDialCmd="ATS0=1;D+79625271206\r"; // UPO BeeLine
 //char* szDialCmd="AT S0=1 D+79048169201\r"; // VPO Utel
 //char* szDialCmd="AT S0=1 D+79128921286\r"; // VPO MTS
 //char* szDialCmd="AT S0=1 D+79136013079\r"; // Isilkul
@@ -63,7 +67,7 @@ TIMECLIENT_SVC TimeSvc;
 
 
 #include "ADC_ARQ.h"
-ADC_SVC ADC_Svc;
+ADC_SVC ADC_Svc(ctx_I7K.ADCsList);
 #include "DI_ARQ.h"
 DI_SVC DI_Svc;
 #include "PROG_Svc.h"
@@ -82,10 +86,10 @@ struct PACKETHEADER {
 
 //class THREAD_HLI
 class THREAD_HLI : public THREAD {
-  COMPORT *HLI;
+  U16 comNum;
 public:
-  THREAD_HLI(COMPORT &HLI):THREAD(4096+1024){
-    this->HLI=&HLI;
+  THREAD_HLI(U16 comNum):THREAD(4096+1024){
+    this->comNum = comNum;
   }
   void execute();
 };
@@ -99,9 +103,11 @@ public:
 #endif
 
 void THREAD_HLI::execute(){
-  COMPORT& HLI=*(this->HLI);
+  COMPORT& HLI = GetCom(comNum);
 #if defined(__GSM_GR47)
   HLI.install(9600);
+#elif defined(__GSM_TC65)
+  HLI.install(115200);
 #elif defined(__CDMA2000_DTG450)
   HLI.install(115200);
 #endif
@@ -112,7 +118,7 @@ void THREAD_HLI::execute(){
   PRT_ARQ prtarq(&prtcom);
   prtarq.TimeClient=&TimeSvc;
   prtarq.Acknowledged=FALSE;
-  dbg("\n\rSTART HLI");
+  dbg3("\n\rSTART HLI_ARQ (#%d, COM%d)",MyAddr,comNum);
   U8 iNextSvc=0;
   U8 RxCnt=0, TxCnt=0;
 #ifdef __HLIControlCD
@@ -150,11 +156,11 @@ void THREAD_HLI::execute(){
       #endif
         do
         {
-        #if defined(__USE_CALLBACK_MODE)
           while(HLI.BytesInRxB())
           {
               char c=HLI.readChar();
               ConWriteChar(c);
+        #if defined(__USE_CALLBACK_MODE)
               if(c!=sRING[iPos++])
                   iPos=0;
               else if(sRING[iPos]==0)
@@ -164,8 +170,8 @@ void THREAD_HLI::execute(){
                   setNeedConnection(TRUE);
                   TimerDial=3;
               }
-          }
         #endif
+          }
           char *szCmd=NULL;
           if(NeedConnection)
           {
@@ -259,7 +265,7 @@ void THREAD_HLI::execute(){
   }
   HLI.uninstall();
   S(0x00);
-  dbg("\n\rSTOP HLI");
+  dbg("\n\rSTOP HLI_ARQ");
 }
 
 

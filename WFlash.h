@@ -1,6 +1,8 @@
 #pragma once
+#ifndef WFlash_h
+#define WFlash_h
 
-#if defined(__7188X)
+#if defined(__mOS7)
 
 #define FlashBase      0xC000
 #define AUTOSELECT_CMD 0x90
@@ -135,6 +137,24 @@ BOOL SYS::FlashErase(U16 Seg)
 
 //*/
 
+#elif defined(__7188)
+
+BOOL SYS::FlashErase(U16 Seg)
+{
+    SYS::WDT_Refresh();
+    BOOL r = ::FlashErase(Seg)==0;
+    SYS::WDT_Refresh();
+    return r;
+}
+
+BOOL SYS::FlashWrite(void *Dst,U8 Data)
+{
+    return ::FlashWrite( FP_SEG(Dst), FP_OFF(Dst), Data )==0;
+}
+
+#endif
+
+#ifdef __mOS7
 void* SYS::FlashGetFreePosition()
 {
     __ReadFlashInfo();
@@ -173,20 +193,7 @@ void SYS::FileWrite(char const* name, void const* data, U16 size)
     SYS::FlashWriteBlock(fd.addr,data,size,TRUE);
 }
 
-#elif defined(__7188)
-
-BOOL SYS::FlashErase(U16 Seg)
-{
-    SYS::WDT_Refresh();
-    BOOL r = ::FlashErase(Seg)==0;
-    SYS::WDT_Refresh();
-    return r;
-}
-
-BOOL SYS::FlashWrite(void *Dst,U8 Data)
-{
-    return ::FlashWrite( FP_SEG(Dst), FP_OFF(Dst), Data )==0;
-}
+#else // !__mOS7
 
 void* SYS::FlashGetFreePosition()
 {
@@ -209,7 +216,7 @@ BOOL SYS::FlashWriteBlock(void *Dst, void const* Src, U32 Size, BOOL AutoErase)
   U16 SectorNum = ((U16)iDst == 0) ? 0 : hi(iDst); // can set SectorNum=0
   for(; Size>0; Size--, iSrc++, iDst++)
   {
-  #ifdef __7188
+  #if !defined(__7188X)
     if( (U8)Size & 0x7F == 0 ) // after every 128 bytes writing
       SYS::WDT_Refresh(); // reset watchdog
   #endif
@@ -228,3 +235,4 @@ BOOL SYS::FlashWriteBlock(void *Dst, void const* Src, U32 Size, BOOL AutoErase)
   return TRUE;
 }
 
+#endif // WFlash_h
