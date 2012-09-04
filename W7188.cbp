@@ -33,7 +33,7 @@
 					<Add option="-dq__RS485" />
 					<Add option="-d__ARQ" />
 					<Add option="-d__GSM_TC65" />
-					<Add option="-dMyAddr=22" />
+					<Add option="-dMyAddr=25" />
 					<Add option="-d__I7K" />
 					<Add option="-dq__MTU" />
 					<Add option="-dPOWERON_DO1=1" />
@@ -48,6 +48,7 @@
 					<Add option="-d__HLI_RX_SWITCH_LED" />
 					<Add option="-dq__DebugThreadState" />
 					<Add option="-d__SHOWADCDATA=100" />
+					<Add option="-d__EVALUATION" />
 				</Compiler>
 				<Linker>
 					<Add option="name w d all SYS dos op m op maxe=25" />

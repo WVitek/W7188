@@ -50,7 +50,7 @@
 #elif defined(__7188XA)
   //*** 7188XA hardware defines
   #define __7188X
-  #define __mOS7
+  //#define __mOS7
   #include "7188xa.h"
   #if defined(__SMALL__) || defined(__COMPACT__)
     #pragma library ("lib\w7188xas.lib");

@@ -103,22 +103,25 @@ public:
 #endif
 
 void THREAD_HLI::execute(){
+  dbg3("\n\rSTART HLI_ARQ (#%d, COM%d)",MyAddr,comNum);
   COMPORT& HLI = GetCom(comNum);
 #if defined(__GSM_GR47)
   HLI.install(9600);
 #elif defined(__GSM_TC65)
   HLI.install(115200);
+  if(!Terminated)
+    SYS::sleep(3000);
 #elif defined(__CDMA2000_DTG450)
   HLI.install(115200);
 #endif
   HLI.print(szModemInitCmd);
-  SYS::sleep(500);
+  if(!Terminated)
+    SYS::sleep(3000);
   HLI.install(_ComSpeedHLI);
   PRT_COMPORT prtcom(&HLI);
   PRT_ARQ prtarq(&prtcom);
   prtarq.TimeClient=&TimeSvc;
   prtarq.Acknowledged=FALSE;
-  dbg3("\n\rSTART HLI_ARQ (#%d, COM%d)",MyAddr,comNum);
   U8 iNextSvc=0;
   U8 RxCnt=0, TxCnt=0;
 #ifdef __HLIControlCD
