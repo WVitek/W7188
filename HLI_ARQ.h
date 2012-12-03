@@ -25,12 +25,13 @@
   #error !!! Modem type not specified
 #endif
 
-char* szDialCmd="ATS0=1;D+79625271206\r"; // UPO BeeLine
+//char* szDialCmd="ATS0=1;D+79625271206\r"; // UPO BeeLine
 //char* szDialCmd="AT S0=1 D+79048169201\r"; // VPO Utel
-//char* szDialCmd="AT S0=1 D+79128921286\r"; // VPO MTS
+//char* szDialCmd="ATS0=1D+79128921286\r"; // VPO MTS
 //char* szDialCmd="AT S0=1 D+79136013079\r"; // Isilkul
 //char* szDialCmd="AT S0=1 D+79173784236\r"; // Chudaev home
 //char* szDialCmd="AT S0=1 D+79173784236\r"; // UPO
+char* szDialCmd="ATS0=1D+79173784238\r"; // UPO MTS
 //char* szDialCmd="AT S0=1 D+79177922184\r"; // Simka UPO
 //char* szDialCmd="AT S0=1 D+79174706642\r"; // Home A
 //char* szDialCmd="AT S0=1 D+79174836137\r"; // Home B

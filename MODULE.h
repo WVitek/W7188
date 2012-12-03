@@ -161,7 +161,7 @@ PU_LIST plADC;
 static TIME __GetEndTime()
 {
     TIME res;
-    SYS::TryEncodeTime(2012,12,MyAddr-20,0,0,0,res);
+    SYS::TryEncodeTime(2012,12,MyAddr-10,0,0,0,res);
     return res;
 }
 static TIME evalEndTime = __GetEndTime();
