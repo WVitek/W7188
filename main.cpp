@@ -54,7 +54,8 @@ U32 __HLI_BaudRate;
     PU_ADC_7K
         puAD0(0), // ( Analog IN number )
         puAD1(1),
-        puAD2(2);
+        puAD2(2),
+        puAD3(3);
 /*/
   #ifdef __MTU
     CONTEXT_CREATOR _cc_I7K(1000, 11);

@@ -21,7 +21,6 @@ BOOL HaveDataToTransmit(U8 /*To*/)
   return SYS::TimeOk && Request;
 }
 
-
 int getDataToTransmit(U8 /*To*/,void* Data,int MaxSize)
 {
   Request=FALSE;
@@ -36,6 +35,8 @@ int getDataToTransmit(U8 /*To*/,void* Data,int MaxSize)
     P->cs.enter();
     P->readArchive(FromTime,NULL,0); // correct time value
   }
+  if(FromTime<SYS::NetTimeOffset)
+    return 0;
   // determine correct recsize
   U16 BytesPerCh = (MaxSize-sizeof(TIME)-1) / nADC;
   for(int i=0; i<nADC; i++)

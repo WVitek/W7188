@@ -25,7 +25,10 @@ public:
       {
         beginRead();
         for(int i=plADC->Count()-1; i>=0 && !Res; i--)
-          Res=Res || ((*plADC)[i]->GetLastTime() > lastSendTime[i]);
+        {
+          TIME t = (*plADC)[i]->GetLastTime();
+          Res=Res || (t > lastSendTime[i] && t>SYS::NetTimeOffset);
+        }
         endRead();
       }
       return Res;

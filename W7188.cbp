@@ -27,19 +27,19 @@
 					<Add option="-s" />
 					<Add option="-bt=dos" />
 					<Add option="-we -e10 -s -zq -os -oi -oa -zdf -zu -1 -bt=dos -mc" />
-					<Add option="-d__7188" />
+					<Add option="-d__7188XA" />
 					<Add option="-d__mOS7" />
-					<Add option="-dq__WIRE" />
+					<Add option="-d__WIRE" />
 					<Add option="-dq__RS485" />
-					<Add option="-d__ARQ" />
-					<Add option="-d__GSM_TC65" />
-					<Add option="-dMyAddr=22" />
+					<Add option="-dq__ARQ" />
+					<Add option="-dq__GSM_TC65" />
+					<Add option="-dMyAddr=1" />
 					<Add option="-d__I7K" />
-					<Add option="-dq__MTU" />
+					<Add option="-d__MTU" />
 					<Add option="-dPOWERON_DO1=1" />
-					<Add option="-dq__DO2_PERIOD=60" />
+					<Add option="-d__DO2_PERIOD=60" />
 					<Add option="-dq__MTU_VAL_EMUL" />
-					<Add option="-dq__GPS_TIME_GPS721" />
+					<Add option="-d__GPS_TIME_GPS721" />
 					<Add option="-dq__NO_STAT" />
 					<Add option="-dq__NO_HLI" />
 					<Add option="-dq__COM_STATUS_BUF" />
@@ -48,6 +48,7 @@
 					<Add option="-d__HLI_RX_SWITCH_LED" />
 					<Add option="-dq__DebugThreadState" />
 					<Add option="-d__SHOWADCDATA=100" />
+					<Add option="-dq__EVALUATION" />
 				</Compiler>
 				<Linker>
 					<Add option="name w d all SYS dos op m op maxe=25" />

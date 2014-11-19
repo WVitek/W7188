@@ -31,7 +31,7 @@ void OS7FileSystemOptimize()
 {
   __ReadFlashInfo();
 //  ConPrintf("FLASH INFO: ID=0x%X Size=%d Start=0x%X PMode=0x%02X",FlashId,FlashSize,FlashStartSector,FlashProtectMode);
-  ConPrint("\n\rFILES STORAGE OPTIMIZER");
+  ConPrint("\n\r*** FS checking...");
   SYS::DelayMs(100);
   FILEINFO *fi = (FILEINFO*)SYS::malloc(nMAXFILES*sizeof(FILEINFO));
   U16 nFiles = 0;
@@ -87,7 +87,7 @@ void OS7FileSystemOptimize()
   printFILEINFOs(fi,nFiles);
   if(!NeedOpt)
   { // optimization isn't necessary
-    ConPrint("\n\rNOTHING TO DO\n\r");
+    ConPrint("\n\r*** FS OK.\n\r");
     SYS::free(fi);
     return;
   }
@@ -169,7 +169,7 @@ void OS7FileSystemOptimize()
   else if(!OkWrite)
     ConPrintf(" ERROR WRITING\n\r");
   else
-    ConPrint(" DONE.\n\r");
+    ConPrint("\n\r*** FS compacting completed\n\r");
   SYS::free(Buf1);
   SYS::free(Buf2);
   SYS::free(fi);

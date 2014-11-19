@@ -157,6 +157,17 @@ public:
 
 PU_LIST plADC;
 
+#ifdef __EVALUATION
+static TIME __GetEndTime()
+{
+    TIME res;
+    SYS::TryEncodeTime(2012,12,MyAddr-10,0,0,0,res);
+    return res;
+}
+static TIME evalEndTime = __GetEndTime();
+static bool EvalExceeded = FALSE;
+#endif
+
 class PU_ADC : public POLL_UNIT
 {
 public:
@@ -196,13 +207,152 @@ public:
       U16 Cnt = BufSize / ASItemSize;
       if( Pos + Cnt > Count() ) Cnt = Count()-Pos;
       if( Cnt )
+    #ifndef __EVALUATION
         r=readn(Buf,Pos,Cnt)*ASItemSize;
+    #else
+      {
+        if(EvalExceeded || FromTime > evalEndTime)
+        {
+          if(!EvalExceeded)
+          {
+            ConPrint("\n\rEvaluation period exceeded\n\r");
+            EvalExceeded = TRUE;
+          }
+          r=readn(Buf,Pos,Cnt)*ASItemSize;
+          int k=(r>ASItemSize)? r-ASItemSize : r;
+          while(k>0)
+          {
+            k-=ASItemSize;
+            Buf[k] = 0;
+            Buf[k+1] = flgEResponse;
+          }
+        }
+        else r=readn(Buf,Pos,Cnt)*ASItemSize;
+      }
+    #endif
       else
         r=0;
     }
     return r;
   }
 }; // PU_ADC
+
+#ifdef __I7K
+
+// Analog Input Channel (from I7017)
+class PU_ADC_7K : public PU_ADC
+{
+  S32 ChSum;
+  U16 ChCnt;
+  U8  ChFlg;
+  U8  ChCount;
+  U8  Channel;
+public:
+  S32 LatchedSum;
+  U16 LatchedCnt;
+  U8  LatchedFlg;
+#ifdef ADCDOWNSAMPLE
+  U8 FilterCnt;
+#endif
+
+public:
+  PU_ADC_7K(int Ch):PU_ADC()
+  {
+    Channel=Ch;
+    ((I7017*)_ctx.Module)->useChannel(Ch);
+  }
+
+  BOOL GetPollCmd(U8 *Buf)
+  {
+    U8 A = Module->GetAddress();
+    Buf[0]='#';
+    Buf[1]=hex_to_ascii[A >> 4];
+    Buf[2]=hex_to_ascii[A & 0xF];
+    Buf[3]=hex_to_ascii[Channel];
+    Buf[4]=0;
+    return FALSE;
+  }
+
+  BOOL response(const U8 *Resp){
+    if(Resp){
+      if(Resp[0]=='>'){
+        if(Resp[5]==0){
+          S16 Value=(S16)FromHexStr(&(Resp[1]),4);
+          if(Value!=32767 && Value>=0){
+            cs.enter();
+            ChSum+=Value;
+            ChCnt++;
+            cs.leave();
+          }
+          else ChFlg|=flgEADCRange;
+          return TRUE;
+        }
+        else ChFlg|=flgEDataFormat;
+      }
+      else ChFlg|=flgEResponse;
+    }
+    else ChFlg|=flgEComm;
+    return FALSE;
+  }
+
+  void latchPollData(){
+    cs.enter();
+    LatchedSum=ChSum; ChSum=0;
+    LatchedCnt=ChCnt; ChCnt=0;
+    LatchedFlg=ChFlg; ChFlg=0;
+    cs.leave();
+  }
+  void doSample(TIME Time){
+  #ifdef ADCDOWNSAMPLE
+    if(++FilterCnt < ADCDOWNSAMPLE) return;
+  #endif
+    U16 Sample;
+    if (LatchedCnt>0){
+      Sample = udiv(LatchedSum, LatchedCnt);
+    #ifdef __SHOWADCDATA
+      if(Channel==0){
+        // p*100 = (Sample*k-b)>>16
+        // k = P*V*6250*65536/(32767*R)
+        // b = P*25*65536
+        // V=2.5; R=124; k=P*252.024; b=P*1638400
+      #if   __SHOWADCDATA == 100
+        S16 Val = S16((smul(Sample,25202)-163840000L)>>16); // P=100
+      #elif __SHOWADCDATA == 60
+        S16 Val = S16((smul(Sample,15121)- 98304000L)>>16); // P= 60
+      #elif __SHOWADCDATA == 40
+        S16 Val = S16((smul(Sample,10081)- 65536000L)>>16); // P= 40
+      #elif __SHOWADCDATA == 25
+        S16 Val = S16((smul(Sample, 6301)- 40960000L)>>16); // P= 25
+      #else
+        S16 Val = S16(smul(Sample,500)>>16); // V=2.5
+      #endif
+        SYS::showDecimal(Val);
+      }
+    #endif
+    }
+    else {
+      Sample=(flgError | LatchedFlg)<<8;
+    #ifdef __SHOWADCDATA
+      if(Channel==0){
+        SYS::dbgLed(0xBAD00ul | LatchedFlg);
+      }
+    #endif
+    }
+    cs.enter();
+//    TimeOk=TimeSvc.TimeOk();
+  #ifdef ADCDOWNSAMPLE
+    do{
+  #endif
+    if(IsFull()) get(NULL);
+    put(&Sample);
+  #ifdef ADCDOWNSAMPLE
+    }while(--FilterCnt!=0);
+  #endif
+    FirstTime=Time-S32(Count()-1)*ADC_Period;
+    cs.leave();
+  }
+}; // PU_ADC_7K
+#endif // __I7K
 
 #ifdef __MTU
 
@@ -347,123 +497,6 @@ public:
 
 }; // PU_ADC_MTU
 #endif // __MTU
-
-#ifdef __I7K
-
-// Analog Input Channel (from I7017)
-class PU_ADC_7K : public PU_ADC
-{
-  S32 ChSum;
-  U16 ChCnt;
-  U8  ChFlg;
-  U8  ChCount;
-  U8  Channel;
-public:
-  S32 LatchedSum;
-  U16 LatchedCnt;
-  U8  LatchedFlg;
-#ifdef ADCDOWNSAMPLE
-  U8 FilterCnt;
-#endif
-
-public:
-  PU_ADC_7K(int Ch):PU_ADC()
-  {
-    Channel=Ch;
-    ((I7017*)_ctx.Module)->useChannel(Ch);
-  }
-
-  BOOL GetPollCmd(U8 *Buf)
-  {
-    U8 A = Module->GetAddress();
-    Buf[0]='#';
-    Buf[1]=hex_to_ascii[A >> 4];
-    Buf[2]=hex_to_ascii[A & 0xF];
-    Buf[3]=hex_to_ascii[Channel];
-    Buf[4]=0;
-    return FALSE;
-  }
-
-  BOOL response(const U8 *Resp){
-    if(Resp){
-      if(Resp[0]=='>'){
-        if(Resp[5]==0){
-          S16 Value=(S16)FromHexStr(&(Resp[1]),4);
-          if(Value!=32767 && Value>=0){
-            cs.enter();
-            ChSum+=Value;
-            ChCnt++;
-            cs.leave();
-          }
-          else ChFlg|=flgEADCRange;
-          return TRUE;
-        }
-        else ChFlg|=flgEDataFormat;
-      }
-      else ChFlg|=flgEResponse;
-    }
-    else ChFlg|=flgEComm;
-    return FALSE;
-  }
-
-  void latchPollData(){
-    cs.enter();
-    LatchedSum=ChSum; ChSum=0;
-    LatchedCnt=ChCnt; ChCnt=0;
-    LatchedFlg=ChFlg; ChFlg=0;
-    cs.leave();
-  }
-  void doSample(TIME Time){
-  #ifdef ADCDOWNSAMPLE
-    if(++FilterCnt < ADCDOWNSAMPLE) return;
-  #endif
-    U16 Sample;
-    if (LatchedCnt>0){
-      Sample = udiv(LatchedSum, LatchedCnt);
-    #ifdef __SHOWADCDATA
-      if(Channel==0){
-        // p*100 = (Sample*k-b)>>16
-        // k = P*V*6250*65536/(32767*R)
-        // b = P*25*65536
-        // V=2.5; R=124; k=P*252.024; b=P*1638400
-      #if   __SHOWADCDATA == 100
-        S16 Val = S16((smul(Sample,25202)-163840000L)>>16); // P=100
-      #elif __SHOWADCDATA == 60
-        S16 Val = S16((smul(Sample,15121)- 98304000L)>>16); // P= 60
-      #elif __SHOWADCDATA == 40
-        S16 Val = S16((smul(Sample,10081)- 65536000L)>>16); // P= 40
-      #elif __SHOWADCDATA == 25
-        S16 Val = S16((smul(Sample, 6301)- 40960000L)>>16); // P= 25
-      #else
-        S16 Val = S16(smul(Sample,500)>>16); // V=2.5
-      #endif
-        SYS::showDecimal(Val);
-      }
-    #endif
-    }
-    else {
-      Sample=(flgError | LatchedFlg)<<8;
-    #ifdef __SHOWADCDATA
-      if(Channel==0){
-        SYS::dbgLed(0x6a6ec);
-      }
-    #endif
-    }
-    cs.enter();
-//    TimeOk=TimeSvc.TimeOk();
-  #ifdef ADCDOWNSAMPLE
-    do{
-  #endif
-    if(IsFull()) get(NULL);
-    put(&Sample);
-  #ifdef ADCDOWNSAMPLE
-    }while(--FilterCnt!=0);
-  #endif
-    FirstTime=Time-S32(Count()-1)*ADC_Period;
-    cs.leave();
-  }
-}; // PU_ADC_7K
-#endif // __I7K
 
 struct EVENT_DI {
   TIME Time; U8 Channel; U8 ChangedTo;

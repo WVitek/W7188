@@ -232,7 +232,7 @@ void receiveData(U8 /*From*/, const void* Data,int Size){
         tout.stop();
       break;
     case PROG_SOFTRESET:
-      SYS::reset(); // AAAA!!!! :-)
+      SYS::reset(TRUE); // AAAA!!!! :-)
     }
   }
   else if ( (S32)fd.size > 0 )
