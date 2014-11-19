@@ -14,8 +14,10 @@
 
 #define setNeedConnection(x)
 
+#ifndef __SendTimeEvents
 #include "TIMC_Svc.h"
 TIMECLIENT_SVC TimeSvc;
+#endif
 
 #if defined(__7188XA) || defined(__7188XB)
 void HLI_linkCheck();
@@ -25,13 +27,14 @@ void HLI_linkCheck();
 
 
 
-
-
 #else // !defined(_HLI_HDR)
 
 
 
-
+#ifdef __SendTimeEvents
+#include "TIMC_Svc.h"
+TIMECLIENT_SVC TimeSvc;
+#endif
 
 #include "ADC_Svc.h"
 #include "DI_Svc.h"
@@ -82,9 +85,19 @@ struct PACKET
 
 #else
 
+#if defined(__ARQ)
+
+#define TOUT_LINK_AFTER_DATA_RX (toTypeSec | 1200)
+#define TOUT_LINK_AFTER_PWR_OFF (toTypeSec | 1200)
+#define TOUT_LINK_POWER_OFF_TIME (toTypeSec | 5)
+
+#else
+
 #define TOUT_LINK_AFTER_DATA_RX (toTypeSec | 600)
 #define TOUT_LINK_AFTER_PWR_OFF (toTypeSec | 600)
 #define TOUT_LINK_POWER_OFF_TIME (toTypeSec | 5)
+
+#endif
 
 #endif
 
@@ -98,6 +111,7 @@ static TIMEOUTOBJ toutLink;
 
 void HLI_linkCheck()
 {
+  //ConPrint("\n\r   Debug Hli link check");
   static enum {modemPowerInit, modemPowerOn, modemPowerOff}
     modemPower = modemPowerInit;
   switch(modemPower)
@@ -106,6 +120,7 @@ void HLI_linkCheck()
         if(!toutLink.IsSignaled())
             return;
       case modemPowerInit:
+        //SYS::sleep(1500); // for relay // not working!
         DIO::SetDO1(POWERON_DO1); // modem power up
         modemPower = modemPowerOn;
         toutLink.start(TOUT_LINK_AFTER_PWR_OFF);
@@ -117,7 +132,7 @@ void HLI_linkCheck()
 #ifdef __RESET_IF_NO_LINK
             ConPrint("\n\rRESET by NO LINK timeout");
             SYS::sleep(100);
-            SYS::reset();
+            SYS::reset(TRUE);
 #else
             DIO::SetDO1(!POWERON_DO1); // modem power down
             modemPower = modemPowerOff;
@@ -134,6 +149,7 @@ void HLI_linkCheck()
 
 BOOL HLI_receive(void const * Buf, int BufSize)
 {
+  //ConPrint("\n\r   Debug Hli recieve");
   if( CRC16_is_OK(Buf,BufSize,CRC16_PPP) )
   {
 #ifdef __HLI_RX_SWITCH_LED
@@ -145,8 +161,12 @@ BOOL HLI_receive(void const * Buf, int BufSize)
     SERVICE **svc = Service;
     while(*svc && (**svc).ID!=SvcID)
         svc++;
-    if(*svc)
+    if(*svc){
+        //ConPrintf("\n\r\n\r HLI_receive:\n\r p->Hdr.To = %d  p->Hdr.From = %d p->Hdr.ServiceID = %d DataSize = %d\n\r",
+        //           p->Hdr.To, p->Hdr.From, p->Hdr.ServiceID, BufSize - HLI_SYSDATASIZE);
+
         (**svc).receiveData( p->Hdr.From, p->Data, BufSize - HLI_SYSDATASIZE );
+    }
     toutLink.start(TOUT_LINK_AFTER_DATA_RX);
     return TRUE;
   }
@@ -161,6 +181,7 @@ BOOL HLI_receive(void const * Buf, int BufSize)
 
 int HLI_totransmit(void* Buf, int BufSize)
 {
+    //ConPrint("\n\r   Debug totransmit");
     static TIMEOUTOBJ toutTx;
     int DataSize = 0;
 
@@ -184,12 +205,34 @@ int HLI_totransmit(void* Buf, int BufSize)
             p->Hdr.ServiceID = 0;
             DataSize = sizeof(PACKETHEADER);
         }
+
+        //ConPrintf("\n\r\n\r HLI_totransmit:\n\r p->Hdr.To = %d  p->Hdr.From = %d p->Hdr.ServiceID = %d DataSize = %d\n\r",
+        //           p->Hdr.To, p->Hdr.From, p->Hdr.ServiceID, DataSize);
+
         toutTx.start(toTypeSec | 40); // need some tx every 40 sec
         CRC16_write( Buf,  DataSize, CRC16_PPP );
         DataSize += CRC_SIZE;
     }
   return DataSize;
 }
+
+#ifdef __UseAvgTOfs
+void HLI_chechForEmergencyResync()
+{
+    //ConPrint("\n\r   Debug HLI_chechForEmergencyResync");
+
+    TimeSvc.chechForEmergencyResync();
+
+    //SERVICE **svc = Service;
+    //while(*svc && (**svc).ID!=1)
+    //    svc++;
+    //if(*svc){
+    //    //ConPrintf("\n\r\n\r HLI_receive:\n\r p->Hdr.To = %d  p->Hdr.From = %d p->Hdr.ServiceID = %d DataSize = %d\n\r",
+    //    //           p->Hdr.To, p->Hdr.From, p->Hdr.ServiceID, BufSize - HLI_SYSDATASIZE);
+    //    (**svc).receiveData( p->Hdr.From, p->Data, BufSize - HLI_SYSDATASIZE );
+    //}
+}
+#endif
 
 #if defined(__GPRS_SIM300)
   #include "hli_sim3.h"
@@ -199,6 +242,8 @@ int HLI_totransmit(void* Buf, int BufSize)
   #include "hli_2238.h"
 #elif defined(__GPRS_TC65)
   #include "hli_tc65.h"
+#elif defined(__GPRS_MC52)
+  #include "hli_mc52.h"
 #elif defined(__WIRE)
   #include "hli_wire.h"
 #else

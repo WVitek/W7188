@@ -683,6 +683,10 @@ void SYS::reset(BOOL needStop)
 
 void SYS::WDT_Refresh(){ RefreshWDT(); }
 
+#elif defined(__I7188)
+
+void SYS::WDT_Refresh(){ RefreshWDT(); }
+
 #elif defined(__7188X)
 
 void SYS::WDT_Refresh()

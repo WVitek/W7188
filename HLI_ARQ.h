@@ -11,9 +11,20 @@
   #if !defined(__ModemInitCmd)
   char* szModemInitCmd="AT &C1 &D2 E0 S0=1 &W\r";
   #endif
+#elif   defined(__GSM_MC52)
+  #define _ComSpeedHLI 19200
+//  #ifdef __TC65_BUG не принимает одной строкой. Надо переделывать, как минимум на 3 строки.
+//    char* szModemInitCmd="AT+IPR=19200;^SCFG=\"GPRS/ATS0/withAttach\",\"off\";&D2&S0E0S0=1&W\r";
+//  #else
+    char* szModemInitCmd="AT+IPR=19200;&D2&S0E0S0=1&W\r";
+//  #endif
 #elif defined(__GSM_TC65)
   #define _ComSpeedHLI 19200
-  char* szModemInitCmd="AT&D2;&S0;E0;S0=1;+IPR=19200\r";
+  #ifdef __TC65_BUG
+    char* szModemInitCmd="AT^SCFG=\"GPRS/ATS0/withAttach\",\"off\";&D2;&S0;E0;S0=1;+IPR=19200\r";
+  #else
+    char* szModemInitCmd="AT&D2;&S0;E0;S0=1;+IPR=19200\r";
+  #endif
 #elif defined(__CDMA2000_DTG450)
   #define _ComSpeedHLI 19200
   char* szModemInitCmd="AT &F &D2 &C1 E0 S0=1 +IPR=19200\r";
@@ -25,22 +36,51 @@
   #error !!! Modem type not specified
 #endif
 
-//char* szDialCmd="ATS0=1;D+79625271206\r";  // UPO BeeLine
-//char* szDialCmd="AT S0=1 D+79173784236\r"; // UPO
-//char* szDialCmd="ATS0=1D+79173784238\r";   // UPO MTS
-//char* szDialCmd="AT S0=1 D+79048169201\r"; // VPO Utel
-//char* szDialCmd="ATS0=1D+79128921286\r";   // VPO MTS
-char* szDialCmd="ATS0=1D+77712117986\r";     // Petropavlovsk
-//char* szDialCmd="AT S0=1 D+79136013079\r"; // Isilkul
-//char* szDialCmd="AT S0=1 D+79173784236\r"; // Chudaev home
-//char* szDialCmd="AT S0=1 D+79177922184\r"; // Simka UPO
-//char* szDialCmd="AT S0=1 D+79174706642\r"; // Home A
-//char* szDialCmd="AT S0=1 D+79174836137\r"; // Home B
-//char* szDialCmd="AT S0=1 D89277558041\r";  // Georgievka
-//char* szDialCmd="AT S0=1 D4406378\r";      // UPO Sotel-Video
-#define IntervalNextDial 90
+#if   defined(__GSM_MC52)
+  #if defined(__UTNP_UPO)
+  //char* szDialCmd="ATS0=1D89177739989\r"; // UPO MTS Tim
+  //char* szDialCmd="ATS0=1D89625271206\r"; // UPO BeeLine NEW
+  char* szDialCmd="ATS0=1D89033046938\r"; // UPO BeeLine Георгиевка
+  //char* szDialCmd="ATS0=1D89625297549\r"; // Cherkassi NEW
+  //char* szDialCmd="ATS0=1D+79173784236\r"; // UPO
+  //char* szDialCmd="ATS0=1D89173784238\r"; // UPO MTS
+  //char* szDialCmd="ATS0=1D+79177922184\r"; // Simka UPO
+  //char* szDialCmd="ATS0=1D89277558041\r"; // Georgievka
+  #elif   defined(__UTNP_VPO)
+  //char* szDialCmd="ATS0=1D+79123102686\r"; // VPO Chelyabinsk NEW
+  //char* szDialCmd="ATS0=1D+77712117986\r"; // VPO Petropavlovsk NEW
+  char* szDialCmd="ATS0=1D+79128921286\r"; // VPO MTS
+  //char* szDialCmd="ATS0=1D+79136013079\r"; // Isilkul
+  #else
+  char* szDialCmd="ATS0=1D89174250742\r"; // Home A
+  #endif
+#else
+  #if defined(__UTNP_UPO)
+  //char* szDialCmd="ATS0=1;D89177739989\r"; // UPO MTS Tim
+  //char* szDialCmd="ATS0=1;D89625271206\r"; // UPO BeeLine NEW
+  char* szDialCmd="ATS0=1;D89033046938\r"; // UPO BeeLine Георгиевка
+  //char* szDialCmd="ATS0=1D89625297549\r"; // Cherkassi NEW
+  //char* szDialCmd="AT S0=1 D+79173784236\r"; // UPO
+  //char* szDialCmd="ATS0=1;D89173784238\r"; // UPO MTS
+  //char* szDialCmd="AT S0=1 D+79177922184\r"; // Simka UPO
+  //char* szDialCmd="AT S0=1 D89277558041\r"; // Georgievka
+  //char* szDialCmd="AT S0=1 D4406378\r"; // UPO Sotel-Video
+  #elif   defined(__UTNP_VPO)
+  char* szDialCmd="ATS0=1;D+79123102686\r"; // VPO Chelyabinsk NEW
+  //char* szDialCmd="ATS0=1;D+77712117986\r"; // VPO Petropavlovsk NEW
+  //char* szDialCmd="ATS0=1D+79128921286\r"; // VPO MTS
+  //char* szDialCmd="AT S0=1 D+79136013079\r"; // Isilkul
+  //char* szDialCmd="AT S0=1 D+79048169201\r"; // VPO Utel
+  #else
+  //char* szDialCmd="AT S0=1 D+79173784236\r"; // Chudaev home
+  char* szDialCmd="AT S0=1 D+79174706642\r"; // Home A
+  //char* szDialCmd="AT S0=1 D+79174836137\r"; // Home B
+  #endif
+#endif
+
+#define IntervalNextDial 95
 //#define IntervalNeedConnect
-#define IntervalRetryDial 45
+#define IntervalRetryDial 85
 S16 TimerDial=0;
 TIME LastConnectTime=0;
 BOOL NeedConnection=TRUE;
@@ -107,12 +147,18 @@ public:
 void THREAD_HLI::execute(){
   dbg3("\n\rSTART HLI_ARQ (#%d, COM%d)",MyAddr,comNum);
   COMPORT& HLI = GetCom(comNum);
+  if(!Terminated)
+    SYS::sleep(2000);  // Pause for modem start
 #if defined(__GSM_GR47)
   HLI.install(9600);
 #elif defined(__GSM_TC65)
-  HLI.install(115200);
   if(!Terminated)
     SYS::sleep(3000);
+  HLI.install(115200);
+#elif defined(__GSM_MC52)
+  if(!Terminated)
+    SYS::sleep(3000);
+  HLI.install(9600);
 #elif defined(__CDMA2000_DTG450)
   HLI.install(115200);
 #endif
@@ -182,9 +228,22 @@ void THREAD_HLI::execute(){
           {
             _csConn.enter();
             TimerDial--;
-            if(TimerDial<=0){
-              szCmd=szDialCmd;
-              TimerDial=IntervalRetryDial;
+            TimerInit--;
+            if(TimerInit<=0){
+              ConPrint("! RESET !");
+              HLI_setDtr(false);
+              SYS::sleep(300);
+              HLI_setDtr(true);
+              SYS::sleep(1000);
+              szCmd=szModemInitCmd;
+              TimerInit=385; // Modem reinit period
+              if(TimerDial<5)
+                TimerDial=5;
+            }else{
+              if(TimerDial<=0){
+                szCmd=szDialCmd;
+                TimerDial=IntervalRetryDial;
+              }
             }
             _csConn.leave();
           }
@@ -200,7 +259,7 @@ void THREAD_HLI::execute(){
               //HLI.print("atz\r");
               SYS::sleep(1000);
               szCmd=szModemInitCmd;
-              TimerInit=120; // Modem reinit period
+              TimerInit=385; // Modem reinit period
             }
           }
           if(szCmd){

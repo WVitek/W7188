@@ -36,30 +36,51 @@ int getDataToTransmit(U8 /*To*/,void* Data,int MaxSize)
     P->readArchive(FromTime,NULL,0); // correct time value
   }
   if(FromTime<SYS::NetTimeOffset)
+  {
+    ConPrintf("\n\r2155 Year Bug : [FromTime=%lld], [NTO=%lld] \n\r", FromTime, SYS::NetTimeOffset);
+  }
+#ifdef __YEAR2155
+  if ( (FromTime<SYS::NetTimeOffset) && (FromTime<1000000000000) )
+  {
+    for(int i=0; i<nADC; i++)
+    {
+      PU_ADC* P = (*plADC)[i];
+      P->cs.leave();
+    }
+    ConPrint("\n\r2155 Year Bug avoided.\n\r");
     return 0;
-  // determine correct recsize
-  U16 BytesPerCh = (MaxSize-sizeof(TIME)-1) / nADC;
-  for(int i=0; i<nADC; i++)
-  {
-    PU_ADC* P = (*plADC)[i];
-    BytesPerCh = P->readArchive(FromTime,NULL,BytesPerCh); // correct time value
   }
-  // reading
-  U8 *Dst = (U8*)Data;
-  *(TIME*)Dst = FromTime; Dst+=sizeof(TIME);
-  *Dst++ = (U8)nADC;
-  for(int i=0; i<nADC; i++)
-  {
-    PU_ADC* P = (*plADC)[i];
-    P->readArchive(FromTime,Dst,BytesPerCh);
-    Dst+=BytesPerCh;
-    P->cs.leave();
-  }
-  //ConPrintf("\n\r\ADC answer [Recs=%d FromTime: Q=%lld; A=%lld]\n\r", BytesPerCh>>1, tmpTime, FromTime);
-  if(BytesPerCh)
-    return sizeof(TIME)+1+BytesPerCh*nADC;
   else
-    return 0;
+  {
+#endif
+    // determine correct recsize
+    U16 BytesPerCh = (MaxSize-sizeof(TIME)-1) / nADC;
+    for(int i=0; i<nADC; i++)
+    {
+      PU_ADC* P = (*plADC)[i];
+      BytesPerCh = P->readArchive(FromTime,NULL,BytesPerCh); // correct time value
+    }
+    // reading
+    U8 *Dst = (U8*)Data;
+    *(TIME*)Dst = FromTime; Dst+=sizeof(TIME);
+    *Dst++ = (U8)nADC;
+    for(int i=0; i<nADC; i++)
+    {
+      PU_ADC* P = (*plADC)[i];
+      P->readArchive(FromTime,Dst,BytesPerCh);
+      Dst+=BytesPerCh;
+      P->cs.leave();
+    }
+    //ConPrintf("\n\r\ADC answer [Recs=%d FromTime: Q=%lld; A=%lld]\n\r", BytesPerCh>>1, tmpTime, FromTime);
+    if(BytesPerCh)
+      return sizeof(TIME)+1+BytesPerCh*nADC;
+    else{
+      ConPrint(" Zero bytes");
+      return 0;
+    }
+#ifdef __YEAR2155
+  }
+#endif
 }
 
 void receiveData(U8 /*From*/,const void* Data,int Size)

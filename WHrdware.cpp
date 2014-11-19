@@ -104,8 +104,11 @@ public:
 #ifdef __SoftAutoDir
     U8 ComDirBit,
 #endif
-    U8 IntVectNum,U16 IntMask,
-    U32 ISR,BOOL Flags):COMPORT()
+    U8 IntVectNum,
+    U16 IntMask,
+    U32 ISR,
+    U8 Flags
+  ):COMPORT()
   {
     this->Base=Base;
 #ifdef __SoftAutoDir
@@ -185,7 +188,7 @@ COM_16550 Com2(Com2Base,
 );
 
 U16 GetBaudRateDivider(U32 baud){
-#if defined(__7188)
+#if defined(__7188) || defined(__I7188)
   switch(baud){
     case 1200ul  : return 96;
     case 2400ul  : return 48;

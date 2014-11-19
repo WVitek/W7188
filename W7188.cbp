@@ -27,28 +27,39 @@
 					<Add option="-s" />
 					<Add option="-bt=dos" />
 					<Add option="-we -e10 -s -zq -os -oi -oa -zdf -zu -1 -bt=dos -mc" />
-					<Add option="-d__7188XA" />
-					<Add option="-d__mOS7" />
-					<Add option="-d__WIRE" />
-					<Add option="-dq__RS485" />
-					<Add option="-dq__ARQ" />
-					<Add option="-dq__GSM_TC65" />
 					<Add option="-dMyAddr=1" />
+					<Add option="-dq__MYGPRS" />
+					<Add option="-dq__GPRS_MC52" />
+					<Add option="-dq__UTNP_UPO" />
+					<Add option="-d__UTNP_VPO" />
+					<Add option="-d__7188XA" />
+					<Add option="-dq__7188" />
+					<Add option="-dq__I7188" />
+					<Add option="-d__mOS7" />
 					<Add option="-d__I7K" />
-					<Add option="-d__MTU" />
-					<Add option="-dPOWERON_DO1=1" />
-					<Add option="-d__DO2_PERIOD=60" />
+					<Add option="-dq__YEAR2155" />
+					<Add option="-dPOWERON_DO1=0" />
+					<Add option="-dq__SHOWADCDATA=60" />
+					<Add option="-dq__DebugThreadState" />
+					<Add option="-dq__WIRE" />
+					<Add option="-d__RS485" />
+					<Add option="-dq__ARQ" />
+					<Add option="-dq__GSM_MC52" />
+					<Add option="-dq__GSM_TC65" />
+					<Add option="-dq__GSM_SIM300" />
+					<Add option="-dq__MTU" />
+					<Add option="-dq__DO2_PERIOD=60" />
 					<Add option="-dq__MTU_VAL_EMUL" />
 					<Add option="-d__GPS_TIME_GPS721" />
 					<Add option="-dq__NO_STAT" />
 					<Add option="-dq__NO_HLI" />
 					<Add option="-dq__COM_STATUS_BUF" />
 					<Add option="-dq__MTU_Old" />
-					<Add option="-d__I7K_NOANS" />
-					<Add option="-d__HLI_RX_SWITCH_LED" />
-					<Add option="-dq__DebugThreadState" />
-					<Add option="-d__SHOWADCDATA=100" />
+					<Add option="-dq__I7K_NOANS" />
+					<Add option="-dq__HLI_RX_SWITCH_LED" />
 					<Add option="-dq__EVALUATION" />
+					<Add option="-dq__UseAvgTOfs" />
+					<Add option="-dq__TC65_BUG" />
 				</Compiler>
 				<Linker>
 					<Add option="name w d all SYS dos op m op maxe=25" />
@@ -58,7 +69,7 @@
 				</Linker>
 				<ExtraCommands>
 					<Add after="p:\work\watcom\binnt\wlink.exe name bin\w.exe d all SYS dos op m op maxe=25 op q op symf op el file obj\WComms.obj,obj\main.obj,obj\WCRCs.obj,obj\WHrdware.obj,obj\wkern.obj" />
-					<Add after="cmd /c copy /y bin\w.exe D:\Work\I7188\NAPDOS\w.exe" />
+					<Add after="cmd /c copy /y bin\w.exe d:\work\I7188\napdos\w.exe" />
 					<Mode after="always" />
 				</ExtraCommands>
 			</Target>
@@ -93,6 +104,7 @@
 		<Unit filename="HLI_ARQ.h">
 			<Option virtualFolder="HLI\" />
 		</Unit>
+		<Unit filename="I7188.H" />
 		<Unit filename="MODULE.h">
 			<Option virtualFolder="DataAcquisition\" />
 		</Unit>
@@ -154,6 +166,9 @@
 		<Unit filename="hli_gr47.h">
 			<Option virtualFolder="HLI\" />
 		</Unit>
+		<Unit filename="hli_mc52.h">
+			<Option virtualFolder="HLI\" />
+		</Unit>
 		<Unit filename="hli_sim3.h">
 			<Option virtualFolder="HLI\" />
 		</Unit>
@@ -170,6 +185,7 @@
 		<Extensions>
 			<code_completion />
 			<debugger />
+			<envvars />
 		</Extensions>
 	</Project>
 </CodeBlocks_project_file>

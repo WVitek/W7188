@@ -30,6 +30,14 @@ void execute()
         SYS::sleep(toTypeNext | ctx_I7K.Period);
         TIME Time;
         SYS::getNetTime(Time);
+        S16 dt = (S16)(Time % ctx_I7K.Period);
+        if(dt>ctx_I7K.Period>>1)
+        {
+            dt = ctx_I7K.Period-dt;
+            Time += dt;
+            SYS::sleep(dt);
+        }
+        else Time -= dt;
         // latch
         for(int j=n1; j>=0; j--)
             (*ctx_I7K.PollList)[j]->latchPollData();
@@ -39,7 +47,6 @@ void execute()
         SYS::switchThread();
         S(0x03);
         //dbg(".!.");
-        Time -= Time % ctx_I7K.Period;
         // sample latched data
         for(int j=n1; j>=0; j--)
             (*ctx_I7K.PollList)[j]->doSample(Time);
@@ -70,10 +77,12 @@ class THREAD_I7K_POLL : public THREAD
         this->baudRate=baudRate;
         //modules = ctx_I7K.Modules;
         //pollList = ctx_I7K.PollList;
+        //ConPrint("\n\r Dbg 1");
     }
 
     void execute()
     {
+        //ConPrint("\n\r Dbg 2");
         COMPORT& RS485=GetCom(pollPort);
         RS485.install(baudRate);
         int nPoll=ctx_I7K.PollList->Count();
@@ -120,9 +129,10 @@ class THREAD_I7K_POLL : public THREAD
 
             if(!more && --i<0)
                 i=nPoll-1;
-        #ifdef __MTU
-            SYS::sleep(17);
-        #endif
+        //#ifdef __MTU tmp_for_GPS_test
+//        #if defined(__MTU) || defined(__GPS_TIME_GPS721)
+//            SYS::sleep(17);
+//        #endif
         }
 /*/
         pu_=(*ctx_I7K.PollList)[i];
@@ -154,9 +164,10 @@ class THREAD_I7K_POLL : public THREAD
         #endif
             int Ans = (r==0 && pu_->response(Resp)) ? 1: 0;
             I7K_StatAdd(1,Ans);
-        #ifdef __MTU
-            SYS::sleep(17);
-        #endif
+        //#ifdef __MTU for_GPS
+//        #if defined(__MTU) || defined(__GPS_TIME_GPS721)
+            //SYS::sleep(15); //17
+//        #endif
             S(0x04);
             i0=i;
             pu_=pu;

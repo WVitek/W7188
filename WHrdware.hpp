@@ -47,6 +47,25 @@
   #define Com4DirPort PIO_DATA_0
   #define Com4DirBit  0x40
   */
+#elif defined(__I7188)
+  //*** I7188 (muOS7) hardware defines
+  #include "I7188.h"
+  #if defined(__SMALL__) || defined(__COMPACT__)
+    #pragma library("lib\I7188s.lib");
+  #else
+    #pragma library("lib\I7188l.lib");
+  #endif
+  #define __SoftAutoDir
+  #define ComDirPort   PIO_DATA_0
+  #define Com1DirBit   0x20
+  #define Com2DirBit   0x40
+  #define Com1Base     0x200
+  #define Com1Int      INT_I0INT
+  #define Com1Msk      INT_MSKI0
+  #define Com2Base     0x100
+  #define Com2Int      INT_I1INT
+  #define Com2Msk      INT_MSKI1
+
 #elif defined(__7188XA)
   //*** 7188XA hardware defines
   #define __7188X

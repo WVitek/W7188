@@ -39,6 +39,9 @@ void execute()
     S(0x03);
 #define __UNDEFINED
 #ifdef __UNDEFINED
+    S16 dt = Time % 1000;
+    dt = (dt>500) ? dt-1000 : dt;
+    Time -= dt;
     U16 year,month,day,hour,min,sec,msec;
     //SYS::getNetTime(Time);
     SYS::DecodeDate(Time, year, month, day);
@@ -68,20 +71,20 @@ void execute()
     }
     S(0x05);
   #ifdef __I7K
-    #define fmt "\n\r%d%02d%02d_%02d%02d%02d.%03d  MTU:%03d/%03d I7K:%03d/%03d SYS:%03d %02d"
+    #define fmt "\n\r%d%02d%02d_%02d%02d%02d.%2d  MTU:%03d/%03d I7K:%03d/%03d SYS:%03d %02d"
     #define arg MTU_Qry, MTU_Ans, I7K_Qry, I7K_Ans
   #else
-    #define fmt "\n\r%d%02d%02d_%02d%02d%02d.%03d  MTU:%03d/%03d SYS:%03d %02d"
+    #define fmt "\n\r%d%02d%02d_%02d%02d%02d.%2d  MTU:%03d/%03d SYS:%03d %02d"
     #define arg MTU_Qry, MTU_Ans
   #endif
 #elif defined( __I7K )
-    #define fmt "\n\r%d%02d%02d_%02d%02d%02d.%03d  I7K:%03d/%03d SYS:%03d %02d"
+    #define fmt "\n\r%d%02d%02d_%02d%02d%02d.%2d  I7K:%03d/%03d SYS:%03d %02d"
     #define arg I7K_Qry, I7K_Ans
 #else
-    #define fmt "\n\r%d%02d%02d_%02d%02d%02d.%03d  SYS:%03d %02d"
+    #define fmt "\n\r%d%02d%02d_%02d%02d%02d.%2d  SYS:%03d %02d"
     #define arg
 #endif
-    pos+=sprintf(buf, fmt, year, month, day, hour, min, sec, msec, arg, SYS::GetCPUIdleMs(), SYS::GetTimerISRMs() );
+    pos+=sprintf(buf, fmt, year, month, day, hour, min, sec, dt, arg, SYS::GetCPUIdleMs(), SYS::GetTimerISRMs() );
 #undef fmt
 #undef arg
 

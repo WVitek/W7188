@@ -1,15 +1,46 @@
 #pragma once
 
 char* szMdmCmdConnParam = _HLI_hostname;
-char* szMdmCmdInit="AT&F;E0;&D2;^SICS=0,conType,GPRS0;^SICS=0,alphabet,0;^SICS=0,user,mts;^SICS=0,passwd,mts;^SISS=1,srvType,Socket;^SISS=1,conId,0;^SISS=1,alphabet,1";
 
 char* szMdmCmdDisc="AT^SISC=1";
 char* szMdmCmdRset="AT^SMSO";
-#if defined(__TNGP)
+#if defined(__UTNP_UPO)
+// Тестовый 1
+//char* szMdmCmdInit="AT&F;E0;&D2;^SICS=0,conType,GPRS0;^SICS=0,alphabet,0;^SICS=0,user,\"9625307170\\00upouraltnp.gldn.gprs\";^SICS=0,passwd,fOaeRjwJ2CJU;^SISS=1,srvType,Socket;^SISS=1,conId,0;^SISS=1,alphabet,1";
+// Тестовый 2 10.226.136.1
+//char* szMdmCmdInit="AT&F;E0;&D2;^SICS=0,conType,GPRS0;^SICS=0,alphabet,0;^SICS=0,user,\"9625297716\\00upouraltnp.gldn.gprs\";^SICS=0,passwd,JTTvfX3QGfeB;^SISS=1,srvType,Socket;^SISS=1,conId,0;^SISS=1,alphabet,1";
+// 10.226.136.2 Yazikovo 87km
+//char* szMdmCmdInit="AT&F;E0;&D2;^SICS=0,conType,GPRS0;^SICS=0,alphabet,0;^SICS=0,user,\"9625297896\\00upouraltnp.gldn.gprs\";^SICS=0,passwd,1XX8uhepOJiK;^SISS=1,srvType,Socket;^SISS=1,conId,0;^SISS=1,alphabet,1";
+// 10.226.136.3 Yazikovo 91km
+//char* szMdmCmdInit="AT&F;E0;&D2;^SICS=0,conType,GPRS0;^SICS=0,alphabet,0;^SICS=0,user,\"9625297964\\00upouraltnp.gldn.gprs\";^SICS=0,passwd,Ut7JzCm1ebEZ;^SISS=1,srvType,Socket;^SISS=1,conId,0;^SISS=1,alphabet,1";
+// 10.226.136.4 Yazikovo 108km
+//char* szMdmCmdInit="AT&F;E0;&D2;^SICS=0,conType,GPRS0;^SICS=0,alphabet,0;^SICS=0,user,\"9625297967\\00upouraltnp.gldn.gprs\";^SICS=0,passwd,7AcoVJPqKPEE;^SISS=1,srvType,Socket;^SISS=1,conId,0;^SISS=1,alphabet,1";
+// 10.226.136.5 Subhankulovo 241km
+//char* szMdmCmdInit="AT&F;E0;&D2;^SICS=0,conType,GPRS0;^SICS=0,alphabet,0;^SICS=0,user,\"9625298086\\00upouraltnp.gldn.gprs\";^SICS=0,passwd,WMwqmUwiuNOS;^SISS=1,srvType,Socket;^SISS=1,conId,0;^SISS=1,alphabet,1";
+// 10.226.136.6 Turino 284
+//char* szMdmCmdInit="AT&F;E0;&D2;^SICS=0,conType,GPRS0;^SICS=0,alphabet,0;^SICS=0,user,\"9625298143\\00upouraltnp.gldn.gprs\";^SICS=0,passwd,59RZ4FNFNe6A;^SISS=1,srvType,Socket;^SISS=1,conId,0;^SISS=1,alphabet,1";
+// 10.226.136.7 Turino 329
+//char* szMdmCmdInit="AT&F;E0;&D2;^SICS=0,conType,GPRS0;^SICS=0,alphabet,0;^SICS=0,user,\"9625298160\\00upouraltnp.gldn.gprs\";^SICS=0,passwd,byUcKJPnLs10;^SISS=1,srvType,Socket;^SISS=1,conId,0;^SISS=1,alphabet,1";
+// 10.226.136.8 Turino 382
+//char* szMdmCmdInit="AT&F;E0;&D2;^SICS=0,conType,GPRS0;^SICS=0,alphabet,0;^SICS=0,user,\"9625298164\\00upouraltnp.gldn.gprs\";^SICS=0,passwd,5tUejs3D5ith;^SISS=1,srvType,Socket;^SISS=1,conId,0;^SISS=1,alphabet,1";
+// 10.226.136.9 Turino 400
+//char* szMdmCmdInit="AT&F;E0;&D2;^SICS=0,conType,GPRS0;^SICS=0,alphabet,0;^SICS=0,user,\"9625298207\\00upouraltnp.gldn.gprs\";^SICS=0,passwd,jtxMkJviDfPh;^SISS=1,srvType,Socket;^SISS=1,conId,0;^SISS=1,alphabet,1";
+// 10.226.136.10 Turino 422
+//char* szMdmCmdInit="AT&F;E0;&D2;^SICS=0,conType,GPRS0;^SICS=0,alphabet,0;^SICS=0,user,\"9625298304\\00upouraltnp.gldn.gprs\";^SICS=0,passwd,seZ1JkjWwrkp;^SISS=1,srvType,Socket;^SISS=1,conId,0;^SISS=1,alphabet,1";
+// 10.226.136.11
+char* szMdmCmdInit="AT&F;E0;&D2;^SICS=0,conType,GPRS0;^SICS=0,alphabet,0;^SICS=0,user,\"9625298407\\00upouraltnp.gldn.gprs\";^SICS=0,passwd,rfwvUb9abr7Y;^SISS=1,srvType,Socket;^SISS=1,conId,0;^SISS=1,alphabet,1";
+// 10.226.136.12
+//char* szMdmCmdInit="AT&F;E0;&D2;^SICS=0,conType,GPRS0;^SICS=0,alphabet,0;^SICS=0,user,\"9625298414\\00upouraltnp.gldn.gprs\";^SICS=0,passwd,ih4zQzFTRBOz;^SISS=1,srvType,Socket;^SISS=1,conId,0;^SISS=1,alphabet,1";
+
+char* szMdmCmdConn="AT^SICS=0,apn,gt.msk;^SISS=1,address,sockudp://%s:19864;^SISO=1";
+#elif defined(__TNGP)
+char* szMdmCmdInit="AT&F;E0;&D2;^SICS=0,conType,GPRS0;^SICS=0,alphabet,0;^SICS=0,user,mts;^SICS=0,passwd,mts;^SISS=1,srvType,Socket;^SISS=1,conId,0;^SISS=1,alphabet,1";
 char* szMdmCmdConn="AT^SICS=0,apn,tngp.kazan;^SISS=1,address,sockudp://%s:19864;^SISO=1";
 #elif defined(__BASHNEFT)
+char* szMdmCmdInit="AT&F;E0;&D2;^SICS=0,conType,GPRS0;^SICS=0,alphabet,0;^SICS=0,user,mts;^SICS=0,passwd,mts;^SISS=1,srvType,Socket;^SISS=1,conId,0;^SISS=1,alphabet,1";
 char* szMdmCmdConn="AT^SICS=0,apn,bashneft.ufa;^SISS=1,address,sockudp://%s:19864;^SISO=1";
 #else
+char* szMdmCmdInit="AT&F;E0;&D2;^SICS=0,conType,GPRS0;^SICS=0,alphabet,0;^SICS=0,user,mts;^SICS=0,passwd,mts;^SISS=1,srvType,Socket;^SISS=1,conId,0;^SISS=1,alphabet,1";
 char* szMdmCmdConn="AT^SICS=0,apn,internet.mts.ru;^SISS=1,address,sockudp://%s:19864;^SISO=1";
 #endif
 
@@ -63,7 +94,7 @@ void execute(){
       Rx = prt.GetBuf( RxSize );
       if(RxSize)
       {
-        if(IsTextMode) 
+        if(IsTextMode)
           ConPrintf(" <Rx=%d:%.*s> ",RxSize,RxSize,Rx);
         else
           ConPrintf(" [Rx=%d] ",RxSize);
@@ -103,7 +134,7 @@ void execute(){
            break;
         }
         ConPrint("\n\rTC65: detecting...\n\r");
-#ifdef __7188XB          
+#ifdef __7188XB
         HLI.setRts(false); SYS::sleep(1000); HLI.setRts(true);
 #else
         HLI.setDtr(false); SYS::sleep(1000); HLI.setDtr(true);
@@ -167,7 +198,7 @@ void execute(){
         SYS::sleep(5000);
         toutState.start(LinkTimeout); // restart link timeout
       }
-      else if( toutState.IsSignaled() ) 
+      else if( toutState.IsSignaled() )
       {
         ConPrint("\n\rTC65: link timeout\n\r");
         NewState = msDisc;
@@ -175,7 +206,7 @@ void execute(){
       }
       if(RxIs("^SISR: 1, 1"))
         nSISR++;
-        
+
       switch(OnlineState) {
 
       case osNone:
@@ -244,9 +275,9 @@ void execute(){
           toutState.start(LinkTimeout); // restart link timeout
           RxCnt++;
         }
-        break;        
+        break;
       }
-      
+
       break; // case msOnline
 
     case msDisc:
@@ -271,7 +302,7 @@ void execute(){
         SYS::getNetTime(Event.Time);
         Event.Channel=255; Event.ChangedTo=2; // 'modem restart' event
         puDI.EventDigitalInput(Event);
-        
+
         IsTextMode = TRUE;
         ConPrint("\n\rTC65: resetting\n\r");
         prt.TxCmd(szMdmCmdRset);
@@ -292,7 +323,7 @@ void execute(){
       break;
 //*/
     } // end of switch(State)
-    
+
 #ifndef __SHOWADCDATA
     SYS::dbgLed( (U32(NewState)<<16) | (U32(RxCnt)<<8) | TxCnt );
 #endif

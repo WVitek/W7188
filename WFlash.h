@@ -143,7 +143,7 @@ BOOL SYS::FlashErase(U16 Seg)
 {
     SYS::WDT_Refresh();
     BOOL r = ::FlashErase(Seg)==0;
-    SYS::WDT_Refresh();
+   SYS::WDT_Refresh();
     return r;
 }
 

@@ -7,6 +7,8 @@
 #if defined(__mOS7)
 #include <string.h>
 #include "WCRCs.hpp"
+#else
+#include "WFlash.h"
 #endif
 
 #if defined(__ARQ)

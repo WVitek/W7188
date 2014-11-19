@@ -162,6 +162,7 @@ static TIME __GetEndTime()
 {
     TIME res;
     SYS::TryEncodeTime(2012,12,MyAddr-10,0,0,0,res);
+    //SYS::TryEncodeTime(2013,3,MyAddr-89,0,0,0,res);
     return res;
 }
 static TIME evalEndTime = __GetEndTime();
@@ -314,15 +315,19 @@ public:
         // p*100 = (Sample*k-b)>>16
         // k = P*V*6250*65536/(32767*R)
         // b = P*25*65536
-        // V=2.5; R=124; k=P*252.024; b=P*1638400
+        // V=2.5; R=125; k=P*252.024; b=P*1638400
       #if   __SHOWADCDATA == 100
-        S16 Val = S16((smul(Sample,25202)-163840000L)>>16); // P=100
+        S16 Val = S16((smul(Sample,25000)-163840000L)>>16); // P=100
       #elif __SHOWADCDATA == 60
-        S16 Val = S16((smul(Sample,15121)- 98304000L)>>16); // P= 60
+        S16 Val = S16((smul(Sample,15000)- 98304000L)>>16); // P= 60
       #elif __SHOWADCDATA == 40
-        S16 Val = S16((smul(Sample,10081)- 65536000L)>>16); // P= 40
+        S16 Val = S16((smul(Sample,10000)- 65536000L)>>16); // P= 40
       #elif __SHOWADCDATA == 25
-        S16 Val = S16((smul(Sample, 6301)- 40960000L)>>16); // P= 25
+        S16 Val = S16((smul(Sample, 6250)- 40960000L)>>16); // P= 25
+      #elif __SHOWADCDATA == 10
+        S16 Val = S16((smul(Sample, 2500)- 16384000L)>>16); // P= 10
+      #elif __SHOWADCDATA == 6
+        S16 Val = S16((smul(Sample, 1500)- 9830400L)>>16); // P= 6
       #else
         S16 Val = S16(smul(Sample,500)>>16); // V=2.5
       #endif
@@ -740,11 +745,8 @@ public:
                     S16 betweenPPS = (S16)(sysTimeOfHiPPS - prevPPS);
                     S16 delta = (S16)(sysTimeNow-sysTimeOfHiPPS);
                     S(0x55);
-                    ConPrintf( "    GPS> %04d, %03d, %03d",
-                        betweenPPS,
-                        (S16)(sysTimeOfLoPPS-sysTimeOfHiPPS),
-                        delta
-                    );
+                    S16 pulseLength = (S16)(sysTimeOfLoPPS-sysTimeOfHiPPS);
+                    ConPrintf( "    GPS> %04d, %03d, %03d", betweenPPS, pulseLength, delta);
 
                     S(0x57);
                     BOOL NoPPS = (U16)sysTimeOfHiPPS == prevPPS;
@@ -789,7 +791,7 @@ public:
                         {
                             S(0x5A);
 //                            S16 delta = (S16)(sysTimeNow-sysTimeOfHiPPS);
-                            if(betweenPPS<900 || betweenPPS>1100 || delta<500 || delta>900)
+                            if(betweenPPS<900 || betweenPPS>1100 || delta<300 || delta>900 || pulseLength<98 || pulseLength>102)
                             {
                                 state = getNSats;
                                 break;
@@ -825,7 +827,7 @@ public:
                 U16 value = Resp[3]-'0';
                 state = getTime;
                 cs.enter();
-                ChSum+=value;
+                ChSum+=value<<8;
                 ChCnt++;
                 cs.leave();
                 break;

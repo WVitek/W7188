@@ -123,9 +123,13 @@ int Rx(void *Data){
     RxReady = FALSE;
     int R=BufPos; BufPos=0;
     if(Data != NULL) memcpy(Data,&(Buf[0]),R);
+    //ConPrintf("\n\r Debug Prt 0 R=%d ", R);
     return R;
   }
-  else return 0;
+  else{
+    //ConPrint("\n\r   Debug Prt 0 ");
+    return 0;
+  }
 }
 
 #define _TxBufSize 32
@@ -181,8 +185,10 @@ U16 ProcessIO(){
   U16 Result=0;
   //********** RX
   int i=com->BytesInRxB();
+  //ConPrintf("\n\r Debug Prt 1 i=%d ", i);
   if(!RxReady && i>0 )
   {
+    //ConPrintf("\n\r   Debug PrtLiner 1 2 BufPos=(%d)", BufPos);
     int Pos=BufPos;
     BOOL NeedXor = SavedNeedXor;
     while(i>0)
@@ -191,7 +197,7 @@ U16 ProcessIO(){
       switch(c)
       {
       case 0x0D: // Carriage Return
-        RxReady = TRUE; 
+        RxReady = TRUE;
         i=0; // break cycle
         break;
       case 0x7D: // ESC prefix '}'
@@ -207,7 +213,7 @@ U16 ProcessIO(){
         }
       }
     }
-    if(RxReady) 
+    if(RxReady)
     {
       NeedXor=FALSE;
       if(HalfDuplex())
@@ -223,6 +229,7 @@ U16 ProcessIO(){
     BufPos=Pos;
   }
   if(RxReady) Result|=IO_RX;
+  //ConPrintf("\n\r   Debug PrtLiner 1 3 BufPos=(%d)", i);
 
   //********** TX
   if(HalfDuplex())
