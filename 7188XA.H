@@ -302,7 +302,7 @@ int cdecl EE_RandomWrite(int Block,int Addr,int Data);
 int cdecl EE_MultiWrite(int Block,int Addr,int no,char *Data);
 
 /*
- 05/15/2001  
+ 05/15/2001
  Add new Led functions
 */
 void cdecl LedToggle(void);

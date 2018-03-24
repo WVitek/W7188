@@ -63,8 +63,8 @@ void execute(){
         toutTx.start(toTypeSec | 10);
         NothingToDo = FALSE;
         TxCnt++;
-      }
-      else prt.Tx(TxBuf,0);
+      };
+      //else prt.Tx(TxBuf,0); // Иначе на одной линии HLI CRC.
     }
     S(0x07);
 #ifndef __SHOWADCDATA

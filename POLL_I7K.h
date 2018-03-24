@@ -32,7 +32,7 @@ void execute()
         SYS::getNetTime(Time);
         S16 dt = (S16)(Time % ctx_I7K.Period);
         if(dt>ctx_I7K.Period>>1)
-        {
+        {  // секунда ещё не закончилась, т.к. время во время сна скорректировалось "назад", нужно "доспать"
             dt = ctx_I7K.Period-dt;
             Time += dt;
             SYS::sleep(dt);
@@ -43,10 +43,8 @@ void execute()
             (*ctx_I7K.PollList)[j]->latchPollData();
         S(0x02);
         // free CPU
-        //SYS::sleep(1);
         SYS::switchThread();
         S(0x03);
-        //dbg(".!.");
         // sample latched data
         for(int j=n1; j>=0; j--)
             (*ctx_I7K.PollList)[j]->doSample(Time);
@@ -129,10 +127,9 @@ class THREAD_I7K_POLL : public THREAD
 
             if(!more && --i<0)
                 i=nPoll-1;
-        //#ifdef __MTU tmp_for_GPS_test
-//        #if defined(__MTU) || defined(__GPS_TIME_GPS721)
-//            SYS::sleep(17);
-//        #endif
+        #ifdef __MTU
+            SYS::sleep(17);
+        #endif
         }
 /*/
         pu_=(*ctx_I7K.PollList)[i];
@@ -164,10 +161,9 @@ class THREAD_I7K_POLL : public THREAD
         #endif
             int Ans = (r==0 && pu_->response(Resp)) ? 1: 0;
             I7K_StatAdd(1,Ans);
-        //#ifdef __MTU for_GPS
-//        #if defined(__MTU) || defined(__GPS_TIME_GPS721)
-            //SYS::sleep(15); //17
-//        #endif
+        #ifdef __MTU
+            SYS::sleep(17);
+        #endif
             S(0x04);
             i0=i;
             pu_=pu;

@@ -69,12 +69,11 @@ class COM_80188 : public COMPORT {
   }
   void uninstall();
 public:
-  COM_80188(int Base,U8 IntVectNum,U16 DisIntMask,U32 ISR,U8 Flags):COMPORT(){
+  COM_80188(int Base,U8 IntVectNum,U16 DisIntMask,U32 ISR):COMPORT(){
     this->Base=Base;
     this->IntVectNum=IntVectNum;
     this->DisIntMask=DisIntMask;
     this->ISR=ISR;
-    this->Flags=Flags;
   }
   ~COM_80188(){
     if(OldIntVect) uninstall();
@@ -174,23 +173,11 @@ private:
 
 #else
 
-COM_80188 ComA(BASE_SPRT0,0x14,0x0400,(U32)SPI0_ISR,
-  #if defined(__HALFDUPLEX_A)
-    CF_HALFDUPLEX
-  #else
-    0
-  #endif
-  );
+COM_80188 ComA(BASE_SPRT0,0x14,0x0400,(U32)SPI0_ISR);
 
 #endif
 
-COM_80188 ComB(BASE_SPRT1,0x11,0x0200,(U32)SPI1_ISR,
-  #if defined(__HALFDUPLEX_B)
-    CF_HALFDUPLEX
-  #else
-    0
-  #endif
-  );
+COM_80188 ComB(BASE_SPRT1,0x11,0x0200,(U32)SPI1_ISR);
 
 void interrupt far SPI0_ISR(void){
 #define COM ComA

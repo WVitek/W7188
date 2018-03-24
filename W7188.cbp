@@ -27,7 +27,7 @@
 					<Add option="-s" />
 					<Add option="-bt=dos" />
 					<Add option="-we -e10 -s -zq -os -oi -oa -zdf -zu -1 -bt=dos -mc" />
-					<Add option="-dMyAddr=1" />
+					<Add option="-dMyAddr=11" />
 					<Add option="-dq__MYGPRS" />
 					<Add option="-dq__GPRS_MC52" />
 					<Add option="-dq__UTNP_UPO" />
@@ -41,8 +41,8 @@
 					<Add option="-dPOWERON_DO1=0" />
 					<Add option="-dq__SHOWADCDATA=60" />
 					<Add option="-dq__DebugThreadState" />
-					<Add option="-dq__WIRE" />
-					<Add option="-d__RS485" />
+					<Add option="-d__WIRE" />
+					<Add option="-dq__RS485" />
 					<Add option="-dq__ARQ" />
 					<Add option="-dq__GSM_MC52" />
 					<Add option="-dq__GSM_TC65" />
@@ -50,7 +50,7 @@
 					<Add option="-dq__MTU" />
 					<Add option="-dq__DO2_PERIOD=60" />
 					<Add option="-dq__MTU_VAL_EMUL" />
-					<Add option="-d__GPS_TIME_GPS721" />
+					<Add option="-dq__GPS_TIME_GPS721" />
 					<Add option="-dq__NO_STAT" />
 					<Add option="-dq__NO_HLI" />
 					<Add option="-dq__COM_STATUS_BUF" />
@@ -68,8 +68,8 @@
 					<Add option="op SHOWDEAD" />
 				</Linker>
 				<ExtraCommands>
-					<Add after="p:\work\watcom\binnt\wlink.exe name bin\w.exe d all SYS dos op m op maxe=25 op q op symf op el file obj\WComms.obj,obj\main.obj,obj\WCRCs.obj,obj\WHrdware.obj,obj\wkern.obj" />
-					<Add after="cmd /c copy /y bin\w.exe d:\work\I7188\napdos\w.exe" />
+					<Add after="d:\work\watcom\binnt\wlink.exe name bin\w.exe d all SYS dos op m op maxe=25 op q op symf op el file obj\WComms.obj,obj\main.obj,obj\WCRCs.obj,obj\WHrdware.obj,obj\wkern.obj" />
+					<Add after="cmd /c copy /y bin\w.exe C:\I8000\7188\w.exe" />
 					<Mode after="always" />
 				</ExtraCommands>
 			</Target>

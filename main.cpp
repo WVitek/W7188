@@ -1,5 +1,5 @@
 // SOU UTNP VPO GPRS MC52 3ADC DI
-// MyAddr=12 __GPRS_MC52 __UTNP_VPO __7188XA __mOS7 __I7K POWERON_DO1=0 __GPS_TIME_GPS721 __UseAvgTOfs
+// MyAddr=211 __GPRS_MC52 __UTNP_VPO __I7188 __mOS7 __I7K POWERON_DO1=0 __UseAvgTOfs
 
 #include <stdio.h>
 #include <string.h>
@@ -19,12 +19,12 @@ class Init {
 //#define _HLI_hostname "10.226.86.79";  // UPO SOU2 ( ARM )
 //#define _HLI_hostname "10.226.136.11"; // UPO Test3 GPRS ( SIM 8407 )
 //#define _HLI_hostname "10.226.136.12"; // UPO Test4 GPRS ( SIM 8414 )
-//#define _HLI_hostname "192.168.12.7";  // VPO New GPRS
+#define _HLI_hostname "192.168.12.7";  // VPO New GPRS
 //#define _HLI_hostname "192.168.12.13"; // VPO New GPRS Isilkul ( Not used )
 //#define _HLI_hostname "192.168.192.18";
 //#define _HLI_hostname "wvn.selfip.net"
 //#define _HLI_hostname "tngp.selfip.net"
-#define _HLI_hostname "10.239.100.254";  // Tmp test
+//#define _HLI_hostname "10.239.100.254";  // Tmp test
 
 static BOOL LedIsOn=FALSE;
 #define switchLed() SYS::led(LedIsOn=!LedIsOn)
@@ -54,47 +54,48 @@ U32 __HLI_BaudRate;
 
 #ifdef __I7K
 
-    CONTEXT_CREATOR _cc_I7K(1000, 14);
+  #ifdef __MTU
+    CONTEXT_CREATOR _cc_I7K(100, 14);
 
     I7017 i7017(0x01); // ( Address )
     PU_ADC_7K
-        puAD0(0), // ( Analog IN number )
-        puAD1(1),
-        puAD2(2);
+        puAD0(0); // ( Analog IN number )
+        //puAD1(1),
+        //puAD2(2),
         //puAD3(3),
         //puAD4(4),
         //puAD5(5),
         //puAD6(6);
-//  #ifdef __MTU
-//    CONTEXT_CREATOR _cc_I7K(1000, 11);
-//
-//    I7017 i7017(0x01); // ( Address )
-//    PU_ADC_7K
-//        puAD0(0), // ( Analog IN number )
-//        puAD1(1),
-//        puAD2(2),
-//        puAD3(3),
-//        puAD4(4),
-//        puAD5(5),
-//        puAD6(6);
-//  #else
+  #else
+    CONTEXT_CREATOR _cc_I7K(1000, 14);
+
+    I7017 i7017(0x01); // ( Address )
+    PU_ADC_7K
+        puAD0(0); // ( Analog IN number )
+        //puAD1(1);
+        //puAD2(2);
+        //puAD3(3),
+        //puAD4(4),
+        //puAD5(5),
+        //puAD6(6);
+
 //    CONTEXT_CREATOR _cc_I7K(100, 14);
 //
 //    I7017 i7017a(0x01); // ( Address )
 //    PU_ADC_7K puAD0(0); // ( Analog IN number )
 //    I7017 i7017b(0x02); // ( Address )
 //    PU_ADC_7K puAD1(0); // ( Analog IN number )
-//  #endif
+  #endif
 
     #ifdef __GPS_TIME_GPS721
         MODULE moduleGPS(0xF0);
         PU_GPS_721 pu_gps(0);
     #endif
 
-    MODULE moduleDIO(0xFF);
-    PU_DI puDI(0x00FF);
-    //MODULE none(0);
-    //PU_DI puDI(0);
+    //MODULE moduleDIO(0xFF);
+    //PU_DI puDI(0x00FF);
+    MODULE none(0);
+    PU_DI puDI(0);
 
     CONTEXT ctx_I7K;
 #else

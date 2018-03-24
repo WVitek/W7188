@@ -121,7 +121,7 @@ int cdecl Is7188(void);
 int cdecl getch4(void);
 int cdecl kbhit4(void);
 int cdecl ungetch4(int key);
-void cdecl putch4(int data); 
+void cdecl putch4(int data);
 
 #define SEND_CMD(port,cmd,timeout,checksum)  SendCmdTo7000(port,cmd,checksum)
 #define RECEIVE_CMD ReceiveResponseFrom7000
@@ -228,6 +228,5 @@ int cdecl SetCom1FifoTriggerLevel(int level);
 int cdecl SetCom2FifoTriggerLevel(int level);
 
 #ifdef __cplusplus
- }
+}
 #endif
-

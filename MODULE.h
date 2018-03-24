@@ -790,7 +790,6 @@ public:
                         if(offs>0 || !SYS::TimeOk)
                         {
                             S(0x5A);
-//                            S16 delta = (S16)(sysTimeNow-sysTimeOfHiPPS);
                             if(betweenPPS<900 || betweenPPS>1100 || delta<300 || delta>900 || pulseLength<98 || pulseLength>102)
                             {
                                 state = getNSats;
@@ -827,7 +826,7 @@ public:
                 U16 value = Resp[3]-'0';
                 state = getTime;
                 cs.enter();
-                ChSum+=value<<8;
+                ChSum+=value;
                 ChCnt++;
                 cs.leave();
                 break;

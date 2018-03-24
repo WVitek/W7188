@@ -104,11 +104,8 @@ public:
 #ifdef __SoftAutoDir
     U8 ComDirBit,
 #endif
-    U8 IntVectNum,
-    U16 IntMask,
-    U32 ISR,
-    U8 Flags
-  ):COMPORT()
+    U8 IntVectNum,U16 IntMask,
+    U32 ISR,BOOL Flags):COMPORT()
   {
     this->Base=Base;
 #ifdef __SoftAutoDir

@@ -166,6 +166,9 @@ BOOL TIMECLIENT_SVC::chechForEmergencyResync()
 #endif
 BOOL TIMECLIENT_SVC::HaveDataToTransmit(U8 To)
 {
+#ifdef __GPS_TIME
+  return FALSE;
+#else
 #ifndef __UseAvgTOfs
     return To==TimeServerAddr && toutResync.IsSignaled();
 #else
@@ -202,7 +205,8 @@ BOOL TIMECLIENT_SVC::HaveDataToTransmit(U8 To)
             return FALSE;
         }
     }
-#endif
+#endif // __UseAvgTOfs ... else ...
+#endif // __GPS_TIME
 }
 
 #pragma argsused
