@@ -15,15 +15,14 @@ inline U32 FPtoU32(const void *x) { return ((U32)FP_SEG(x)<<4) + FP_OFF(x); }
 
 #if defined(__WATCOMC__)
 
-#if defined(__SMALL__) || defined(__COMPACT__)
 extern CMD_LINE const * GetCmdLine();
 #pragma aux GetCmdLine = \
-  "xor ax,ax" \
-  "mov bx,cs" \
+  "mov ah,0x62" \
+  "int 0x21" \
   "sub bx,8" \
+  "xor ax,ax" \
   modify [ax bx] \
   value [ax bx];
-#endif
 
 extern inline U16 swap2bytes(U16 x);
 #pragma aux swap2bytes = \

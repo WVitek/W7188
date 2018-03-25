@@ -1,8 +1,6 @@
 #include "Hardware.hpp"
 #include "Comms.hpp"
 
-#include "W80188SP.h"
-
 class COM_NULL : public COMPORT {
 protected:
   void enableTx(){}

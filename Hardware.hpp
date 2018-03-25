@@ -83,17 +83,6 @@
   #define Com2Int      INT_I3INT
   #define Com2Msk      INT_MSKI3
 
-#elif defined(__IP8000)
-  //*** 7188XA hardware defines
-  //#define __mOS7
-  #include "8000a.h"
-  #if defined(__SMALL__) || defined(__COMPACT__)
-    #error Only LARGE or HUGE memory model supported for __IP8000;
-  #else
-    #pragma library ("lib\8000a.lib");
-  #endif
-  #define Com
-
 #elif defined(__7188XB)
   //*** 7188XB hardware defines
   #define __7188X
@@ -104,12 +93,24 @@
   #else
     #pragma library ("lib\w7188xal.lib");
   #endif
-  #define Com
+
+#elif defined(__IP8000)
+  //*** 7188XA hardware defines
+  //#definC:\I8000\W7188\Hardware.hppe __mOS7
+  #include "8000a.h"
+  #if defined(__SMALL__) || defined(__COMPACT__)
+    #error Only LARGE or HUGE memory model supported for __IP8000;
+  #else
+    #pragma library ("lib\8000a.lib");
+  #endif
+
+  #define __UseVendorComms
+
 #else
-  #error Declare target controller (__7188, __7188XA or __7188XB) in compiler options
+  #error Declare target controller (__7188, __7188XA, __7188XB or __IP8000) in compiler options
 #endif
 
-#ifdef __mOS7 || defined(__IP8000)
+#if defined(__mOS7) || defined(__IP8000)
   #define ConsoleBaudRate 115200
 #else
   #define ConsoleBaudRate 57600

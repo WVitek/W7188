@@ -5,7 +5,11 @@
 #endif
 #include <stdio.h>
 
-#if !defined(__ConPort) && !defined(__7188XB)
+
+#if defined(__ConPort)
+#elif defined(__IP8000)
+  #define __ConPort 1
+#elif !defined(__7188XB)
   #define __ConPort 4
 #endif
 

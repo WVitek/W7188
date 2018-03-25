@@ -1,11 +1,12 @@
 //file WKERN.CPP
 #include "WKern.hpp"
 #include <string.h>
-#include "WComms.hpp"
+#include <stdio.h>
+#include "Comms.hpp"
 #ifdef __BORLANDC__
   #include "Wint64.h"
 #endif
-#include "WHrdware.hpp"
+#include "Hardware.hpp"
 
 //***
 _BDLI *Threads=NULL;
@@ -679,15 +680,7 @@ void SYS::reset(BOOL needStop)
 //void SYS::WDT_Enable() { EnableWDT();  }
 //void SYS::WDT_Disable(){ DisableWDT(); }
 
-#if defined(__7188)
-
-void SYS::WDT_Refresh(){ RefreshWDT(); }
-
-#elif defined(__I7188)
-
-void SYS::WDT_Refresh(){ RefreshWDT(); }
-
-#elif defined(__7188X)
+#if defined(__7188X)
 
 void SYS::WDT_Refresh()
 {
@@ -708,6 +701,9 @@ void SYS::WDT_Refresh()
         popf
     }
 }
+#else
+
+void SYS::WDT_Refresh(){ RefreshWDT(); }
 
 #endif
 

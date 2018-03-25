@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "WKern.hpp"
-#include "WComms.hpp"
+#include "Comms.hpp"
 #include "WCRCs.hpp"
 
 #ifdef __mOS7

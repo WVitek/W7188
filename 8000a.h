@@ -52,73 +52,73 @@ extern "C" {
 #endif
 
 /* Fro library version, date,...*/
-void InitLib(void);
-void GetLibDate(char *date);
-unsigned GetLibVersion(void);
+void cdecl InitLib(void);
+void cdecl GetLibDate(char *date);
+unsigned cdecl GetLibVersion(void);
 
 /* FOR WDT */
-void EnableWDT(void);
-void DisableWDT(void);
-void RefreshWDT(void);
+void cdecl EnableWDT(void);
+void cdecl DisableWDT(void);
+void cdecl RefreshWDT(void);
 
 /* FOR INIT* pin */
-int ReadInitPin(void);
+int cdecl ReadInitPin(void);
 
 /* For SCLK pin */
-void ClockHigh(void);
-void ClockHighLow(void);
-void ClockLow(void);
+void cdecl ClockHigh(void);
+void cdecl ClockHighLow(void);
+void cdecl ClockLow(void);
 
 /* For LED (L1 of S-MMI)*/
-void LedOn(void);
-void LedOff(void);
-void LedToggle(void);
+void cdecl LedOn(void);
+void cdecl LedOff(void);
+void cdecl LedToggle(void);
 
 /* For L1/L2/L3 on I-8000 S-MMI */
 #define LED_OFF     0
 #define LED_ON      1
 #define LED_TOGGLE  2
-void SetLedL1(int mode);
-void SetLedL2(int mode);
-void SetLedL3(int mode);
+void cdecl SetLedL1(int mode);
+void cdecl SetLedL2(int mode);
+void cdecl SetLedL3(int mode);
 
 /* FOR 5* 7-segments LED */
 extern unsigned char ShowData[19];
 void pascal Show5DigitLed(int pos, int data);
 void pascal Show5DigitLedWithDot(int pos, int data);
-void Init5DigitLed(void);
+void cdecl Init5DigitLed(void);
 void pascal Show5DigitLedSeg(int pos, unsigned char data);
 void pascal Set5DigitLedTestMode(int mode);
 void pascal Set5DigitLedIntensity(int mode);
-void Disable5DigitLed(void);
-void Enable5DigitLed(void);
+void cdecl Disable5DigitLed(void);
+void cdecl Enable5DigitLed(void);
 
 /* For STDIO */
-void Putch(int data);
-void Puts(char *str);
-int Getch(void);
-int Gets(char *str);
-int Kbhit(void);
-int LineInput(char *buf,int maxlen);
-void ResetScanBuffer(void);
-void SetScanBuffer(unsigned char *buf,int len);
-int Scanf(char *fmt, ...); /* for TC/BC only */
-int Print(const char *fmt, ...);
-int _Printf(const char *fmt, ...); /* for TC/BC only */
-int UngetchI(int key);
-int Ungetch(int key);
+void cdecl Putch(int data);
+void cdecl Puts(char *str);
+int cdecl Getch(void);
+int cdecl Gets(char *str);
+int cdecl Kbhit(void);
+int cdecl LineInput(char *buf,int maxlen);
+void cdecl ResetScanBuffer(void);
+void cdecl SetScanBuffer(unsigned char *buf,int len);
+int cdecl Scanf(char *fmt, ...); /* for TC/BC only */
+int cdecl Print(const char *fmt, ...);
+int cdecl _Printf(const char *fmt, ...); /* for TC/BC only */
+int cdecl UngetchI(int key);
+int cdecl Ungetch(int key);
 
 /* For RTC/NVRAM */
-void GetTime(int *hour,int *minute,int *sec);
-void GetDate(int *year,int *month,int *day);
-int GetWeekDay(void);
-int SetDate(int year,int month,int day);
-int SetTime(int hour,int minute,int sec);
-int ReadNVRAM(int addr);
-int WriteNVRAM(int addr, int data);
-void ReadRTC(int addr, int *data);
-void WriteRTC(int addr, int data);
-int _ReadRTC(int addr); //[2008/11/24] add
+void cdecl GetTime(int *hour,int *minute,int *sec);
+void cdecl GetDate(int *year,int *month,int *day);
+int cdecl GetWeekDay(void);
+int cdecl SetDate(int year,int month,int day);
+int cdecl SetTime(int hour,int minute,int sec);
+int cdecl ReadNVRAM(int addr);
+int cdecl WriteNVRAM(int addr, int data);
+void cdecl ReadRTC(int addr, int *data);
+void cdecl WriteRTC(int addr, int data);
+int cdecl _ReadRTC(int addr); //[2008/11/24] add
 
 /* for system timeticks */
 /* [2012/08/23] marked by Tim Tsai.
@@ -133,16 +133,16 @@ On iPAC-8000 please use GetTimeTicks() to instead of *TimeTicks.
 #define ProtectEEP	EE_WriteProtect
 
 /* for EEPROM(24WC128)*/
-void EE_WriteProtect(void);
-void EE_WriteEnable(void);
-int EE_RandomRead(int Block,unsigned Addr);
-unsigned char EE_ReadNext(int Block);
-int EE_MultiRead(int StartBlock,unsigned StartAddr,int no,void *databuf);
-int EE_RandomWrite(int Block,unsigned Addr,int Data);
-int EE_MultiWrite(int Block,unsigned Addr,int no,const void *src);
-int EE_MultiWrite_A(int Block,unsigned Addr,unsigned no,const void *src);
-int EE_MultiWrite_L(unsigned address,unsigned no,const void *src);
-int EE_MultiRead_L(unsigned address,unsigned no,void *databuf);
+void cdecl EE_WriteProtect(void);
+void cdecl EE_WriteEnable(void);
+int cdecl EE_RandomRead(int Block,unsigned Addr);
+unsigned char cdecl EE_ReadNext(int Block);
+int cdecl EE_MultiRead(int StartBlock,unsigned StartAddr,int no,void cdecl *databuf);
+int cdecl EE_RandomWrite(int Block,unsigned Addr,int Data);
+int cdecl EE_MultiWrite(int Block,unsigned Addr,int no,const void cdecl *src);
+int cdecl EE_MultiWrite_A(int Block,unsigned Addr,unsigned no,const void cdecl *src);
+int cdecl EE_MultiWrite_L(unsigned address,unsigned no,const void cdecl *src);
+int cdecl EE_MultiRead_L(unsigned address,unsigned no,void cdecl *databuf);
 
 /*[2006/05/15] Add variables for EEPROM
 For 24LC16, size=2K bytes
@@ -168,16 +168,16 @@ extern int const EE_BlockNo;
 extern int const EE_PageSize;
 
 /* for IP/MASK/GATEWAY/MAC */
-void GetIp(unsigned char *ip);
+void cdecl GetIp(unsigned char *ip);
 #define GetMac	GetEid
-void GetEid(unsigned char *id);
-void GetMask(unsigned char *mask);
-void GetGateway(unsigned char *gate);
-void SetIp(unsigned char *ip);
+void cdecl GetEid(unsigned char *id);
+void cdecl GetMask(unsigned char *mask);
+void cdecl GetGateway(unsigned char *gate);
+void cdecl SetIp(unsigned char *ip);
 #define SetMac	SetEid
-void SetEid(unsigned char *id);
-void SetMask(unsigned char *mask);
-void SetGateway(unsigned char *gate);
+void cdecl SetEid(unsigned char *id);
+void cdecl SetMask(unsigned char *mask);
+void cdecl SetGateway(unsigned char *gate);
 
 extern int IpErrno; /*[2008/01/21] */
 extern int Ip2Errno; /*[2008/01/21] */
@@ -187,55 +187,55 @@ extern int Ip2Errno; /*[2008/01/21] */
 #define GATEWAY_ERROR	4
 #define MAC_ERROR		8
 /*[2008/01/21] */
-void GetIp2(unsigned char *ip);
+void cdecl GetIp2(unsigned char *ip);
 #define GetMac2	GetEid2
-void GetEid2(unsigned char *id);
-void GetMask2(unsigned char *mask);
-void GetGateway2(unsigned char *gate);
-void SetIp2(unsigned char *ip);
+void cdecl GetEid2(unsigned char *id);
+void cdecl GetMask2(unsigned char *mask);
+void cdecl GetGateway2(unsigned char *gate);
+void cdecl SetIp2(unsigned char *ip);
 #define SetEid2 SetMac2
-void SetEid2(unsigned char *id);
-void SetMask2(unsigned char *mask);
-void SetGateway2(unsigned char *gate);
+void cdecl SetEid2(unsigned char *id);
+void cdecl SetMask2(unsigned char *mask);
+void cdecl SetGateway2(unsigned char *gate);
 
 /* for system */
-extern unsigned long far *IntVect;
-int IsMiniOS7(void);
-int Is8000(void);
-int Is8000Tcp(void);
+//extern unsigned long far *IntVect;
+int cdecl IsMiniOS7(void);
+int cdecl Is8000(void);
+int cdecl Is8000Tcp(void);
 #define IsResetByPowerOff	IsResetByPowerOn
-int IsResetByPowerOn(void);
-int IsResetByWatchDogTimer(void);
+int cdecl IsResetByPowerOn(void);
+int cdecl IsResetByWatchDogTimer(void);
 
 /* for FLASH MEMORY */
-int FlashReadId(void);
-int FlashErase(unsigned int FlashSeg);
-int FlashWrite(unsigned int seg, unsigned int offset, char data);
+int cdecl FlashReadId(void);
+int cdecl FlashErase(unsigned int FlashSeg);
+int cdecl FlashWrite(unsigned int seg, unsigned int offset, char data);
 
 #define FlashRead FlashReadB
 unsigned char FlashReadB(unsigned seg, unsigned offset);
 unsigned FlashReadI(unsigned seg, unsigned offset);
 unsigned long FlashReadL(unsigned seg, unsigned offset);
-void far *_MK_FP_(unsigned s,unsigned off);
+void cdecl far *_MK_FP_(unsigned s,unsigned off);
 
 extern unsigned FlashId;
 extern int FlashSize;
 
 /* Timer functions */
-int TimerOpen(void);
-int TimerClose(void);
-void TimerResetValue(void);
+int cdecl TimerOpen(void);
+int cdecl TimerClose(void);
+void cdecl TimerResetValue(void);
 unsigned long TimerReadValue(void);
-int StopWatchReset(int channel);
-int StopWatchStart(int channel);
-int StopWatchStop(int channel);
-int StopWatchPause(int channel);
-int StopWatchContinue(int channel);
-int StopWatchReadValue(int channel,unsigned long *value);
-int CountDownTimerStart(int channel,unsigned long count);
-int CountDownTimerReadValue(int channel,unsigned long *value);
-void InstallUserTimer(void (*fun)(void));
-void InstallUserTimer1C(void (*fun)(void));
+int cdecl StopWatchReset(int channel);
+int cdecl StopWatchStart(int channel);
+int cdecl StopWatchStop(int channel);
+int cdecl StopWatchPause(int channel);
+int cdecl StopWatchContinue(int channel);
+int cdecl StopWatchReadValue(int channel,unsigned long *value);
+int cdecl CountDownTimerStart(int channel,unsigned long count);
+int cdecl CountDownTimerReadValue(int channel,unsigned long *value);
+void cdecl InstallUserTimer(void cdecl (*fun)(void));
+void cdecl InstallUserTimer1C(void cdecl (*fun)(void));
 
 /* StopWatch [­p®É½Xªí] */
 
@@ -256,34 +256,34 @@ typedef struct {
 } COUNTDOWNTIMER;
 #endif
 
-void T_StopWatchStart(STOPWATCH *sw);
+void cdecl T_StopWatchStart(STOPWATCH *sw);
 ulong T_StopWatchGetTime(STOPWATCH *sw);
-void T_StopWatchPause(STOPWATCH *sw);
-void T_StopWatchContinue(STOPWATCH *sw);
+void cdecl T_StopWatchPause(STOPWATCH *sw);
+void cdecl T_StopWatchContinue(STOPWATCH *sw);
 
-void T_CountDownTimerStart(COUNTDOWNTIMER *cdt,ulong timems);
-void T_CountDownTimerPause(COUNTDOWNTIMER *cdt);
-void T_CountDownTimerContinue(COUNTDOWNTIMER *cdt);
-int T_CountDownTimerIsTimeUp(COUNTDOWNTIMER *cdt);
-ulong T_CountDownTimerGetTimeLeft(COUNTDOWNTIMER *cdt);
+void cdecl T_CountDownTimerStart(COUNTDOWNTIMER *cdt,ulong timems);
+void cdecl T_CountDownTimerPause(COUNTDOWNTIMER *cdt);
+void cdecl T_CountDownTimerContinue(COUNTDOWNTIMER *cdt);
+int cdecl T_CountDownTimerIsTimeUp(COUNTDOWNTIMER *cdt);
+ulong cdecl T_CountDownTimerGetTimeLeft(COUNTDOWNTIMER *cdt);
 
 /* Timer functions II */
-void T2_UpdateCurrentTimeTicks(void); /* every loop must call T2_UpdateCurrentTimeTicks() to get new time.*/
-void T2_StopWatchStart(STOPWATCH *sw);
-ulong T2_StopWatchGetTime(STOPWATCH *sw);
-void T2_StopWatchPause(STOPWATCH *sw);
-void T2_StopWatchContinue(STOPWATCH *sw);
+void cdecl T2_UpdateCurrentTimeTicks(void); /* every loop must call T2_UpdateCurrentTimeTicks() to get new time.*/
+void cdecl T2_StopWatchStart(STOPWATCH *sw);
+ulong cdecl T2_StopWatchGetTime(STOPWATCH *sw);
+void cdecl T2_StopWatchPause(STOPWATCH *sw);
+void cdecl T2_StopWatchContinue(STOPWATCH *sw);
 
-void T2_CountDownTimerStart(COUNTDOWNTIMER *cdt,ulong timems);
-void T2_CountDownTimerPause(COUNTDOWNTIMER *cdt);
-void T2_CountDownTimerContinue(COUNTDOWNTIMER *cdt);
-int T2_CountDownTimerIsTimeUp(COUNTDOWNTIMER *cdt);
+void cdecl T2_CountDownTimerStart(COUNTDOWNTIMER *cdt,ulong timems);
+void cdecl T2_CountDownTimerPause(COUNTDOWNTIMER *cdt);
+void cdecl T2_CountDownTimerContinue(COUNTDOWNTIMER *cdt);
+int cdecl T2_CountDownTimerIsTimeUp(COUNTDOWNTIMER *cdt);
 ulong T2_CountDownTimerGetTimeLeft(COUNTDOWNTIMER *cdt);
 
-void Delay(unsigned ms); /* delay unit is ms, use CPU Timer 1. */
-void Delay_1(unsigned ms); /* delay unit is 0.1 ms ,use CPU Timer 1.*/
-void Delay_2(unsigned ms); /* delay unit is 0.01 ms ,use CPU Timer 1.*/
-void DelayMs(unsigned t);/* delay unit is ms, use system timeticks. */
+void cdecl Delay(unsigned ms); /* delay unit is ms, use CPU Timer 1. */
+void cdecl Delay_1(unsigned ms); /* delay unit is 0.1 ms ,use CPU Timer 1.*/
+void cdecl Delay_2(unsigned ms); /* delay unit is 0.01 ms ,use CPU Timer 1.*/
+void cdecl DelayMs(unsigned t);/* delay unit is ms, use system timeticks. */
 
 /* for MiniOS7 FLASH file system */
 #ifndef __FILE_DATA__
@@ -340,16 +340,16 @@ extern unsigned DiskAStartSeg,DiskBStartSeg;
 /* char far * GetFilePositionByName(char *fname) */
 #define GetFilePositionByName(fname)	GetFilePositionByName_AB(DISKA,fname)
 
-int GetFileNo_AB(int disk);
-int GetFileName_AB(int disk,int no,char *fname);
-FILE_DATA far * GetFileInfoByNo_AB(int disk,int no);
-FILE_DATA far *GetFileInfoByName_AB(int disk,char *fname);
-char far * GetFilePositionByNo_AB(int disk,int no);
-char far * GetFilePositionByName_AB(int disk,char *fname);
+int cdecl GetFileNo_AB(int disk);
+int cdecl GetFileName_AB(int disk,int no,char *fname);
+FILE_DATA cdecl far * GetFileInfoByNo_AB(int disk,int no);
+FILE_DATA cdecl far *GetFileInfoByName_AB(int disk,char *fname);
+char cdecl far * GetFilePositionByNo_AB(int disk,int no);
+char cdecl far * GetFilePositionByName_AB(int disk,char *fname);
 
-void far *AddFarPtrLong(void far * ptr1,unsigned long size);
-void ReadSizeAB(void);
-void MoveToStartAddr(int disk);
+void cdecl far *AddFarPtrLong(void cdecl far * ptr1,unsigned long size);
+void cdecl ReadSizeAB(void);
+void cdecl MoveToStartAddr(int disk);
 
 /* for COM0 (used by 87K module) */
 /* WITHOUT CTS & RTS control */
@@ -390,47 +390,47 @@ void MoveToStartAddr(int disk);
 #define SendBreak0		SendBreak_0
 #define IsDetectBreak0		IsDetectBreak_0
 
-void ClearTxBuffer_0(void);
-int GetTxBufferFreeSize_0(void);
-int PushDataToCom_0(int data);
-void CheckInputBufSize_0(void);
-int InstallCom_0(unsigned long baud, int data, int parity,int stop);
-int RestoreCom_0(void);
-int SetBaudrate_0(unsigned long baud);
-int SetDataFormat_0(int databit,int parity,int stopbit);
-int ClearCom_0(void);
-int DataSizeInCom_0(void);
-int IsCom_0(void);
-int IsComOutBufEmpty_0(void);
-int ReadCom_0(void);
-int ToComBufn_0(char *buf,int no);
-int ToComStr_0(char *str);
-void SetComTimeout_0(unsigned t);
-int ToCom_0(int data);
-int IsTxBufEmpty_0(void);
-int WaitTransmitOver_0(void);
-int ReadComn_0(unsigned char *buf,int no);
-int printCom_0(const char *fmt,...);
+void cdecl ClearTxBuffer_0(void);
+int cdecl GetTxBufferFreeSize_0(void);
+int cdecl PushDataToCom_0(int data);
+void cdecl CheckInputBufSize_0(void);
+int cdecl InstallCom_0(unsigned long baud, int data, int parity,int stop);
+int cdecl RestoreCom_0(void);
+int cdecl SetBaudrate_0(unsigned long baud);
+int cdecl SetDataFormat_0(int databit,int parity,int stopbit);
+int cdecl ClearCom_0(void);
+int cdecl DataSizeInCom_0(void);
+int cdecl IsCom_0(void);
+int cdecl IsComOutBufEmpty_0(void);
+int cdecl ReadCom_0(void);
+int cdecl ToComBufn_0(char *buf,int no);
+int cdecl ToComStr_0(char *str);
+void cdecl SetComTimeout_0(unsigned t);
+int cdecl ToCom_0(int data);
+int cdecl IsTxBufEmpty_0(void);
+int cdecl WaitTransmitOver_0(void);
+int cdecl ReadComn_0(unsigned char *buf,int no);
+int cdecl printCom_0(const char *fmt,...);
 
-int DataSizeInCom_DMA_0(void);
-int ReadComn_DMA_0(unsigned char *buf,int maxsize);
-int InstallCom_DMA_0(unsigned long baud, int data, int parity,int stop);
-int ClearCom_DMA_0(void);
-int IsCom_DMA_0(void);
-int DataSizeInCom_DMA_0(void);
-int ReadCom_DMA_0(void);
+int cdecl DataSizeInCom_DMA_0(void);
+int cdecl ReadComn_DMA_0(unsigned char *buf,int maxsize);
+int cdecl InstallCom_DMA_0(unsigned long baud, int data, int parity,int stop);
+int cdecl ClearCom_DMA_0(void);
+int cdecl IsCom_DMA_0(void);
+int cdecl DataSizeInCom_DMA_0(void);
+int cdecl ReadCom_DMA_0(void);
 
-void SetBreakMode_0(int mode);
-void SendBreak_0(unsigned TimeMs);
-int IsDetectBreak_0(void);
-void SetComPortBufferSize_0(int in_size,int out_size);
+void cdecl SetBreakMode_0(int mode);
+void cdecl SendBreak_0(unsigned TimeMs);
+int cdecl IsDetectBreak_0(void);
+void cdecl SetComPortBufferSize_0(int in_size,int out_size);
 
 /* for COM0 use DMA */
 unsigned Com0GetDataSize(void);
-void Com0SetInputBuf(char far *ptr,unsigned cnt);
-void Com0SendCmd(char far *cmd,unsigned length);
-void OpenCom0UseDMA(void);
-void CloseCom0UseDMA(void);
+void cdecl Com0SetInputBuf(char far *ptr,unsigned cnt);
+void cdecl Com0SendCmd(char far *cmd,unsigned length);
+void cdecl OpenCom0UseDMA(void);
+void cdecl CloseCom0UseDMA(void);
 
 /* for COM1 */
 /* WITHOUT CTS & RTS control */
@@ -461,40 +461,40 @@ void CloseCom0UseDMA(void);
 #define SendBreak1		SendBreak_1
 #define IsDetectBreak1		IsDetectBreak_1
 
-void ClearTxBuffer_1(void);
-int GetTxBufferFreeSize_1(void);
-int PushDataToCom_1(int data);
-void CheckInputBufSize_1(void);
-int InstallCom_1(unsigned long baud, int data, int parity,int stop);
-int RestoreCom_1(void);
-int SetBaudrate_1(unsigned long baud);
-int SetDataFormat_1(int databit,int parity,int stopbit);
-int ClearCom_1(void);
-int DataSizeInCom_1(void);
-int IsCom_1(void);
-int IsComOutBufEmpty_1(void);
-int ReadCom_1(void);
-int ToComBufn_1(char *buf,int no);
-int ToComStr_1(char *str);
-void SetComTimeout_1(unsigned t);
-int ToCom_1(int data);
-int IsTxBufEmpty_1(void);
-int WaitTransmitOver_1(void);
-int ReadComn_1(unsigned char *buf,int no);
-int printCom_1(const char *fmt,...);
+void cdecl ClearTxBuffer_1(void);
+int cdecl GetTxBufferFreeSize_1(void);
+int cdecl PushDataToCom_1(int data);
+void cdecl CheckInputBufSize_1(void);
+int cdecl InstallCom_1(unsigned long baud, int data, int parity,int stop);
+int cdecl RestoreCom_1(void);
+int cdecl SetBaudrate_1(unsigned long baud);
+int cdecl SetDataFormat_1(int databit,int parity,int stopbit);
+int cdecl ClearCom_1(void);
+int cdecl DataSizeInCom_1(void);
+int cdecl IsCom_1(void);
+int cdecl IsComOutBufEmpty_1(void);
+int cdecl ReadCom_1(void);
+int cdecl ToComBufn_1(char *buf,int no);
+int cdecl ToComStr_1(char *str);
+void cdecl SetComTimeout_1(unsigned t);
+int cdecl ToCom_1(int data);
+int cdecl IsTxBufEmpty_1(void);
+int cdecl WaitTransmitOver_1(void);
+int cdecl ReadComn_1(unsigned char *buf,int no);
+int cdecl printCom_1(const char *fmt,...);
 
-void SetBreakMode_1(int mode);
-void SendBreak_1(unsigned TimeMs);
-int IsDetectBreak_1(void);
-void SetComPortBufferSize_1(int in_size,int out_size);
+void cdecl SetBreakMode_1(int mode);
+void cdecl SendBreak_1(unsigned TimeMs);
+int cdecl IsDetectBreak_1(void);
+void cdecl SetComPortBufferSize_1(int in_size,int out_size);
 
-int InstallCom_DMA_1(unsigned long baud, int data, int parity,int stop);
-int DataSizeInCom_DMA_1(void);
-int ReadComn_DMA_1(unsigned char *buf,int maxsize);
-int ClearCom_DMA_1(void);
-int IsCom_DMA_1(void);
-int DataSizeInCom_DMA_1(void);
-int ReadCom_DMA_1(void);
+int cdecl InstallCom_DMA_1(unsigned long baud, int data, int parity,int stop);
+int cdecl DataSizeInCom_DMA_1(void);
+int cdecl ReadComn_DMA_1(unsigned char *buf,int maxsize);
+int cdecl ClearCom_DMA_1(void);
+int cdecl IsCom_DMA_1(void);
+int cdecl DataSizeInCom_DMA_1(void);
+int cdecl ReadCom_DMA_1(void);
 
 #define FLOW_CONTROL_DISABLE	0
 #define FLOW_CONTROL_ENABLE	1
@@ -529,34 +529,34 @@ int ReadCom_DMA_1(void);
 #define SendBreak3		SendBreak_3
 #define IsDetectBreak3		IsDetectBreak_3
 
-int InstallCom_3(unsigned long baud, int data, int parity, int stop);
-int RestoreCom_3(void);
-int IsCom_3(void);
-int ToCom_3(int data);
-int ToComStr_3(char *str);
-int ToComBufn_3(char *buf,int no);
-int printCom_3(const char *fmt,...);
-void ClearTxBuffer_3(void);
-int SetComFifoTriggerLevel_3(int level);
-int SetBaudrate_3(unsigned long baud);
-int ReadCom_3(void);
-int ClearCom_3(void);
-int DataSizeInCom_3(void);
-int WaitTransmitOver_3(void);
-int IsTxBufEmpty_3(void);
-int IsComOutBufEmpty_3(void);
-int SetDataFormat_3(int databit,int parity,int stopbit);
-int ReadComn_3(unsigned char *buf,int n);
-void SetRtsActive_3(void);
-void SetRtsInactive_3(void);
-int GetCtsStatus_3(void);
-void SendBreak_3(unsigned timems);
-void SetBreakMode_3(int mode);
-int IsDetectBreak_3(void);
-void SetCtsControlMode_3(int mode);
-void SetRtsControlMode_3(int mode);
-void SetComPortBufferSize_3(int in_size,int out_size);
-int GetComFifoTriggerLevel_3(void);	/*[2006/11/09]*/
+int cdecl InstallCom_3(unsigned long baud, int data, int parity, int stop);
+int cdecl RestoreCom_3(void);
+int cdecl IsCom_3(void);
+int cdecl ToCom_3(int data);
+int cdecl ToComStr_3(char *str);
+int cdecl ToComBufn_3(char *buf,int no);
+int cdecl printCom_3(const char *fmt,...);
+void cdecl ClearTxBuffer_3(void);
+int cdecl SetComFifoTriggerLevel_3(int level);
+int cdecl SetBaudrate_3(unsigned long baud);
+int cdecl ReadCom_3(void);
+int cdecl ClearCom_3(void);
+int cdecl DataSizeInCom_3(void);
+int cdecl WaitTransmitOver_3(void);
+int cdecl IsTxBufEmpty_3(void);
+int cdecl IsComOutBufEmpty_3(void);
+int cdecl SetDataFormat_3(int databit,int parity,int stopbit);
+int cdecl ReadComn_3(unsigned char *buf,int n);
+void cdecl SetRtsActive_3(void);
+void cdecl SetRtsInactive_3(void);
+int cdecl GetCtsStatus_3(void);
+void cdecl SendBreak_3(unsigned timems);
+void cdecl SetBreakMode_3(int mode);
+int cdecl IsDetectBreak_3(void);
+void cdecl SetCtsControlMode_3(int mode);
+void cdecl SetRtsControlMode_3(int mode);
+void cdecl SetComPortBufferSize_3(int in_size,int out_size);
+int cdecl GetComFifoTriggerLevel_3(void);	/*[2006/11/09]*/
 
 /*
   mode can be:
@@ -599,34 +599,34 @@ extern int fRtsControlMode_3;
 #define SendBreak4		SendBreak_4
 #define IsDetectBreak4		IsDetectBreak_4
 
-int InstallCom_4(unsigned long baud, int data, int parity, int stop);
-int RestoreCom_4(void);
-int IsCom_4(void);
-int ToCom_4(int data);
-int ToComStr_4(char *str);
-int ToComBufn_4(char *buf,int no);
-int printCom_4(const char *fmt,...);
-void ClearTxBuffer_4(void);
-int SetComFifoTriggerLevel_4(int level);
-int SetBaudrate_4(unsigned long baud);
-int ReadCom_4(void);
-int ClearCom_4(void);
-int DataSizeInCom_4(void);
-int WaitTransmitOver_4(void);
-int IsTxBufEmpty_4(void);
-int IsComOutBufEmpty_4(void);
-int SetDataFormat_4(int databit,int parity,int stopbit);
-int ReadComn_4(unsigned char *buf,int n);
-void SetRtsActive_4(void);
-void SetRtsInactive_4(void);
-int GetCtsStatus_4(void);
-void SendBreak_4(unsigned timems);
-void SetBreakMode_4(int mode);
-int IsDetectBreak_4(void);
-void SetCtsControlMode_4(int mode);
-void SetRtsControlMode_4(int mode);
-void SetComPortBufferSize_4(int in_size,int out_size);
-int GetComFifoTriggerLevel_4(void);	/*[2006/11/09]*/
+int cdecl InstallCom_4(unsigned long baud, int data, int parity, int stop);
+int cdecl RestoreCom_4(void);
+int cdecl IsCom_4(void);
+int cdecl ToCom_4(int data);
+int cdecl ToComStr_4(char *str);
+int cdecl ToComBufn_4(char *buf,int no);
+int cdecl printCom_4(const char *fmt,...);
+void cdecl ClearTxBuffer_4(void);
+int cdecl SetComFifoTriggerLevel_4(int level);
+int cdecl SetBaudrate_4(unsigned long baud);
+int cdecl ReadCom_4(void);
+int cdecl ClearCom_4(void);
+int cdecl DataSizeInCom_4(void);
+int cdecl WaitTransmitOver_4(void);
+int cdecl IsTxBufEmpty_4(void);
+int cdecl IsComOutBufEmpty_4(void);
+int cdecl SetDataFormat_4(int databit,int parity,int stopbit);
+int cdecl ReadComn_4(unsigned char *buf,int n);
+void cdecl SetRtsActive_4(void);
+void cdecl SetRtsInactive_4(void);
+int cdecl GetCtsStatus_4(void);
+void cdecl SendBreak_4(unsigned timems);
+void cdecl SetBreakMode_4(int mode);
+int cdecl IsDetectBreak_4(void);
+void cdecl SetCtsControlMode_4(int mode);
+void cdecl SetRtsControlMode_4(int mode);
+void cdecl SetComPortBufferSize_4(int in_size,int out_size);
+int cdecl GetComFifoTriggerLevel_4(void);	/*[2006/11/09]*/
 
 /*
 When use SetComPortBufferSize_0/1/3/4() to set the size of com port input/output buffer,
@@ -640,14 +640,14 @@ extern int fCtsControlMode_4;
 extern int fRtsControlMode_4;
 
 /* For COM4 without use INTERRUPT */
-int IsCom_4_1(void);
-int ReadCom_4_1(void);
-int ReadComn_4_1(unsigned char *buf,int no);
-int ToCom_4_1(int data);
-void ReadDataFromUartFifo(void);
-void SendDataToUartFifo(void);
-void EnableMonitorCom4(void);
-void DisableMonitorCom4(void);
+int cdecl IsCom_4_1(void);
+int cdecl ReadCom_4_1(void);
+int cdecl ReadComn_4_1(unsigned char *buf,int no);
+int cdecl ToCom_4_1(int data);
+void cdecl ReadDataFromUartFifo(void);
+void cdecl SendDataToUartFifo(void);
+void cdecl EnableMonitorCom4(void);
+void cdecl DisableMonitorCom4(void);
 
 /* for I-8000 module(slot/back plane) */
 typedef union {
@@ -692,49 +692,49 @@ extern unsigned long far *const LedData32; /*(unsigned long far *)0x0040004CL; *
 
 extern DIODATA32 far *DIOData32;
 
-int GetNetId(void);
-void ChangeToSlot(unsigned slot);
+int cdecl GetNetId(void);
+void cdecl ChangeToSlot(unsigned slot);
 
-//void ClrSlotInt(int mask);
-//void ClrAllSlotInt(void);
-//void DisableNMI(void);
-//void EnableNMI(void);
+//void cdecl ClrSlotInt(int mask);
+//void cdecl ClrAllSlotInt(void);
+//void cdecl DisableNMI(void);
+//void cdecl EnableNMI(void);
 //int GetSlotInt(void);
-int GetNumberOfSlot(void);
+int cdecl GetNumberOfSlot(void);
 
-void DO_32(int slot,unsigned long cdata);	/* For 32 bits output */
-void DIO_DO_16(int slot,unsigned cdata);	/*  For:  16 bits output on DI16/DO16 */
-void DO_16(int slot,unsigned int cdata);	/* For 16 bits output */
-void DO_8(int slot,unsigned char cdata);	/* For 8 bits output */
-void DIO_DO_8(int slot,unsigned char cdata);	/*  For:  8 bits output on DI8/DO8 or 4 bits output on DI4/DO4 */
-unsigned long int DI_32(int slot);	/* For 32 bits input */
-unsigned int DI_16(int slot);		/* For 16 bits input */
-unsigned char DI_8(int slot);		/*For 8 bits input */
+void cdecl DO_32(int slot,unsigned long cdata);	/* For 32 bits output */
+void cdecl DIO_DO_16(int slot,unsigned cdata);	/*  For:  16 bits output on DI16/DO16 */
+void cdecl DO_16(int slot,unsigned int cdata);	/* For 16 bits output */
+void cdecl DO_8(int slot,unsigned char cdata);	/* For 8 bits output */
+void cdecl DIO_DO_8(int slot,unsigned char cdata);	/*  For:  8 bits output on DI8/DO8 or 4 bits output on DI4/DO4 */
+unsigned long int cdecl DI_32(int slot);	/* For 32 bits input */
+unsigned int cdecl DI_16(int slot);		/* For 16 bits input */
+unsigned char cdecl DI_8(int slot);		/*For 8 bits input */
 /*
 [11/03/2003] add function for universal DI/O card.(such as 8050)
 */
 #define UDIO_DI16	DI_16
 #define UDIO_DO16	DO_16
-unsigned UDIO_ReadConfig_16(int slot);
-void UDIO_WriteConfig_16(int slot,unsigned config);
+unsigned cdecl UDIO_ReadConfig_16(int slot);
+void cdecl UDIO_WriteConfig_16(int slot,unsigned config);
 
 /*
  functions for COM port on 8142/8142I/8144/8144I/8112/8114
 */
-int SetInBufSIze(int size);
-int SetOutBufSIze(int size);
-int _SetBaudrate(unsigned slot,unsigned port,unsigned long baud);
-int _SetDataFormat(unsigned slot,unsigned port,int data, int parity,int stop);
-int RestoreCom8000(unsigned slot);
-int InstallCom8000(unsigned slot);
-int IsCom8000(unsigned slot,unsigned port);
-int ToCom8000(unsigned slot,unsigned port,int data);
-int ToCom8000Str(unsigned slot,unsigned port,char *str);
-int ToCom8000nBytes(unsigned slot,unsigned port,char *buf,int no);
-int ReadCom8000(unsigned slot,unsigned port);
-int ReadCom8000nBytes(unsigned slot,unsigned port,char *buf,int maxno);
-int ClearCom8000(unsigned slot, unsigned port);
-void ShowErrLedCom8000(unsigned slot,int data);
+int cdecl SetInBufSIze(int size);
+int cdecl SetOutBufSIze(int size);
+int cdecl _SetBaudrate(unsigned slot,unsigned port,unsigned long baud);
+int cdecl _SetDataFormat(unsigned slot,unsigned port,int data, int parity,int stop);
+int cdecl RestoreCom8000(unsigned slot);
+int cdecl InstallCom8000(unsigned slot);
+int cdecl IsCom8000(unsigned slot,unsigned port);
+int cdecl ToCom8000(unsigned slot,unsigned port,int data);
+int cdecl ToCom8000Str(unsigned slot,unsigned port,char *str);
+int cdecl ToCom8000nBytes(unsigned slot,unsigned port,char *buf,int no);
+int cdecl ReadCom8000(unsigned slot,unsigned port);
+int cdecl ReadCom8000nBytes(unsigned slot,unsigned port,char *buf,int maxno);
+int cdecl ClearCom8000(unsigned slot, unsigned port);
+void cdecl ShowErrLedCom8000(unsigned slot,int data);
 /*
 	bit vallue: 0: LED ON, 1:LED OFF
 	bit 0(0x01) for com port 1
@@ -759,14 +759,14 @@ void ShowErrLedCom8000(unsigned slot,int data);
 #define _MCR_LOOP	0x10
 #define _MCR_AUTO_FLOW_CONTROL	0x20
 
-int GetCom8000_MSR(unsigned slot, unsigned port);
+int cdecl GetCom8000_MSR(unsigned slot, unsigned port);
 /*
   Get current MSR.(Modem Status Register)
 
   On error return PortError(-1).
   On success return 8 bits status. The bit definition is as above.(_MSR_xxx)
 */
-int SetCom8000_MCR(unsigned slot, unsigned port,int mcr);
+int cdecl SetCom8000_MCR(unsigned slot, unsigned port,int mcr);
 /*
   Set the MCR(Modem Control Register) bit 0(DTR) & bit 1(RTS).
   On error return PortError(-1).
@@ -778,33 +778,33 @@ int SetCom8000_MCR(unsigned slot, unsigned port,int mcr);
   call SetCom8000_MCR(slot, port,0); to inactive both RTS & DTR.
 */
 
-int SetCom8000_MCR_Bit(unsigned slot, unsigned port,int mcr_bit);
-int ClearCom8000_MCR_Bit(unsigned slot, unsigned port,int mcr_bit);
+int cdecl SetCom8000_MCR_Bit(unsigned slot, unsigned port,int mcr_bit);
+int cdecl ClearCom8000_MCR_Bit(unsigned slot, unsigned port,int mcr_bit);
 
-int SetRts8000(unsigned slot, unsigned port,int mode);
+int cdecl SetRts8000(unsigned slot, unsigned port,int mode);
 /*
   mode=1 --> set RTS active
   mode=0 --> set RTS inactive
 */
-int SetCtsControlMode8000(unsigned slot,unsigned port,int mode);
-int SetRtsControlMode8000(unsigned slot,unsigned port,int mode);
+int cdecl SetCtsControlMode8000(unsigned slot,unsigned port,int mode);
+int cdecl SetRtsControlMode8000(unsigned slot,unsigned port,int mode);
 /*
    mode: the same as SetCtsControlMode_3()
 */
 
-int GetCtsControlMode8000(unsigned slot,unsigned port);
-int GetRtsControlMode8000(unsigned slot,unsigned port);
-int GetCom8000TxBufferFreeSize(unsigned slot, unsigned port);
-void ClearCom8000TxBuffer(unsigned slot, unsigned port);
-int GetCurMsr8000(unsigned slot,unsigned port);
-int GetMsrChanged8000(unsigned slot,unsigned port);
-void ClrMsrChanged8000(unsigned slot,unsigned port);
-int SetCom8000FifoTriggerLevel(unsigned slot, unsigned port, int level);
-int GetCom8000FifoTriggerLevel(unsigned slot, unsigned port);
+int cdecl GetCtsControlMode8000(unsigned slot,unsigned port);
+int cdecl GetRtsControlMode8000(unsigned slot,unsigned port);
+int cdecl GetCom8000TxBufferFreeSize(unsigned slot, unsigned port);
+void cdecl ClearCom8000TxBuffer(unsigned slot, unsigned port);
+int cdecl GetCurMsr8000(unsigned slot,unsigned port);
+int cdecl GetMsrChanged8000(unsigned slot,unsigned port);
+void cdecl ClrMsrChanged8000(unsigned slot,unsigned port);
+int cdecl SetCom8000FifoTriggerLevel(unsigned slot, unsigned port, int level);
+int cdecl GetCom8000FifoTriggerLevel(unsigned slot, unsigned port);
 
-void SendBreak8000(unsigned slot, unsigned port,unsigned timems);
-void SetBreakMode8000(unsigned slot, unsigned port,int mode);
-int IsDetectBreak8000(unsigned slot, unsigned port);
+void cdecl SendBreak8000(unsigned slot, unsigned port,unsigned timems);
+void cdecl SetBreakMode8000(unsigned slot, unsigned port,int mode);
+int cdecl IsDetectBreak8000(unsigned slot, unsigned port);
 
 
 /*
@@ -826,16 +826,16 @@ extern unsigned char far * const KeyStatus;
 #define GetSystemKey	_GetSystemKey
 
 extern int (*_IsSystemKey)(void);
-extern void (*_ClearSystemKey)(void);
+extern void cdecl (*_ClearSystemKey)(void);
 extern int (*_GetSystemKey)(void);
 
 /*
   For Send command to I-7000/I-87K series.
 */
-extern char hex_to_ascii[16];
-int ascii_to_hex(char ascii);
+//extern char hex_to_ascii[16];
+int cdecl ascii_to_hex(char ascii);
 
-int SendCmdTo7000(int iPort, unsigned char *cCmd, int iChksum);
+int cdecl SendCmdTo7000(int iPort, unsigned char *cCmd, int iChksum);
 /*
 (INPUT)iPort:can be 0,1,3,4.
 (INPUT)lTimeout: unit is ms.
@@ -844,7 +844,7 @@ int SendCmdTo7000(int iPort, unsigned char *cCmd, int iChksum);
 (INPUT) iChksum: 0: disable, 1: enable.
 */
 #define ReceiveResponseFrom7000_loop	ReceiveResponseFrom7000
-int ReceiveResponseFrom7000(int iPort, unsigned char *cCmd, long lTimeout, int iChksum);
+int cdecl ReceiveResponseFrom7000(int iPort, unsigned char *cCmd, long lTimeout, int iChksum);
 /*
 (INPUT)iPort:can be 0,1,3,4.
 (INPUT)lTimeout: unit is check times.
@@ -853,7 +853,7 @@ int ReceiveResponseFrom7000(int iPort, unsigned char *cCmd, long lTimeout, int i
 */
 
 #define ReceiveResponseFrom7000_ms	ReceiveResponseFrom7000_1
-int ReceiveResponseFrom7000_1(int iPort, unsigned char *cCmd, long lTimeout, int iChksum);
+int cdecl ReceiveResponseFrom7000_1(int iPort, unsigned char *cCmd, long lTimeout, int iChksum);
 /*
 (INPUT)iPort:can be 0,1,3,4.
 (INPUT)lTimeout: unit is ms. (*****)
@@ -863,47 +863,47 @@ int ReceiveResponseFrom7000_1(int iPort, unsigned char *cCmd, long lTimeout, int
 
 
 /* for ALL COM PORT */
-int printCom(int port,char *fmt,...);
-int IsDetectBreak(int port);
-int SendBreak(int port,unsigned timems);
-int SetBreakMode(int port,int mode);
-int ClearCom(int port);
-int ClearTxBuffer(int port);
-int InstallCom(int port, unsigned long baud, int data, int parity,int stop);
-int ToComBufn(int port,char *buf,int no);
-int RestoreCom(int port);
-int ToComStr(int port,char *str);
-int DataSizeInCom(int port);
-int IsCom(int port);
-int ReadComn(int port,unsigned char *buf,int n);
-int ReadCom(int port);
-int SetBaudrate(int port,unsigned long baud);
-int SetDataFormat(int port,int databit,int parity,int stopbit); /*[2005/09/15]*/
-int ToCom(int port,int data);
-int IsTxBufEmpty(int port);
-int GetTxBufferFreeSize(int port);
-int WaitTransmitOver(int port);
-int SetRtsActive(int port);
-int SetRtsInactive(int port);
-int GetCtsStatus(int port);
-int SetCtsControlMode(int port,int mode);	/*[2006/01/19] add*/
-int SetRtsControlMode(int port,int mode);	/*[2006/01/19] add*/
-int SetXonXoffControlMode(int port,int mode);	/*[2006/01/19] add*/
-int SetMCR(int port,int mcr); /*[2006/06/29] */
-int SetMCR_Bit(int port, int mcr_bit); /*[2006/06/29] */
-int ClearMCR_Bit(int port,int mcr_bit); /*[2006/06/29] */
-int SetComFifoTriggerLevel(int port,int level); /*[2006/06/29] */
-int SetComPortBufferSize(int port,int in_size,int out_size); /* [2006/07/12] */
-int GetCtsControlMode(int port);/*[2006/11/09]*/
-int GetRtsControlMode(int port);/*[2006/11/09]*/
-int SetDtrActive(int port); /*[2006/11/09]*/
-int SetDtrInactive(int port); /*[2006/11/09]*/
-int GetDsrStatus(int port); /*[2006/11/09]*/
-int GetMSR(int port);	/*[2006/11/09]*/
-int GetCurMsr(int port);	/*[2006/11/09]*/
-int GetMsrChanged(int port);	/*[2006/11/09]*/
-int ClrMsrChanged(int port);	/*[2006/11/09]*/
-int GetComFifoTriggerLevel(int port);	/*[2006/11/09]*/
+int cdecl printCom(int port,char *fmt,...);
+int cdecl IsDetectBreak(int port);
+int cdecl SendBreak(int port,unsigned timems);
+int cdecl SetBreakMode(int port,int mode);
+int cdecl ClearCom(int port);
+int cdecl ClearTxBuffer(int port);
+int cdecl InstallCom(int port, unsigned long baud, int data, int parity,int stop);
+int cdecl ToComBufn(int port,char *buf,int no);
+int cdecl RestoreCom(int port);
+int cdecl ToComStr(int port,char *str);
+int cdecl DataSizeInCom(int port);
+int cdecl IsCom(int port);
+int cdecl ReadComn(int port,unsigned char *buf,int n);
+int cdecl ReadCom(int port);
+int cdecl SetBaudrate(int port,unsigned long baud);
+int cdecl SetDataFormat(int port,int databit,int parity,int stopbit); /*[2005/09/15]*/
+int cdecl ToCom(int port,int data);
+int cdecl IsTxBufEmpty(int port);
+int cdecl GetTxBufferFreeSize(int port);
+int cdecl WaitTransmitOver(int port);
+int cdecl SetRtsActive(int port);
+int cdecl SetRtsInactive(int port);
+int cdecl GetCtsStatus(int port);
+int cdecl SetCtsControlMode(int port,int mode);	/*[2006/01/19] add*/
+int cdecl SetRtsControlMode(int port,int mode);	/*[2006/01/19] add*/
+int cdecl SetXonXoffControlMode(int port,int mode);	/*[2006/01/19] add*/
+int cdecl SetMCR(int port,int mcr); /*[2006/06/29] */
+int cdecl SetMCR_Bit(int port, int mcr_bit); /*[2006/06/29] */
+int cdecl ClearMCR_Bit(int port,int mcr_bit); /*[2006/06/29] */
+int cdecl SetComFifoTriggerLevel(int port,int level); /*[2006/06/29] */
+int cdecl SetComPortBufferSize(int port,int in_size,int out_size); /* [2006/07/12] */
+int cdecl GetCtsControlMode(int port);/*[2006/11/09]*/
+int cdecl GetRtsControlMode(int port);/*[2006/11/09]*/
+int cdecl SetDtrActive(int port); /*[2006/11/09]*/
+int cdecl SetDtrInactive(int port); /*[2006/11/09]*/
+int cdecl GetDsrStatus(int port); /*[2006/11/09]*/
+int cdecl GetMSR(int port);	/*[2006/11/09]*/
+int cdecl GetCurMsr(int port);	/*[2006/11/09]*/
+int cdecl GetMsrChanged(int port);	/*[2006/11/09]*/
+int cdecl ClrMsrChanged(int port);	/*[2006/11/09]*/
+int cdecl GetComFifoTriggerLevel(int port);	/*[2006/11/09]*/
 
 /*  function table for up functions except printCom */
 /*
@@ -965,23 +965,23 @@ extern int (*GetMsrChanged_[COM_PORT_NO+1])(void);	/*[2006/11/09]*/
 extern int (*ClrMsrChanged_[COM_PORT_NO+1])(void);	/*[2006/11/09]*/
 extern int (*GetComFifoTriggerLevel_[COM_PORT_NO+1])(void);	/*[2006/11/09]*/
 
-int GetComportNumber(void);
+int cdecl GetComportNumber(void);
 
 extern const unsigned char far * const SystemSerialNumber;
-void InitLib(void);
+void cdecl InitLib(void);
 /*
   MUST CALL InitLib() first before use "DIOData32".
 */
-void GetLibDate(char *date);
-unsigned GetLibVersion(void);
+void cdecl GetLibDate(char *date);
+unsigned cdecl GetLibVersion(void);
 /*
  Current version is 2.01 (return 0x0201)
 */
 
 extern int TriggerLevel[4];
 
-void InstallComInputData_3(int (*DoInputData)(unsigned char data));
-void InstallComInputData_4(int (*DoInputData)(unsigned char data));
+void cdecl InstallComInputData_3(int (*DoInputData)(unsigned char data));
+void cdecl InstallComInputData_4(int (*DoInputData)(unsigned char data));
 /*
 After call InstallComInputData_3/4(), When the COM port ISR for COM3/4 receive a data,
 it will call the function installed(DoInputData), and pass the received data to it.
@@ -991,9 +991,9 @@ And IsCom() will always return 0.
 /* [11/06/2003] add Software flow control(Xon/Xoff) for COM1~COM4
 	COM2 is RS-485, used in half-duplex mode, need not software flow control.
 */
-void SetXonXoffControlMode_1(int mode);
-void SetXonXoffControlMode_3(int mode);
-void SetXonXoffControlMode_4(int mode);
+void cdecl SetXonXoffControlMode_1(int mode);
+void cdecl SetXonXoffControlMode_3(int mode);
+void cdecl SetXonXoffControlMode_4(int mode);
 /*
   mode=0 --> disable Xon/Xoff control
   mode=1 --> enable Xon/Xoff control
@@ -1005,20 +1005,20 @@ void SetXonXoffControlMode_4(int mode);
  Even after all InstallCom_1() also can use these 3 functions to send message to STDIO COM port.
 */
 void pascal _dPutch(int data1);
-void _dPuts(char *str);
-int _dPrint(char *fmt,...);
+void cdecl _dPuts(char *str);
+int cdecl _dPrint(char *fmt,...);
 
 /*
  [2003/12/10]
  Add function for read system timeticks.
 */
-long GetTimeTicks(void);
-long GetTimeTicks_ISR(void); /* use this one in ISR */
+long cdecl GetTimeTicks(void);
+long cdecl GetTimeTicks_ISR(void); /* use this one in ISR */
 /*
   The return value is *TimeTicks.
 */
 
-int InstallUserTimerFunction_us(unsigned time,void (*fun)(void));
+int cdecl InstallUserTimerFunction_us(unsigned time,void cdecl (*fun)(void));
 /*
   time unit is 0.1 us.
 
@@ -1027,7 +1027,7 @@ int InstallUserTimerFunction_us(unsigned time,void (*fun)(void));
 	(That is to say system will call your function once every 0.5 ms)
 	just use
 
-	void fun(void)
+	void cdecl fun(void)
 	{
 		...
 	}
@@ -1035,7 +1035,7 @@ int InstallUserTimerFunction_us(unsigned time,void (*fun)(void));
 	InstallUserTimerFunction_us(5000,fun);
 */
 
-int InstallUserTimerFunction_ms(unsigned time,void (*fun)(void));
+int cdecl InstallUserTimerFunction_ms(unsigned time,void cdecl (*fun)(void));
 /*
   time unit is ms.
 
@@ -1044,7 +1044,7 @@ int InstallUserTimerFunction_ms(unsigned time,void (*fun)(void));
 	(That is to say system will call your function once every 1 sec.)
 	just use
 
-	void fun(void)
+	void cdecl fun(void)
 	{
 		...
 	}
@@ -1052,21 +1052,21 @@ int InstallUserTimerFunction_ms(unsigned time,void (*fun)(void));
 	InstallUserTimerFunction_ms(1000,fun);
 */
 
-void StopUserTimerFun(void);
+void cdecl StopUserTimerFun(void);
 
 /* [2004/02/17] add EEPROM(93C46) functions for I-8017/8024 */
 
 /* For EEPROM(93C46) on 8017 */
-void I8017_EE_WriteDisable(int slot);
-void I8017_EE_WriteEnable(int slot);
-unsigned I8017_EE_Read(int slot,int Addr);
-void I8017_EE_Write(int slot,int Addr,unsigned Data);
+void cdecl I8017_EE_WriteDisable(int slot);
+void cdecl I8017_EE_WriteEnable(int slot);
+unsigned cdecl I8017_EE_Read(int slot,int Addr);
+void cdecl I8017_EE_Write(int slot,int Addr,unsigned Data);
 
 /* For EEPROM(93C46) on 8024*/
 #define I8024_EE_WriteEnable(slot)	I8017_EE_WriteEnable(slot)
 #define I8024_EE_WriteDisable(slot)	I8017_EE_WriteDisable(slot)
-unsigned I8024_EE_Read(int slot,int Addr);
-void I8024_EE_Write(int slot,int Addr,unsigned Data);
+unsigned cdecl I8024_EE_Read(int slot,int Addr);
+void cdecl I8024_EE_Write(int slot,int Addr,unsigned Data);
 
 /* 2004/02/26 add function usr burst mode to read date/time from RTC chip(DS-1302) */
 typedef struct {
@@ -1075,8 +1075,8 @@ typedef struct {
 	char hour,minute,sec;
 }TIME_DATE;
 
-void GetTimeDate(TIME_DATE *timedate);
-int SetTimeDate(TIME_DATE *timedate);
+void cdecl GetTimeDate(TIME_DATE *timedate);
+int cdecl SetTimeDate(TIME_DATE *timedate);
 /*
   when call SetTimeDate(), need set the right year,month,day and the function
   will auto set the weekday.
@@ -1094,7 +1094,7 @@ int SetTimeDate(TIME_DATE *timedate);
 #define MAX_CMD_NO 50
 extern int Argc;
 extern char *Argv[MAX_CMD_NO];
-int CmdToArg(char *cmd);
+int cdecl CmdToArg(char *cmd);
 /*
   return value is argument number(Argc).
   for example:
@@ -1125,11 +1125,11 @@ extern int bMsrChanged_4;
 extern int fDsrControlMode_4,fDtrControlMode_4;
 extern int CurDTR_4;
 
-void SetDtrActive_4(void);
-void SetDtrInactive_4(void);
-int GetDsrStatus_4(void);
-void SetDsrControlMode_4(int mode);/* not finished */
-void SetDtrControlMode_4(int mode);/* not finished */
+void cdecl SetDtrActive_4(void);
+void cdecl SetDtrInactive_4(void);
+int cdecl GetDsrStatus_4(void);
+void cdecl SetDsrControlMode_4(int mode);/* not finished */
+void cdecl SetDtrControlMode_4(int mode);/* not finished */
 
 /*
  Functions for COM2
@@ -1156,31 +1156,31 @@ void SetDtrControlMode_4(int mode);/* not finished */
 #define SendBreak2		SendBreak_2
 #define IsDetectBreak2		IsDetectBreak_2
 
-int InstallCom_2(unsigned long baud, int data, int parity, int stop);
-int RestoreCom_2(void);
-int IsCom_2(void);
-int ToCom_2(int data);
-int ToComStr_2(char *str);
-int ToComBufn_2(char *buf,int no);
-int printCom_2(const char *fmt,...);
-void ClearTxBuffer_2(void);
-int SetComFifoTriggerLevel_2(int level);
-int SetBaudrate_2(unsigned long baud);
-int ReadCom_2(void);
-int ClearCom_2(void);
-int DataSizeInCom_2(void);
-int WaitTransmitOver_2(void);
-int IsTxBufEmpty_2(void);
-int IsComOutBufEmpty_2(void);
-int SetDataFormat_2(int databit,int parity,int stopbit);
-int ReadComn_2(unsigned char *buf,int n);
-void SendBreak_2(unsigned timems);
-void SetBreakMode_2(int mode);
-int IsDetectBreak_2(void);
-void SetComPortBufferSize_2(int in_size,int out_size);
-int GetComFifoTriggerLevel_2(void);	/*[2006/11/09]*/
+int cdecl InstallCom_2(unsigned long baud, int data, int parity, int stop);
+int cdecl RestoreCom_2(void);
+int cdecl IsCom_2(void);
+int cdecl ToCom_2(int data);
+int cdecl ToComStr_2(char *str);
+int cdecl ToComBufn_2(char *buf,int no);
+int cdecl printCom_2(const char *fmt,...);
+void cdecl ClearTxBuffer_2(void);
+int cdecl SetComFifoTriggerLevel_2(int level);
+int cdecl SetBaudrate_2(unsigned long baud);
+int cdecl ReadCom_2(void);
+int cdecl ClearCom_2(void);
+int cdecl DataSizeInCom_2(void);
+int cdecl WaitTransmitOver_2(void);
+int cdecl IsTxBufEmpty_2(void);
+int cdecl IsComOutBufEmpty_2(void);
+int cdecl SetDataFormat_2(int databit,int parity,int stopbit);
+int cdecl ReadComn_2(unsigned char *buf,int n);
+void cdecl SendBreak_2(unsigned timems);
+void cdecl SetBreakMode_2(int mode);
+int cdecl IsDetectBreak_2(void);
+void cdecl SetComPortBufferSize_2(int in_size,int out_size);
+int cdecl GetComFifoTriggerLevel_2(void);	/*[2006/11/09]*/
 
-int GetSerialNumber(char *Serial);
+int cdecl GetSerialNumber(char *Serial);
 
 /*
 [2004/10/13] Add
@@ -1190,12 +1190,12 @@ int GetSerialNumber(char *Serial);
 	  return -2: CRC error
 */
 
-void InstallNewTimer(void);
+void cdecl InstallNewTimer(void);
 extern int Int9Flag;
 /*
-int _IsSystemKey(void);
-int _GetSystemKey(void);
-void _ClearSystemKey(void);
+int cdecl _IsSystemKey(void);
+int cdecl _GetSystemKey(void);
+void cdecl _ClearSystemKey(void);
 */
 /*
 [2004/11/16] Add
@@ -1210,11 +1210,11 @@ void _ClearSystemKey(void);
    Please be carefully for using these 3 functions.
    !!! NOT ALL 32 PIO pins can use used by user. !!!
 */
-void SetPioDir(unsigned pin,int dir);
-void SetPio(int pin,int mode);
-int GetPio(int pin);
-void SetPioHighLow(int pin); /* [2005/11/29]add */
-void SetPioLowHigh(int pin); /* [2005/11/29]add */
+void cdecl SetPioDir(unsigned pin,int dir);
+void cdecl SetPio(int pin,int mode);
+int cdecl GetPio(int pin);
+void cdecl SetPioHighLow(int pin); /* [2005/11/29]add */
+void cdecl SetPioLowHigh(int pin); /* [2005/11/29]add */
 
 #define _OUTPUT_MODE							0
 #define _INPUT_MODE_WITH_PULL_HIGH_OR_LOW		1
@@ -1240,22 +1240,22 @@ void SetPioLowHigh(int pin); /* [2005/11/29]add */
 /*
 [2005/02/21] Add
 */
-void far * AllocateTopMemory(unsigned long size);
+void cdecl far * AllocateTopMemory(unsigned long size);
 
 /*
 [2005/03/07] add
 */
-int GetMSR_3(void);
-int GetMSR_4(void);
+int cdecl GetMSR_3(void);
+int cdecl GetMSR_4(void);
 
-int SetMCR_3(int mcr);
-int SetMCR_4(int mcr);
+int cdecl SetMCR_3(int mcr);
+int cdecl SetMCR_4(int mcr);
 
-void SetMCR_Bit_3(int mcr_bit);
-void SetMCR_Bit_4(int mcr_bit);
+void cdecl SetMCR_Bit_3(int mcr_bit);
+void cdecl SetMCR_Bit_4(int mcr_bit);
 
-void ClearMCR_Bit_3(int mcr_bit);
-void ClearMCR_Bit_4(int mcr_bit);
+void cdecl ClearMCR_Bit_3(int mcr_bit);
+void cdecl ClearMCR_Bit_4(int mcr_bit);
 
 /*
 [2007/09/17] Add functions for S256/S512 on I-8000 back plate.
@@ -1269,7 +1269,7 @@ For S512 : 256(S256_MaxBlock) blocks, every block has 2048(S256_BlockSize) bytes
 #define S256_BlockWordSize	1024
 #define S256_MaxBlock		256
 /*---------------------------------------------------------------------*/
-int S256_Init(void);
+int cdecl S256_Init(void);
 /*
 Before use S256/S512 must call this function.
 
@@ -1280,7 +1280,7 @@ Before use S256/S512 must call this function.
 */
 
 /*---------------------------------------------------------------------*/
-int S256_Read(unsigned block,unsigned offset);
+int cdecl S256_Read(unsigned block,unsigned offset);
 /*
 Read data from SRAM by block & offset.
 [input]
@@ -1294,7 +1294,7 @@ if offset is out of range return OffsetError(-100).
 */
 
 /*---------------------------------------------------------------------*/
-int S256_Write(unsigned block,unsigned offset,unsigned char data);
+int cdecl S256_Write(unsigned block,unsigned offset,unsigned char data);
 /*
 Write data to SRAM by block & offset.
 [input]
@@ -1308,7 +1308,7 @@ if offser is out of range return OffsetError(-100).
 */
 
 /*---------------------------------------------------------------------*/
-int S256_ReadF(unsigned long address);
+int cdecl S256_ReadF(unsigned long address);
 /*
 Read data from SRAM by linear address.
 [input]
@@ -1320,7 +1320,7 @@ BlockError: the address is out og range,
 */
 
 /*---------------------------------------------------------------------*/
-int S256_ReadFn(unsigned long address,unsigned no,unsigned char *buf);
+int cdecl S256_ReadFn(unsigned long address,unsigned no,unsigned char *buf);
 /*
 Read n bytes data from SRAM by linear address.
 
@@ -1335,7 +1335,7 @@ if the address is out of range S256_ReadFn() return 0.
 */
 
 /*---------------------------------------------------------------------*/
-int S256_WriteF(unsigned long address,unsigned char data);
+int cdecl S256_WriteF(unsigned long address,unsigned char data);
 /*
 Write data to SRAM by linear address.
 
@@ -1348,7 +1348,7 @@ NoError(0): Write success.
 */
 
 /*---------------------------------------------------------------------*/
-int S256_WriteFn(unsigned long address,unsigned no,unsigned char *data);
+int cdecl S256_WriteFn(unsigned long address,unsigned no,unsigned char *data);
 /*
 Write n bytes data to SRAM by linear address.
 
@@ -1362,21 +1362,21 @@ return the readed data number.
 if the address is out of range S256_ReadFn() return 0.
 */
 /*---------------------------------------------------------------------*/
-int S256_WriteBlock(unsigned block,unsigned char *Buf);
-int S256_ReadBlock(unsigned block,unsigned char *Buf);
+int cdecl S256_WriteBlock(unsigned block,unsigned char *Buf);
+int cdecl S256_ReadBlock(unsigned block,unsigned char *Buf);
 /*---------------------------------------------------------------------*/
 
 /*
 [2005/05/27] add functions for using timer functions
 */
-int SetDelayTimer(int no);
+int cdecl SetDelayTimer(int no);
 /*
 The delay functions(Dealy()/Delay_1()/Delay_2() by default using system's timer 0.
 user can call SetDelayTimer(1); set it to use timer 1.
 
 return : 0 for using timer 0, 1 for using timer 1.
 */
-int SetUserTimer(int no);
+int cdecl SetUserTimer(int no);
 /*
 The user timer functions(InstallUserTimerFunction_us()/InstallUserTimerFunction_ms()
  by default using system's timer 0.
@@ -1389,37 +1389,37 @@ return : 0 for using timer 0, 1 for using timer 1.
   [2006/02/07] Add functions for write/delete file
   Please refer to the file:"OS7_file.txt" or "OS7_file_big5.txt"
 */
-int OS7_DeleteAllFile(int disk);
-long OS7_GetDiskFreeSize(int disk);
-int OS7_OpenWriteFile(int disk);
-int OS7_WriteFile(int disk,void *buf,int size);
-int OS7_CloseWriteFile(int disk,FILE_DATA *f_data);
+int cdecl OS7_DeleteAllFile(int disk);
+long cdecl OS7_GetDiskFreeSize(int disk);
+int cdecl OS7_OpenWriteFile(int disk);
+int cdecl OS7_WriteFile(int disk,void cdecl *buf,int size);
+int cdecl OS7_CloseWriteFile(int disk,FILE_DATA *f_data);
 extern int OS7_FileDateTimeMode;
 /*
   [2006/02/10] add functions for CRC16
   OS7_xxxx() will use these function to get the crc16 of the file data.
   Please refer to the file:"OS7_crc16.txt" or "OS7_crc16_big5.txt"
 */
-int CRC16_Push(void);
-int CRC16_Pop(void);
-void CRC16_Set(unsigned val);
+int cdecl CRC16_Push(void);
+int cdecl CRC16_Pop(void);
+void cdecl CRC16_Set(unsigned val);
 #define CRC16_Reset()	CRC16_Set(0)
-unsigned CRC16_Read(void);
-void CRC16_AddData(unsigned char data);
-void CRC16_AddDataN(unsigned char far *data,unsigned length);
-int CRC16_MakeTable(void);
+unsigned cdecl CRC16_Read(void);
+void cdecl CRC16_AddData(unsigned char data);
+void cdecl CRC16_AddDataN(unsigned char far *data,unsigned length);
+int cdecl CRC16_MakeTable(void);
 
 /*
 [2006/07/06] add 2 functions for 8112/8114/8142/8144 series.
 */
-int IsCom8000OutBufEmpty(int slot, int port);
+int cdecl IsCom8000OutBufEmpty(int slot, int port);
 /*
 on error return PortError(-1).
 If the output buffer is empty retunrs 1.
 If the output buffer is not empty returns 0.
 */
 
-int WaitCom8000TransmitOver(int slot, int port);
+int cdecl WaitCom8000TransmitOver(int slot, int port);
 /*
 On success returns NoError(0).
 On error returns PortError(-1) or TimeOut(-5).
@@ -1448,16 +1448,16 @@ extern unsigned char far ** const ModuleFullName;
  [2007/01/18] Add function to control the high ram(128K FRAM/SRAM or 256K SRAM )
  C837/813 can support high ram.(option)
 */
-void EnableHighRam(void);
-void DisableHighRam(void);
-int GetHighRamMode(void); /* [2007/06/04] add */
+void cdecl EnableHighRam(void);
+void cdecl DisableHighRam(void);
+int cdecl GetHighRamMode(void); /* [2007/06/04] add */
 /*
  return value:
  0 --> high ram is ENABLED.
  != 0 --> high ram is DISABLED.
 */
 
-void SetHighRam(int mode); /* [2007/06/04] add */
+void cdecl SetHighRam(int mode); /* [2007/06/04] add */
 /*
  mode=0 --> ENABLE high ram
  mode != 0 --> DISABLE high ram.
@@ -1475,13 +1475,13 @@ void SetHighRam(int mode); /* [2007/06/04] add */
 /*
 [2007/06/20] Add functions for swap data byte order.
 */
-unsigned SwapShort(unsigned data);
+unsigned cdecl SwapShort(unsigned data);
 /*
   swap the high byte and low byte.
   SwapShort(0x1234) will return 0x3412;
 */
 
-unsigned long SwapLong(unsigned long val);
+unsigned long cdecl SwapLong(unsigned long val);
 /*
   SwapLong(0x12345678) will return 0x78563412;
 */
@@ -1491,54 +1491,54 @@ unsigned long SwapLong(unsigned long val);
 [2007/06/28] Add functions for CRC-16 used by Modbus/RTU
 */
 extern unsigned Modbus_CRC16;
-void Modbus_CRC16_Set(unsigned val);
+void cdecl Modbus_CRC16_Set(unsigned val);
 #define Modbus_CRC16_Reset()	Modbus_CRC16_Set(0xFFFF)
-unsigned Modbus_CRC16_Read(void);
-void Modbus_GetCRC16(unsigned char *puchMsg, int DataLen);
-int Modbus_CRC16_Push(void);
-int Modbus_CRC16_Pop(void);
+unsigned cdecl Modbus_CRC16_Read(void);
+void cdecl Modbus_GetCRC16(unsigned char *puchMsg, int DataLen);
+int cdecl Modbus_CRC16_Push(void);
+int cdecl Modbus_CRC16_Pop(void);
 
 /*----------------------------------------------------------------------------*/
 /*
 [2007/07/06] Add functions for the NAME/VER/DATE of the library.
 */
-unsigned GetOsLibVersion(void); /* the same as GetLibVersion(). */
-char *GetOsLibDate(void);
-char *GetOsLibName(void);
+unsigned cdecl GetOsLibVersion(void); /* the same as GetLibVersion(). */
+char cdecl *GetOsLibDate(void);
+char cdecl *GetOsLibName(void);
 
 /*----------------------------------------------------------------------------*/
 /* [2007/09/11] Add functions for new Back Plane */
-void Install_8KIsr(void); /* InitLib() will call this function.*/
-void UnInstall_8KIsr(void);
+void cdecl Install_8KIsr(void); /* InitLib() will call this function.*/
+void cdecl UnInstall_8KIsr(void);
 
-int InstallSlotLevelIsr(unsigned slot,void (*isr)(int slot));
-int UnInstallSlotLevelIsr(unsigned slot);
+int cdecl InstallSlotLevelIsr(unsigned slot,void cdecl (*isr)(int slot));
+int cdecl UnInstallSlotLevelIsr(unsigned slot);
 
-int InstallSlotRisingIsr(unsigned slot,void (*isr)(int slot));
-int UnInstallSlotRisingIsr(unsigned slot);
+int cdecl InstallSlotRisingIsr(unsigned slot,void cdecl (*isr)(int slot));
+int cdecl UnInstallSlotRisingIsr(unsigned slot);
 
-int InstallComIsr_2(void (*isr)(void));
-int UnInstallComIsr_2(void);
-int InstallComIsr_3(void (*isr)(void));
-int UnInstallComIsr_3(void);
-int InstallComIsr_4(void (*isr)(void));
-int UnInstallComIsr_4(void);
+int cdecl InstallComIsr_2(void cdecl (*isr)(void));
+int cdecl UnInstallComIsr_2(void);
+int cdecl InstallComIsr_3(void cdecl (*isr)(void));
+int cdecl UnInstallComIsr_3(void);
+int cdecl InstallComIsr_4(void cdecl (*isr)(void));
+int cdecl UnInstallComIsr_4(void);
 
-int InstallModulePlugIsr(void (*isr)(void));
-int UnInstallModulePlugIsr(void);
+int cdecl InstallModulePlugIsr(void cdecl (*isr)(void));
+int cdecl UnInstallModulePlugIsr(void);
 
-int InstallTimerOutIsr(void (*isr)(void),unsigned dtHigh,unsigned dtLow); /* unit = 1 us */
-int UnInstallTimerOutIsr(void);
+int cdecl InstallTimerOutIsr(void cdecl (*isr)(void),unsigned dtHigh,unsigned dtLow); /* unit = 1 us */
+int cdecl UnInstallTimerOutIsr(void);
 
-int InstallTimer1Isr(void (*isr)(void),unsigned dt); /* unit = 1 us */
-int UnInstallTimer1Isr(void);
+int cdecl InstallTimer1Isr(void cdecl (*isr)(void),unsigned dt); /* unit = 1 us */
+int cdecl UnInstallTimer1Isr(void);
 
-int InstallTimer2Isr(void (*isr)(void),unsigned dt); /* unit = 10 us */
-int UnInstallTimer2Isr(void);
+int cdecl InstallTimer2Isr(void cdecl (*isr)(void),unsigned dt); /* unit = 10 us */
+int cdecl UnInstallTimer2Isr(void);
 
 /*----------------------------------------------------------------------------*/
 /* [2008/03/03] add */
-int FlashGetWpStatus(void);
+int cdecl FlashGetWpStatus(void);
 /*
 return 0: Flash is in Write-Enabled mode
 return 1: Flash is in Write-Protected mode
@@ -1546,7 +1546,7 @@ return 1: Flash is in Write-Protected mode
 
 /*----------------------------------------------------------------------------*/
 /* [2008/03/05] add */
-int GetBatteryStatus(void);
+int cdecl GetBatteryStatus(void);
 #define BATTERY_LOW_1	2
 #define BATTERY_LOW_2	4
 /*
@@ -1559,10 +1559,10 @@ The two batteries are used for RTC & the 512K bytes battery backup SRAM.
 
 /*----------------------------------------------------------------------------*/
 /*[2008/04/01] add function for microSD*/
-int microSD_WriteBlock(void *data,unsigned long block,unsigned BlockNo);
-int microSD_ReadBlock(void *data,unsigned long block,unsigned BlockNo);
-int microSD_Start(unsigned long *BlockNo,unsigned long *MemorySize);
-int microSD_CheckCardReady(void); //[2008/11/14] add.
+int cdecl microSD_WriteBlock(void cdecl *data,unsigned long block,unsigned BlockNo);
+int cdecl microSD_ReadBlock(void cdecl *data,unsigned long block,unsigned BlockNo);
+int cdecl microSD_Start(unsigned long *BlockNo,unsigned long *MemorySize);
+int cdecl microSD_CheckCardReady(void); //[2008/11/14] add.
 /*
 return value:
 1--> SD card is ready.
@@ -1571,30 +1571,30 @@ return value:
 
 /*----------------------------------------------------------------------------*/
 /*[2008/08/14] add function for new plugged 8K module */
-void Check_ID_8K(int slot);
+void cdecl Check_ID_8K(int slot);
 
 /*----------------------------------------------------------------------------*/
 /*[2009/04/28] */
 extern unsigned char CPU_Version;
-void Sound(unsigned freq,unsigned period);
-void _Sound(unsigned freq);
-void NoSound(void);
+void cdecl Sound(unsigned freq,unsigned period);
+void cdecl _Sound(unsigned freq);
+void cdecl NoSound(void);
 
 /*----------------------------------------------------------------------------*/
 /*
 [2010/04/14] Add functions for delay function to use Timer 0 or Timer 1.
 */
-void Delay0(unsigned ms);
-void Delay1(unsigned ms);
+void cdecl Delay0(unsigned ms);
+void cdecl Delay1(unsigned ms);
 /*
 	Delay time unit = 1 ms
 	Delay0() and Delay1() are the same as Delay(),but
 	Delay0() will use Timer 0,
 	Delay1() will use Timer 1.
 */
-void Delay0_1(unsigned ms);
-void Delay1_1(unsigned ms);
-void Delay2_1(unsigned ms);
+void cdecl Delay0_1(unsigned ms);
+void cdecl Delay1_1(unsigned ms);
+void cdecl Delay2_1(unsigned ms);
 /*
 	Delay time unit = 0.1 ms
 	Delay0_1() and Delay1_1() are the same as Delay_1(),but
@@ -1603,9 +1603,9 @@ void Delay2_1(unsigned ms);
 	Delay2_1() will use Timer 2. [2011/12/14] add
 */
 
-void Delay0_2(unsigned ms);
-void Delay1_2(unsigned ms);
-void Delay2_2(unsigned ms);
+void cdecl Delay0_2(unsigned ms);
+void cdecl Delay1_2(unsigned ms);
+void cdecl Delay2_2(unsigned ms);
 /*
 	Delay time unit = 0.01 ms
 	Delay0_2() and Delay1_2() are the same as Delay_2(),but
@@ -1614,7 +1614,7 @@ void Delay2_2(unsigned ms);
 	Delay2_2() will use Timer 2. [2011/12/14] add
 */
 
-void Delay2(unsigned ms);
+void cdecl Delay2(unsigned ms);
 /*
 	Delay time unit = 1 ms
 	Delay2() like Delay() but it use Timer 2.
@@ -1624,13 +1624,13 @@ void Delay2(unsigned ms);
 	(InstallUserTimer1Function_us() or InstallUserTimer1Function_us() )
 */
 
-int InstallUserTimer0Function_us(unsigned time,void (*fun)(void));
-int InstallUserTimer0Function_ms(unsigned time,void (*fun)(void));
-void StopUserTimer0Fun(void);
+int cdecl InstallUserTimer0Function_us(unsigned time,void cdecl (*fun)(void));
+int cdecl InstallUserTimer0Function_ms(unsigned time,void cdecl (*fun)(void));
+void cdecl StopUserTimer0Fun(void);
 
-int InstallUserTimer1Function_us(unsigned time,void (*fun)(void));
-int InstallUserTimer1Function_ms(unsigned time,void (*fun)(void));
-void StopUserTimer1Fun(void);
+int cdecl InstallUserTimer1Function_us(unsigned time,void cdecl (*fun)(void));
+int cdecl InstallUserTimer1Function_ms(unsigned time,void cdecl (*fun)(void));
+void cdecl StopUserTimer1Fun(void);
 /* End of [2010/04/14]--------------------------------------------------------*/
 
 /* [2013/11/27] */

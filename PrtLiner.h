@@ -1,6 +1,6 @@
 #pragma once
 
-#include "WComms.hpp"
+#include "Comms.hpp"
 
 #define LINER_BUFSIZE 1024
 #define RX_TIMEOUT (toTypeSec | 3)

@@ -2,9 +2,9 @@
 
 #include <stdlib.h>
 #include "SERVICE.h"
-#include "WHrdware.hpp"
+#include "Hardware.hpp"
 
-class DUMP_SVC : public SERVICE 
+class DUMP_SVC : public SERVICE
 {
   U32 Offset;
   BOOL Active;

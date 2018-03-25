@@ -82,7 +82,7 @@ void execute()
     #define arg I7K_Qry, I7K_Ans
 #else
     #define fmt "\n\r%d%02d%02d_%02d%02d%02d.%2d  SYS:%03d %02d"
-    #define arg
+    #define arg 0
 #endif
     pos+=sprintf(buf, fmt, year, month, day, hour, min, sec, dt, arg, SYS::GetCPUIdleMs(), SYS::GetTimerISRMs() );
 #undef fmt

@@ -56,7 +56,7 @@ void execute()
 
 
 #include "Module.h"
-#include "WHrdware.hpp"
+#include "Hardware.hpp"
 
 class THREAD_I7K_POLL : public THREAD
 {

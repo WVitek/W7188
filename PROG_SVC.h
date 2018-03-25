@@ -2,7 +2,7 @@
 
 #include <stdlib.h>
 #include "SERVICE.h"
-#include "WHrdware.hpp"
+#include "Hardware.hpp"
 
 #if defined(__mOS7)
 #include <string.h>
