@@ -15,8 +15,8 @@ void THREAD_GPS::execute()
 {
     COMPORT& com = GetCom(3);
     COMPORT& comPPS = GetCom(1);
-    EVENT& evtPPS = comPPS.EventHiCTS();
-    EVENT& evtRx = com.RxEvent();
+//    EVENT& evtPPS = comPPS.EventHiCTS();
+//    EVENT& evtRx = com.RxEvent();
     com.install(9600);
     U8 buf[256];
     dbg("\n\rSTART GPS_Time");

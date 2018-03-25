@@ -13,40 +13,17 @@
 //class COMPORT
 
 COMPORT::COMPORT(){
-  RxB.WrP=RxB.RdP=TxB.WrP=TxB.RdP=0;
-  RxB.ExpMask=0;
-  RxB.ExpChar=1;
-  RxCnt=0;
-  OldIntVect=0;
   StrBuf=0;
-//  SYS::enableThreadSwitching(FALSE);
-//  ComNum=Num;
-//  this->Baud=Baud;
-//  InstallCom(ComNum,Baud);
-//  HalfDuplex=(ComNum==2);
-//  SYS::enableThreadSwitching(TRUE);
 }
 
 COMPORT::~COMPORT(){
   if(StrBuf) SYS::free(StrBuf);
-//  if(OldIntVect) uninstall();
 }
-
-#ifdef __UsePerfCounters
-void COMPORT::GetPerf(STRUCT_COMPERF *P){
-  SYS::cli();
-  U32 Ticks = ISRTicks;  ISRTicks=0;
-  P->RCalls=_RC; P->RBytes=_RB;
-  P->TCalls=_TC; P->TBytes=_TB;
-  _RC=_RB=_TC=_TB=0;
-  SYS::sti();
-  P->ISRMs=(U16)(Ticks/SysTicksInMs);
-}
-#endif
 
 void COMPORT::setExpectation(U8 Mask,U8 Char,U16 Count){
+// TODO (w#1#): implement comm task
   SYS::cli();
-  RxB.Event.reset();
+  rxEvent.reset();
   RxB.ExpMask=Mask;
   RxB.ExpChar=Char;
   RxCnt=Count;
@@ -54,114 +31,33 @@ void COMPORT::setExpectation(U8 Mask,U8 Char,U16 Count){
 }
 
 U8 _fast COMPORT::readChar(){
-  while(!BytesInRxB()) SYS::sleep(1);
-  SYS::cli();
-  U8 Char=RxB.Data[RxB.RdP++];
-  RxB.RdP&=COMBUF_WRAPMASK;
-  SYS::sti();
-  return Char;
+  while(!IsCom(port)) SYS::sleep(1);
+  return ReadCom(port);
 }
 
 U16 COMPORT::read(void* Buf,U16 Cnt,int Timeout){
-  if(Timeout){
-    if(Cnt>COMBUF_SIZE) Cnt=COMBUF_SIZE;
-    SYS::cli();
-    if(RxB.BytesOccupied()<Cnt) {
-      setExpectation(0,0,Cnt-RxB.BytesOccupied()); //any char
-      SYS::sti();
-      RxB.Event.waitFor(Timeout);
+  if(Timeout == 0) Timeout = 32767;
+  int nLeft = Cnt;
+  while(Timeout>0 && nLeft>0){
+    int n = DataSizeInCom(port);
+    if(n==0){
+        SYS::sleep(1);
+        Timeout--;
+        continue;
     }
-    else SYS::sti();
-    U16 i=0;
-    for(;i<Cnt;i++){
-      _disable();
-      if(RxB.RdP==RxB.WrP)
-      {
-          _enable();
-          break;
-      }
-      ((U8*)Buf)[i]=RxB.Data[RxB.RdP++];
-      RxB.RdP&=COMBUF_WRAPMASK;
-      _enable();
-    }
-    Cnt=i;
+    if(n>nLeft) n = nLeft;
+    ReadComn(port,Buf,n);
+    nLeft -= n;
   }
-  else for(int i=0; i<Cnt; i++) ((U8*)Buf)[i]=readChar();
-  return Cnt;
+  return Cnt - nLeft;
 }
-
-#ifdef __COM_STATUS_BUF
-U16 COMPORT::read(void* Buf, void* Status, U16 Cnt, int Timeout)
-{
-    if(Timeout)
-    {
-        if(Cnt>COMBUF_SIZE) Cnt=COMBUF_SIZE;
-        SYS::cli();
-        if(BytesInRxB()<Cnt)
-        {
-            setExpectation(0,0,Cnt-BytesInRxB()); //any char
-            SYS::sti();
-            RxB.Event.waitFor(Timeout);
-        }
-        else SYS::sti();
-        U16 i=0;
-        for(;i<Cnt && BytesInRxB();i++)
-        {
-            _disable();
-            ((U8*)Status)[i]=RxB.Status[RxB.RdP];
-            ((U8*)Buf)[i]=RxB.Data[RxB.RdP++];
-            RxB.RdP&=COMBUF_WRAPMASK;
-            _enable();
-        }
-        Cnt=i;
-    }
-    else for(int i=0; i<Cnt; i++) ((U8*)Buf)[i]=readChar();
-    return Cnt;
-}
-#endif
 
 void _fast COMPORT::writeChar(U8 Char){
-  int nextidx;
-  do{
-    _disable();
-    if((nextidx=(TxB.WrP+1)&COMBUF_WRAPMASK) != TxB.RdP){
-      TxB.Data[TxB.WrP]=Char;
-      TxB.WrP=nextidx;
-      _enable();
-      break;
-    }
-    else{
-      TxEvent().reset();
-      _enable();
-      TxEvent().waitFor();
-    }
-  } while(1);
-  enableTx();
+  ToCom(port, Char);
 }
 
 U16 COMPORT::write(const void *Buf,U16 Cnt){
-  U8* Bytes = (U8*)Buf;
-  while(1)
-  {
-    _disable();
-    U16 nBF = TxB.BytesFree();
-    U16 n = (nBF<Cnt) ? nBF : Cnt;
-    Cnt -= n;
-    while(n-- > 0){
-      TxB.Data[TxB.WrP] = *(Bytes++);
-      ++TxB.WrP &= COMBUF_WRAPMASK;
-    }
-    _enable();
-    enableTx();
-    if(Cnt>0)
-    {
-      TxEvent().waitFor();
-      TxEvent().reset();
-    }
-    else
-      break;
-  }
-//  for(;Cnt>0;Cnt--) writeChar(*(Bytes++));
+  ToComBufn(port,Buf,Cnt);
   return Cnt;
 }
 
@@ -224,14 +120,17 @@ void COMPORT::sendCmdTo7000(U8 *Cmd, BOOL Checksum, BOOL ClearRxBuf){
 
 int COMPORT::receiveLine(U8 *Buf,int Timeout,BOOL Checksum, U8 endChar){
     int Pos=0, Res;
-    if(Timeout && SYS::waitFor(Timeout,&RxEvent())!=1)
+    if(Timeout==0) Timeout=32767;
+    while(--Timeout>0 && !IsCom(port))
+        SYS::sleep(1);
+    if(Timeout == 0)
         Res=-1;
     //else
     {
         int Sum=0;
         while(1)
         {
-            if(!BytesInRxB()) { Res=-2; break; }
+            if(!IsCom(port)) { Res=-2; break; }
             U8 c = readChar();
             if(c==endChar) { Res=0; break; }
             Buf[Pos]=c;
@@ -275,344 +174,249 @@ void PRT_ABSTRACT::TxStr(const char *psz)
   Tx( psz, strlen(psz) );
 }
 
-#if defined(__ARQ)
+class COM_NULL : public COMPORT {
+protected:
+  void enableTx(){}
+public:
+  U16  read(void* /*Buf*/,U16 /*Cnt*/,int /*Timeout*/){return 0;}
+  U16  write(const void* /*Buf*/,U16 /*Cnt*/){return 0;}
+public:
+  COM_NULL(){}
+  BOOL install(U32 /*Baud*/){return TRUE;}
+  void uninstall(){}
+  void setDataFormat(U8 nDataBits, PARITY_KIND parity, U8 nStopBits){}
+  BOOL setSpeed(U32 /*Baud*/){return TRUE;}
+  BOOL IsTxOver(){return TRUE;}
+  BOOL CarrierDetected(){return FALSE;}
+  BOOL virtual IsClearToSend(){return FALSE;}
+  void setDtr(bool /*high*/){}
+  void setRts(bool /*high*/){}
+} ComZero;
 
-//class PRT_COMPORT
-PRT_COMPORT::PRT_COMPORT(COMPORT *com){
-  this->com=com;
-  RxState=RX_FLAG;
-  com->setExpectation(0xFF,'V');
-}
+#if !defined(__7188XB) && !defined(__IP8000)
 
-int PRT_COMPORT::Rx(void *Data){
-  if(RxState==RX_READY){
-    RxState=RX_FLAG;
-    return com->read(Data,DataSize,0);
+//#define Txbuf 0x00     // tx buffer
+//#define Rxbuf 0x00     // rx buffer
+#define Dll   0x00     // baud lsb
+#define Dlh   0x01     // baud msb
+#define Ier   0x01     // int enable reg
+#define Fcr   0x02     // FIFO control register
+#define Iir   0x02     // Interrupt Identification Register
+#define Lcr   0x03     // line control reg
+//#define Dfr   0x03     // Data format  reg
+#define Mcr   0x04     // modem control reg
+#define Lsr   0x05     // line status reg
+#define Msr   0x06     // modem status reg
+//#define Scr   0x07     // Scratch reg
+
+#define NoError         0
+#define PortError      -1
+#define DataError      -2
+#define ParityError    -3
+#define StopError      -4
+#define TimeOut        -5
+#define QueueEmpty     -6
+#define QueueOverflow  -7
+#define BaudRateError  -13
+#define CheckSumError  -14
+
+class COM_VENDOR : public COMPORT {
+  TIME timeOfHiCTS;
+  TIME timeOfLoCTS;
+public:
+  COM_VENDOR(int port):COMPORT(port)
+  {
+    this->Base=Base;
+    this->IntVectNum=IntVectNum;
+    this->IntMask=IntMask;
+    this->ISR=ISR;
+    this->Flags=Flags;
   }
-  else return 0;
-}
+  BOOL install(U32 Baud);
+  void uninstall();
+  BOOL setSpeed(U32 Baud);
 
-void PRT_COMPORT::Tx(const void *Data, U16 Cnt){
-  _HEADER hdr;
-  hdr.DataSize=(U8)Cnt;
-//  hdr.CRC=(U8)CRC16_get(&hdr,sizeof(hdr)-1);
-  hdr.CRC=(U8)CRC16_get( &hdr, sizeof(hdr)-1, CRC16_ModBus );
-  com->writeChar('W');
-  com->write(&hdr,sizeof(hdr));
-  com->write(Data,Cnt);
-  com->writeChar('V');
-  dump(&hdr,sizeof(hdr));
-}
-
-U16 PRT_COMPORT::ProcessIO(){
-  U16 Result=0;
-  // RX
-  BOOL Process=TRUE;
-  while(com->BytesInRxB() && Process){
-    switch(RxState){
-    case RX_FLAG:
-      while(com->BytesInRxB()){
-        if(com->readChar()=='W'){
-          RxState=RX_HDR;
-          break;
-        }
-      }
-      break;
-    case RX_HDR:
-      _HEADER hdr;
-      if(com->BytesInRxB() >= sizeof(hdr)){
-        com->read(&(hdr),sizeof(hdr),0);
-        //if((U8)(CRC16_get(&hdr,sizeof(hdr)-1))==hdr.CRC){
-        if((U8)(CRC16_get(&hdr,sizeof(hdr)-1,CRC16_ModBus))==hdr.CRC){
-          DataSize=hdr.DataSize;
-          RxState=RX_DATA;
-        }
-        else {
-//          com->unread(&hdr,sizeof(hdr));
-          RxState=RX_FLAG;
-        }
-      }
-      else Process=FALSE;
-      break;
-    case RX_DATA:
-      if(com->BytesInRxB() >= DataSize+1){
-        RxState=RX_READY;
-        Result|=IO_RX;
-      }
-      Process=FALSE;
-      break;
-    }
+  BOOL TimeOfCTS(TIME &ToHi, TIME &ToLo)
+  {
+      _disable();
+      ToHi = timeOfHiCTS;
+      ToLo = timeOfLoCTS;
+      _enable();
+      return TRUE;
   }
-  if(!Process && RxState!=RX_READY) com->RxEvent().reset();
-  // TX
-  U16 bct=com->BytesCanTx();
-  if(bct >= LL_PRTDataSize+256 ){
-    Result|=IO_TX;
-    if(bct==COMBUF_SIZE) Result|=IO_TXEMPTY;
+
+  void setDataFormat(U8 nDataBits, PARITY_KIND parity, U8 nStopBits)
+  {
+      U8 format;
+      GetFormatData(nDataBits,parity,nStopBits,format);
+      SYS::cli();
+      outp(Base+Lcr,format);
+      SYS::sti();
   }
-  return Result;
-}
 
-
-//class PRT_ARQ
-PRT_ARQ::PRT_ARQ(PRT_ABSTRACT *prt){
-  this->prt=prt;
-  RxWin=new ARQRXWINITEM[ARQ_WINSIZE];
-  TxWin=new ARQTXWINITEM[ARQ_WINSIZE];
-  TimeClient=NULL;
-  TxBuf.Addr=0;
-  ARQState=ARQS_RSTQ;
-  reset();
-}
-
-void PRT_ARQ::reset(){
-  RxRd=RxWr=TxRd=TxWr=LastACKNum=0;
-  LastSendTime=0;
-  SYS::getSysTime(LastRecvTime);
-  for(int i=0; i<ARQ_WINSIZE; i++) RxWin[i].DataSize=0;
-}
-
-int PRT_ARQ::Rx(void *Data){
-  U16 i=RxRd & ARQ_WINWRAP;
-  int Result=RxWin[i].DataSize;
-  memcpy(Data,RxWin[i].Data,Result);
-  RxWin[i].DataSize=0;
-//  dbg3("\n\rPRT_ARQ::Rx : ¹=%02X DataSize=%d",RxRd,Result);
-  ++RxRd&=ARQ_NUMWRAP;
-//  dbg3("\n\rRxRd: RxRd=%02X RxWr=%02X ",RxRd,RxWr);
-  return Result;
-}
-
-void PRT_ARQ::Tx(const void *Data, U16 DataSize){
-  U16 i=TxWr & ARQ_WINWRAP;
-  TxWin[i].TxTime=0;
-  TxWin[i].DataSize=(U8)DataSize;
-  memcpy(TxWin[i].Data,Data,DataSize);
-//  dbg3("\n\rPRT_ARQ::Tx : ¹=%02X DataSize=%d",TxWr,DataSize);
-  ++TxWr&=ARQ_NUMWRAP;
-}
-
-#define CODE_RR   0x0
-#define CODE_RNR  0x2
-#define CODE_SREJ 0x3
-#define CODE_TIMQ 0x4
-#define CODE_TIMA 0x5
-#define CODE_RSTQ 0x6
-#define CODE_RSTA 0x7
-
-U16 PRT_ARQ::ProcessIO(){
-  U16 EM = prt->ProcessIO();
-  PACKET Buf;
-  U16 Size;
-  // RX
-  if(EM & IO_RX){
-    Size = prt->Rx(&Buf);
-    // Frame corrupted?
-    U16 CRC=CRC16_get((U8*)&Buf+2,Size-2, CRC16_ModBus);
-//    ConPrintHex(&Buf,Size);
-//    dbg3("Size=%d CRC=%04X ",Size,CRC);
-    if(Buf.CRC!=CRC)
-    { // Frame corrupted!
-      dbg("\n\rframe corrupted");
-      // Header is valid and frame is a i-frame?
-      if(Buf.HdrCRC==(U8)CRC16_get(&Buf.Hdr,sizeof(Buf.Hdr), CRC16_ModBus) &&
-        Buf.Hdr.A._.Type==0)
-      { // corrupted i-frame received, prepare SREJ-frame
-        TxBuf.Addr=MyAddr;
-        TxBuf.A._.Type=1;
-        TxBuf.A.S.Code=CODE_SREJ;
-        TxBuf.B.NRx=Buf.Hdr.A.I.NTx;
-        TxBuf.B.QA=1;
-        dbg2(" Generate SREJ ¹%02X",TxBuf.B.NRx);
-      }
-    }
-    else
-    { // Frame valid
-      SYS::getSysTime(LastRecvTime);
-      if(Buf.Hdr.A._.Type==0)
-      { // i-frame
-        if(ARQState==ARQS_NORMAL)
-        { // ARQ in "normal operation" state
-          acknowledge(Buf.Hdr.B.NRx);
-          int i=Buf.Hdr.A.I.NTx;
-          if( ((i-RxRd) & ARQ_NUMWRAP) < ARQ_WINSIZE ){
-            if( ((i-RxWr) & ARQ_NUMWRAP) <= ((i-RxRd) & ARQ_NUMWRAP) )
-              RxWr=(i+1) & ARQ_NUMWRAP;
-            i&=ARQ_WINWRAP;
-            RxWin[i].DataSize=(U8)(Size-ARQ_PRTDataSize);
-            memcpy(RxWin[i].Data,Buf.Data,sizeof(Buf.Data));
-          }
-        }
-      }
-      else
-      { // s-frame
-        switch(Buf.Hdr.A.S.Code){
-        case CODE_SREJ:
-          dbg2("\n\rSREJ %02X received",Buf.Hdr.B.NRx);
-          // prepare requested i-frame
-          TxBuf.Addr=MyAddr;
-          TxBuf.A._.Type=0;
-          TxBuf.A.I.NTx=Buf.Hdr.B.NRx;
-          break;
-        case CODE_RR:
-//          dbg2(" Rec_RR %02X",Buf.Hdr.B.NRx);
-          acknowledge(Buf.Hdr.B.NRx);
-          break;
-        case CODE_TIMA:
-          if(TimeClient)
-            TimeClient->receiveData(1,&(Buf.Data[0]),Size-ARQ_PRTDataSize);
-          break;
-        case CODE_RSTQ:
-          if(ARQState==ARQS_NORMAL) reset();
-          TxBuf.Addr=MyAddr;
-          TxBuf.A._.Type=1;
-          TxBuf.A.S.Code=CODE_RSTA;
-          TxBuf.B.QA=0;
-          TxBuf.B.NRx=0;
-          ConPrint("recv(ARQS_RSTQ)\n\r");
-          break;
-        case CODE_RSTA:
-          ConPrint("recv(ARQS_RSTA)\n\r");
-          if(ARQState==ARQS_RSTQ) reset();
-          ARQState=ARQS_NORMAL;
-          break;
-        default:;
-          //now i don't know what to do
-        }
-      }
-    }
+  BOOL IsTxOver(){
+    SYS::cli();
+    BOOL Res=(TxB.WrP==TxB.RdP) && (inp(Base+Lsr) & 0x40);
+    SYS::sti();
+    return Res;
   }
-  // TX
-  if(EM & IO_TX){
-    Size=ARQ_PRTDataSize;
-    TIME Now;
-    SYS::getSysTime(Now);
-    // We have no frame in TxBuf ?
-    if(TxBuf.Addr==0){
-      if(TimeClient && TimeClient->HaveDataToTransmit(1)){
-        if(EM & IO_TXEMPTY){
-          TxBuf.Addr=MyAddr;
-          TxBuf.A._.Type=1;
-          TxBuf.A.S.Code=CODE_TIMQ;
-          TxBuf.B.QA=0;
-          TxBuf.B.NRx=0;
-          Size+=TimeClient->getDataToTransmit(1,&(Buf.Data[0]),MaxARQDataSize);
-        }
-      }
-      else switch(ARQState){
-        case ARQS_RSTQ:
-          if((LastSendTime==TIME(0)) || ((LastSendTime+PACKET_TIMEOUT) < Now)){
-            // generate RSTQ s-frame
-            TxBuf.Addr=MyAddr;
-            TxBuf.A._.Type=1;
-            TxBuf.A.S.Code=CODE_RSTQ;
-            TxBuf.B.QA=0;
-            TxBuf.B.NRx=0;
-            LastSendTime=Now;
-            ConPrint("send(ARQS_RSTQ)\n\r");
-          }
-          break;
-        case ARQS_NORMAL:
-          // check i-frame in queue or ..
-          if(!get_i_frame() && (
-            (LastSendTime+(PACKET_TIMEOUT/2) < Now) ||
-            ((LastACKNum-RxRd) & ARQ_NUMWRAP > ARQ_WINSIZE) &&
-            ((RxRd-LastACKNum) & ARQ_NUMWRAP) > (ARQ_WINSIZE>>1)
-          )){ // .. or generate RR s-frame
-            TxBuf.Addr=MyAddr;
-            TxBuf.A._.Type=1;
-            TxBuf.A.S.Code=CODE_RR;
-            TxBuf.B.NRx=GetNRx();
-            TxBuf.B.QA=0;
-//            dbg2(" Gen_RR %02X",TxBuf.B.NRx);
-            break;
-          }
-        default:;
-          // do nothing
-      }
-    }
-    // we have anything to send?
-    if(TxBuf.Addr!=0){
-      if(TxBuf.A._.Type==0)
-      { // for i-frame do some actions
-        TxBuf.B.NRx=GetNRx();
-        TxBuf.B.QA=0;
-        int i=TxBuf.A.I.NTx & ARQ_WINWRAP;
-        int DSize=TxWin[i].DataSize;
-        memcpy(Buf.Data,TxWin[i].Data,DSize);
-        Size+=DSize;
-        TxWin[i].TxTime=Now;
-      }
-      memcpy(&Buf.Hdr,&TxBuf,sizeof(TxBuf));
-      sendPacket(Buf,Size);
-      TxBuf.Addr=0;
-    }
+  BOOL CarrierDetected(){
+      return (BOOL)(inp(Base+Msr)&0x80);
   }
-  return
-    ( (RxWin[RxRd&ARQ_WINWRAP].DataSize>0) ? IO_RX : 0 ) |
-    ( (((TxWr-TxRd)&ARQ_NUMWRAP) < ARQ_WINSIZE) ? IO_TX : 0 );
-}
-
-void PRT_ARQ::acknowledge(U16 R){
-  if( TxRd!=R && ((R-TxRd) & ARQ_NUMWRAP) <= ((TxWr-TxRd) & ARQ_NUMWRAP) ){
-    TxRd=(U8)R;
-/*
-    ConPrintf("\n\rACK: TxRd=%02X TxWr=%02X   RxRd=%02X RxWr=%02X",
-      TxRd,TxWr,RxRd,RxWr);
-//*/
+  BOOL IsClearToSend(){
+      return (BOOL)(inp(Base+Msr)&0x10);
   }
-  Acknowledged=TRUE;
-}
-
-BOOL PRT_ARQ::get_i_frame(){
-  TIME Now;
-  SYS::getSysTime(Now);
-  int i=TxRd;
-  while(i!=TxWr){
-    TIME &Tmp=TxWin[i & ARQ_WINWRAP].TxTime;
-    //SYS::checkTime(Tmp);
-    if(Tmp+PACKET_TIMEOUT < Now) break;
-    ++i&=ARQ_NUMWRAP;
+  void setDtr(bool high)
+  {
+      if(high) outp(Base+Mcr,inp(Base+Mcr)|1);
+      else outp(Base+Mcr,inp(Base+Mcr)&~1);
   }
-  if(i!=TxWr){
-    TxBuf.Addr=MyAddr;
-    TxBuf.A._.Type=0;
-    TxBuf.A.I.NTx=i;
-    return TRUE;
+  void setRts(bool high)
+  {
+      if(high) outp(Base+Mcr,inp(Base+Mcr)|2);
+      else outp(Base+Mcr,inp(Base+Mcr)&~2);
   }
-  else return FALSE;
-}
+};
 
-U8 PRT_ARQ::GetNRx(){
-  int i=RxRd;
-  while(RxWin[i & ARQ_WINWRAP].DataSize!=0 && i!=RxWr) ++i&=ARQ_NUMWRAP;
-  SYS::getSysTime(LastSendTime);
-  LastACKNum=i;
-//  dbg2(" GetNRx=%02X",i);
-  return i;
-}
-
-void PRT_ARQ::sendPacket(PACKET &P,U16 Size){
-  P.HdrCRC=(U8)CRC16_get(&P.Hdr,sizeof(P.Hdr), CRC16_ModBus);
-  P.CRC=CRC16_get((U8*)&P+2,Size-2, CRC16_ModBus);
-  prt->Tx(&P,Size);
-}
-
-BOOL PRT_ARQ::LinkTimeout(){
-  TIME Now;
-  SYS::getSysTime(Now);
-  if(LastRecvTime+PACKET_TIMEOUT*4 < Now){
-    LastRecvTime = Now;
-    return TRUE;
-  }
-  else return FALSE;
-}
-
-
-PRT_ARQ::~PRT_ARQ(){
-  delete RxWin;
-  delete TxWin;
-}
-
+COM_16550 Com1(Com1Base,
+#ifdef __SoftAutoDir
+  Com1DirBit,
 #endif
-//*/
+  Com1Int,Com1Msk,(U32)Com1_ISR,
+#ifdef __HALFDUPLEX
+  CF_HALFDUPLEX
+#else
+  CF_FULLDUPLEX // | CF_HWFLOWCTRL
+#endif
+);
+COM_16550 Com2(Com2Base,
+#ifdef __SoftAutoDir
+  Com2DirBit,
+#endif
+  Com2Int,Com2Msk,(U32)Com2_ISR,
+  CF_HALFDUPLEX|CF_AUTODIR
+);
+
+U16 GetBaudRateDivider(U32 baud){
+#if defined(__7188) || defined(__I7188)
+  switch(baud){
+    case 1200ul  : return 96;
+    case 2400ul  : return 48;
+    case 4800ul  : return 24;
+    case 9600ul  : return 12;
+    case 19200ul : return  6;
+    case 38400ul : return  3;
+    case 57600ul : return  2;
+    case 115200ul: return  1;
+    default : return 0; // baud rate error
+  }
+#elif defined(__7188XA)
+  switch(baud){
+    case 1200ul  : return 768;
+    case 2400ul  : return 384;
+    case 4800ul  : return 192;
+    case 9600ul  : return  96;
+    case 19200ul : return  48;
+    case 38400ul : return  24;
+    case 57600ul : return  16;
+    case 115200ul: return   8;
+    default : return 0; // baud rate error
+  }
+#endif
+}
+
+BOOL COM_16550::install(U32 Baud){
+  if(OldIntVect) uninstall();
+  err=0;
+  U8 format;
+  if(GetFormatData(8,pkNone,1,format)!=NoError) return FALSE;
+  SYS::cli();
+  // save interrupt status
+  save[3]=inp(Base+Ier);
+  // save old format & speed
+  save[2]=inp(Base+Lcr);
+  // 1. set DLAB (baud rate)
+  outp(Base+Lcr,0x80);
+  //    save old baud rate
+  save[0]=inp(Base+Dll);
+  save[1]=inp(Base+Dlh);
+  if(!setSpeed(Baud)){ SYS::sti(); return FALSE; }
+  // 2. set data format
+  outp(Base+Lcr,format);
+  // 3. enable & clear FIFO
+  outp(Base+Fcr,0xC1); // 01-1,41-4,81-8,C1-14 (Rx FIFO trigger level)
+  outp(Base+Ier,0x09); // enable UART interrupts: Rx, Modem Status change
+
+  //outp(Base+Mcr,0x0b); // set DTR line active
+  // 5. init QUEUE
+  RxB.WrP=RxB.RdP=TxB.WrP=TxB.RdP=0;
+  RxB.ExpMask=0;
+  RxB.ExpChar=1;
+  // save old ISR
+  OldIntVect=IntVect[IntVectNum];
+  // install new ISR
+  IntVect[IntVectNum]=ISR;
+  // 6. unmask interrupt
+  outpw(INT_IMASK,inpw(INT_IMASK)&(~IntMask));
+#ifdef __SoftAutoDir
+  // 7. 485 initial in C:\I8000\W7188\VendorHardware.cppreceive direction
+  set485DirRx(ComDirBit);
+#endif
+  TxPaused=FALSE;
+  SYS::sti();
+  setDtr(true);
+  setRts(true);
+  return TRUE;
+}
+
+BOOL COM_16550::setSpeed(U32 Baud){
+  U16 Divider = GetBaudRateDivider(Baud);
+  if (Divider==0) return FALSE;
+  SYS::cli();
+  // set DLAB (baud rate)
+  outp(Base+Lcr,0x80);
+  outp(Base+Dll,LoByte(Divider));
+  outp(Base+Dlh,HiByte(Divider));
+  SYS::sti();
+  this->Baud=Baud;
+  return TRUE;
+}
+
+void COM_16550::uninstall(void){
+  if(!OldIntVect) return;
+  _disable();
+  outp(Base+Mcr,0x00); // set DTR line inactive?
+  // 1. restore OLD ISR
+  IntVect[IntVectNum]=OldIntVect;
+  OldIntVect=0L;
+  // 2. restore baud rate
+  outp(Base+Lcr,0x80);
+  outp(Base+Dll,save[0]);
+  outp(Base+Dlh,save[1]);
+  // 3. restore data format
+  outp(Base+Lcr,save[2]&0x7f);
+  // 4. restore enable COM's interrupt
+  outp(Base+Ier,save[3]);
+  // 6. mask interrupt
+  outpw(INT_IMASK,inpw(INT_IMASK)|IntMask);
+  _enable();
+}
+
+
+#endif // !defined(__7188XB)
+
+COMPORT& GetCom(int ComNum){
+  switch(ComNum){
+#if defined(__7188XB) || defined(__IP8000)
+  case 1: return ComA;
+  case 2: return ComB;
+  default: return ComZero;
+#else
+  case 1: return Com1;
+  case 2: return Com2;
+  case 3: return ComA;
+  case 4: return ComB;
+  default: return ComZero;
+#endif
+  }
+}

@@ -66,8 +66,6 @@ protected:
   U16 _TC,_TB;
 #endif
   char* StrBuf;
-  //EVENT EvtLoCTS;
-  //EVENT EvtHiCTS;
   virtual void enableTx()=0;
 public:
   U16  virtual read(void *Buf,U16 Cnt,int Timeout);
@@ -98,8 +96,6 @@ public:
   }
   EVENT inline &RxEvent() {return RxB.Event;}
   EVENT inline &TxEvent() {return TxB.Event;}
-  //EVENT inline &EventLoCTS() {return EvtLoCTS;}
-  //EVENT inline &EventHiCTS() {return EvtHiCTS;}
   void         setExpectation(U8 Mask,U8 Char,U16 Count=0);
   U8   _fast   readChar();
   void _fast   writeChar(U8 Char);

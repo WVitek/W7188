@@ -2,7 +2,7 @@
 <CodeBlocks_project_file>
 	<FileVersion major="1" minor="6" />
 	<Project>
-		<Option title="W7188" />
+		<Option title="iP-8000" />
 		<Option pch_mode="2" />
 		<Option compiler="ow" />
 		<Option virtualFolders="DataAcquisition\;HLI\;Z_Unused\;VendorImpl\;WImpl\;" />
