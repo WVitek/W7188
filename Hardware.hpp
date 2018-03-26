@@ -96,15 +96,18 @@
 
 #elif defined(__IP8000)
   //*** 7188XA hardware defines
-  //#definC:\I8000\W7188\Hardware.hppe __mOS7
+  #define __mOS7
   #include "8000a.h"
   #if defined(__SMALL__) || defined(__COMPACT__)
     #error Only LARGE or HUGE memory model supported for __IP8000;
   #else
     #pragma library ("lib\8000a.lib");
+    #pragma library ("clibl.lib")
   #endif
 
-  #define __UseVendorComms
+  #ifndef __UseVendorLibs
+      #define __UseVendorLibs
+  #endif
 
 #else
   #error Declare target controller (__7188, __7188XA, __7188XB or __IP8000) in compiler options

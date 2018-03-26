@@ -7,13 +7,13 @@
 #include "Comms.hpp"
 #include "WCRCs.hpp"
 
-#ifdef __mOS7
-#include "WFlash.h"
-#include "W_FSOpt.h"
-class Init {
-    public: Init(int _){ OS7FileSystemOptimize(); }
-} __tmp(0);
-#endif
+//#ifdef __mOS7
+//#include "WFlash.h"
+//#include "W_FSOpt.h"
+//class Init {
+//    public: Init(int _){ OS7FileSystemOptimize(); }
+//} __tmp(0);
+//#endif
 
 //#define _HLI_hostname "10.226.86.50";  // UPO SOU  ( Main Server )
 //#define _HLI_hostname "10.226.86.79";  // UPO SOU2 ( ARM )
@@ -267,7 +267,7 @@ cdecl main()
         cp.com = 3;
         cp.speed = 9600;
 #else
-        cp.com = 1;
+        cp.com = 3;
         cp.speed = 19200;
 #endif
         GetComParams(" hli=",&cp);

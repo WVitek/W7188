@@ -5,75 +5,9 @@
 		<Option title="iP-8000" />
 		<Option pch_mode="2" />
 		<Option compiler="ow" />
-		<Option virtualFolders="DataAcquisition\;HLI\;Z_Unused\;VendorImpl\;WImpl\;" />
+		<Option virtualFolders="DataAcquisition\;HLI\;VendorImpl\;" />
 		<Build>
-			<Target title="7188">
-				<Option output="bin/w_bad.exe" prefix_auto="1" extension_auto="0" />
-				<Option working_dir="" />
-				<Option object_output="obj/" />
-				<Option type="5" />
-				<Option compiler="ow" />
-				<Option projectCompilerOptionsRelation="1" />
-				<Option projectLinkerOptionsRelation="1" />
-				<Option projectLibDirsRelation="2" />
-				<Compiler>
-					<Add option="-os" />
-					<Add option="-oi" />
-					<Add option="-oa" />
-					<Add option="-mc" />
-					<Add option="-zu" />
-					<Add option="-zm" />
-					<Add option="-zdf" />
-					<Add option="-s" />
-					<Add option="-bt=dos" />
-					<Add option="-we -e10 -s -zq -os -oi -oa -zdf -zu -1 -bt=dos" />
-					<Add option="-dMyAddr=11" />
-					<Add option="-dq__MYGPRS" />
-					<Add option="-dq__GPRS_MC52" />
-					<Add option="-dq__UTNP_UPO" />
-					<Add option="-d__UTNP_VPO" />
-					<Add option="-d__7188XA" />
-					<Add option="-dq__7188" />
-					<Add option="-dq__I7188" />
-					<Add option="-d__mOS7" />
-					<Add option="-d__I7K" />
-					<Add option="-dq__YEAR2155" />
-					<Add option="-dPOWERON_DO1=0" />
-					<Add option="-dq__SHOWADCDATA=60" />
-					<Add option="-dq__DebugThreadState" />
-					<Add option="-d__WIRE" />
-					<Add option="-dq__RS485" />
-					<Add option="-dq__ARQ" />
-					<Add option="-dq__GSM_MC52" />
-					<Add option="-dq__GSM_TC65" />
-					<Add option="-dq__GSM_SIM300" />
-					<Add option="-dq__MTU" />
-					<Add option="-dq__DO2_PERIOD=60" />
-					<Add option="-dq__MTU_VAL_EMUL" />
-					<Add option="-dq__GPS_TIME_GPS721" />
-					<Add option="-dq__NO_STAT" />
-					<Add option="-dq__NO_HLI" />
-					<Add option="-dq__COM_STATUS_BUF" />
-					<Add option="-dq__MTU_Old" />
-					<Add option="-dq__I7K_NOANS" />
-					<Add option="-dq__HLI_RX_SWITCH_LED" />
-					<Add option="-dq__EVALUATION" />
-					<Add option="-dq__UseAvgTOfs" />
-					<Add option="-dq__TC65_BUG" />
-				</Compiler>
-				<Linker>
-					<Add option="name w d all SYS dos op m op maxe=25" />
-					<Add option="op symf" />
-					<Add option="op ELIMINATE" />
-					<Add option="op SHOWDEAD" />
-				</Linker>
-				<ExtraCommands>
-					<Add after="d:\work\watcom\binnt\wlink.exe name bin\w.exe d all SYS dos op m op maxe=25 op q op symf op el file obj\WComms.obj,obj\main.obj,obj\WCRCs.obj,obj\WHrdware.obj,obj\wkern.obj" />
-					<Add after="cmd /c copy /y bin\w.exe C:\I8000\7188\w.exe" />
-					<Mode after="always" />
-				</ExtraCommands>
-			</Target>
-			<Target title="IP8000">
+			<Target title="iP-8000">
 				<Option output="bin/w_bad.exe" prefix_auto="1" extension_auto="0" />
 				<Option working_dir="" />
 				<Option object_output="obj/" />
@@ -93,6 +27,7 @@
 					<Add option="-s" />
 					<Add option="-bt=dos" />
 					<Add option="-we -e10 -s -zq -os -oi -oa -zdf -zu -1 -bt=dos" />
+					<Add option="-d__UseVendorLibs" />
 					<Add option="-dMyAddr=11" />
 					<Add option="-dq__MYGPRS" />
 					<Add option="-dq__GPRS_MC52" />
@@ -127,7 +62,6 @@
 					<Add option="-dq__EVALUATION" />
 					<Add option="-dq__UseAvgTOfs" />
 					<Add option="-dq__TC65_BUG" />
-					<Add option="-d__UseVendorComms" />
 				</Compiler>
 				<Linker>
 					<Add option="name w d all SYS dos op m op maxe=25" />
@@ -148,15 +82,7 @@
 		<Linker>
 			<Add directory="lib" />
 		</Linker>
-		<Unit filename="7188.H">
-			<Option target="7188" />
-		</Unit>
-		<Unit filename="7188XA.H">
-			<Option target="7188" />
-		</Unit>
-		<Unit filename="8000a.h">
-			<Option target="IP8000" />
-		</Unit>
+		<Unit filename="8000a.h" />
 		<Unit filename="ADC_ARQ.h">
 			<Option virtualFolder="DataAcquisition/" />
 		</Unit>
@@ -181,14 +107,8 @@
 			<Option virtualFolder="HLI/" />
 		</Unit>
 		<Unit filename="Hardware.hpp" />
-		<Unit filename="I7188.H">
-			<Option target="7188" />
-		</Unit>
 		<Unit filename="MODULE.h">
 			<Option virtualFolder="DataAcquisition/" />
-		</Unit>
-		<Unit filename="MSGBUF.h">
-			<Option virtualFolder="Z_Unused/" />
 		</Unit>
 		<Unit filename="MTU05.h">
 			<Option virtualFolder="DataAcquisition/" />
@@ -216,49 +136,24 @@
 		</Unit>
 		<Unit filename="VendorComms.cpp">
 			<Option virtualFolder="VendorImpl/" />
-			<Option target="IP8000" />
 		</Unit>
 		<Unit filename="VendorComms.h">
 			<Option virtualFolder="VendorImpl/" />
-			<Option target="IP8000" />
-		</Unit>
-		<Unit filename="W16550IH.h">
-			<Option virtualFolder="WImpl/" />
-			<Option target="7188" />
-		</Unit>
-		<Unit filename="W80188SP.h">
-			<Option virtualFolder="WImpl/" />
-			<Option target="7188" />
 		</Unit>
 		<Unit filename="WAm186ES.H" />
 		<Unit filename="WCRCs.cpp" />
 		<Unit filename="WCRCs.hpp" />
 		<Unit filename="WClasses.HPP" />
-		<Unit filename="WComms.cpp">
-			<Option virtualFolder="WImpl/" />
-			<Option target="7188" />
-		</Unit>
-		<Unit filename="WComms.h">
-			<Option virtualFolder="WImpl/" />
-			<Option target="7188" />
-		</Unit>
 		<Unit filename="WConsole.h" />
 		<Unit filename="WFlash.h" />
 		<Unit filename="WFloat32.h">
 			<Option virtualFolder="DataAcquisition/" />
-		</Unit>
-		<Unit filename="WHrdware.cpp">
-			<Option virtualFolder="WImpl/" />
-			<Option target="7188" />
 		</Unit>
 		<Unit filename="WInlines.h" />
 		<Unit filename="WInt64.h" />
 		<Unit filename="WKern.cpp" />
 		<Unit filename="WKern.hpp" />
 		<Unit filename="WTLIST.hpp" />
-		<Unit filename="W_EmbSPH.h">
-			<Option virtualFolder="WImpl/" />
-		</Unit>
 		<Unit filename="W_FSOpt.h" />
 		<Unit filename="dump_SVC.h">
 			<Option virtualFolder="HLI/" />
@@ -282,10 +177,6 @@
 			<Option virtualFolder="HLI/" />
 		</Unit>
 		<Unit filename="main.cpp" />
-		<Unit filename="x600.h">
-			<Option virtualFolder="Z_Unused/" />
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
 		<Extensions>
 			<code_completion />
 			<debugger />

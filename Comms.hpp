@@ -6,11 +6,15 @@
 //#include "hardware.hpp"
 #include "service.h"
 
-#ifdef __UseVendorComms
+#define CF_FULLDUPLEX 0x00
+#define CF_HALFDUPLEX 0x80
+#define CF_HWFLOWCTRL 0x20
+
+#ifdef __UseVendorLibs
 #include "VendorComms.h"
 #else
 #include "WComms.h"
-#endif // __UseVendorComms
+#endif // __UseVendorLibs
 
 extern COMPORT& GetCom(int ComNum);
 

@@ -327,4 +327,11 @@ U16 ConBytesInRxB();
 U8 ConReadChar();
 void ConWriteChar(U8 Char);
 
+//// Is need for vendor library functions
+//extern "C" {
+//  void cdecl _free( void *__ptr );
+//  void cdecl * _malloc( size_t __size );
+//  int cdecl _atexit( void (*func)(void) );
+//}
+
 #endif // __WKERN_HPP

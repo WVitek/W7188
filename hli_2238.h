@@ -43,7 +43,7 @@ void execute(){
   int RxSize, TxSize=0;
   U8 TxBuf[MaxTxSize];
   BOOL IsFactoryRate = setComRate(TRUE);
-  
+
   while(!Terminated){
     U16 R = prt.ProcessIO();
     if(R & IO_UP==0)
@@ -58,7 +58,7 @@ void execute(){
       Rx = prt.GetBuf( RxSize );
       if(RxSize)
       {
-        if(State!=msOnline) 
+        if(State!=msOnline)
           ConPrintf(" <Rx=%d:%.*s> ",RxSize,RxSize,Rx);
         else
           ConPrintf(" [Rx=%d] ",RxSize);
@@ -151,7 +151,7 @@ void execute(){
         toutState.start(LinkTimeout); // restart link timeout
         toutSend.setSignaled();
       }
-      else if( toutState.IsSignaled() ) 
+      else if( toutState.IsSignaled() )
       {
         ConPrint("\n\rGSM2238: link timeout\n\r");
         NewState = msRset;
@@ -192,9 +192,9 @@ void execute(){
     case msRset:
       NewState = msDetect;
       break;
-      
+
     } // end of switch(State)
-    
+
 #ifndef __SHOWADCDATA
     SYS::dbgLed( (U32(NewState)<<16) | (U32(RxCnt)<<8) | TxCnt );
 #endif
