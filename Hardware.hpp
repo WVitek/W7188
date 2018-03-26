@@ -4,7 +4,9 @@
 
 #include <conio.h>
 
+#ifndef __UseVendorTimers
 #include "WAm186ES.h"
+#endif // __UseVendorTimers
 
 #if defined(__7188)
   //*** I7188 hardware defines
@@ -105,8 +107,8 @@
     #pragma library ("clibl.lib")
   #endif
 
-  #ifndef __UseVendorLibs
-      #define __UseVendorLibs
+  #ifndef __UseVendorComms
+      #define __UseVendorComms
   #endif
 
 #else

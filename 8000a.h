@@ -1,5 +1,8 @@
 /*
 Last Update at 2010/04/14 [yyyy/mm/dd] By Tim Tsai, ICP DAS.
+************************************************************
+***** WARNING! Modified for iP-8000 project 2018-03-25 *****
+************************ wvn@bk.ru *************************
 */
 #ifndef __MINIOS7__
 #define __MINIOS7__

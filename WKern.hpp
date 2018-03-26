@@ -20,7 +20,14 @@
 #ifndef __WCLASSES_HPP
   #include "WClasses.hpp"
 #endif
-#ifndef __WAM186ES_H
+
+#ifdef __UseVendorComms
+  #define __UseVendorTimers
+#else
+  #define __UseVendorTimers
+#endif // __UseVendorComms
+
+#if !defined(__UseVendorTimers) && !defined(__WAM186ES_H)
   #include "WAm186ES.h"
 #endif
 
@@ -34,9 +41,21 @@ class EVENT;
 class CRITICALSECTION;
 
 //***** Constanst
-#define SysTicksInMs 10000u //10001
-#define SysTimerInterval 2u
-#define SysThreadSwitchIntervalMask 0xFu
+#ifdef __IP8000
+#define SysTicksInMs 20000u // 80 MHz CPU
+#else
+#define SysTicksInMs 10000u // 40 MHz CPU
+#endif
+
+#if defined(__UseVendorComms)
+  // Some time critical functions (may) moved to tasks and we need frequent thread switching
+  #define SysTimerInterval 1u
+  #define SysThreadSwitchIntervalMask 0x1u
+#else
+  #define SysTimerInterval 2u
+  #define SysThreadSwitchIntervalMask 0xFu
+#endif // __UseVendorComms
+
 #define SysTimerMaxcount (SysTicksInMs*SysTimerInterval)
 #define dt100MSec 100u
 #define dtOneSecond 1000u
@@ -158,19 +177,22 @@ public:
 //  inline static void getNetTime(TIME& Time)
 //  { _disable(); Time=SystemTime+NetTimeOffset; _enable(); }
 #ifdef __UsePerfCounters
-    inline static void startCounting()
-    {
-        __StartTicks=inpw(TMR_T1CNT);
-    }
+  #ifndef TMR_T1CNT
+  #define TMR_T1CNT  0xFF58
+  #endif // TMR_T1CNT
+  inline static void startCounting()
+  {
+    __StartTicks=inpw(TMR_T1CNT);
+  }
 
-    inline static void stopCounting(U32& Counter)
-    {
-        S16 delta = inpw(TMR_T1CNT) - __StartTicks;
-        if(delta<0)
-            Counter+=SysTimerMaxcount+delta;
-        else
-            Counter+=delta;
-    }
+  inline static void stopCounting(U32& Counter)
+  {
+    S16 delta = inpw(TMR_T1CNT) - __StartTicks;
+    if(delta<0)
+      Counter+=SysTimerMaxcount+delta;
+    else
+      Counter+=delta;
+  }
 #endif
 public:
   static void       dbgLed(U32 Val);
@@ -219,6 +241,7 @@ public:
   inline static U16 GetTimerISRMs(){return 0;}
 #endif
   static void       printThreadsState();
+  static void       init();
   static void       startKernel();
   static bool       Stopping();
   static void       stopKernel();
@@ -228,7 +251,11 @@ private:
   static void _fast addTimeout(TIMEOUTOBJ* pto,TIMEOUT Timeout);
   static void _fast addThreadTimeout(TIMEOUT Timeout);
   static void _fast TimerProc(BOOL Hw);
+#ifdef __UseCustomTimers
   friend void interrupt far TimerISR(void);
+#else
+  friend void cdecl TimerFuncCalledFromISR(void);
+#endif
   friend class TIMEOUTOBJ;
 };
 

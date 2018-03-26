@@ -194,6 +194,7 @@ bool GetComParams(char *prefix, COM_PARAMS *res)
 
 cdecl main()
 {
+    SYS::init();
     dbg("\n\rSTART Main\n\r");
 #ifdef __DebugThreadState
     SYS::printThreadsState();
@@ -293,6 +294,7 @@ cdecl main()
     BOOL Quit=FALSE;
     while(TRUE)
     {
+        ConWriteChar('.');
         while(ConBytesInRxB())
         {
             char c=ConReadChar();

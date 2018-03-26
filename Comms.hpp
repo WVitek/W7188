@@ -10,11 +10,11 @@
 #define CF_HALFDUPLEX 0x80
 #define CF_HWFLOWCTRL 0x20
 
-#ifdef __UseVendorLibs
+#ifdef __UseVendorComms
 #include "VendorComms.h"
 #else
 #include "WComms.h"
-#endif // __UseVendorLibs
+#endif // __UseVendorComms
 
 extern COMPORT& GetCom(int ComNum);
 

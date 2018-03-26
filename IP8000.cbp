@@ -27,7 +27,7 @@
 					<Add option="-s" />
 					<Add option="-bt=dos" />
 					<Add option="-we -e10 -s -zq -os -oi -oa -zdf -zu -1 -bt=dos" />
-					<Add option="-d__UseVendorLibs" />
+					<Add option="-d__UseVendorComms" />
 					<Add option="-dMyAddr=11" />
 					<Add option="-dq__MYGPRS" />
 					<Add option="-dq__GPRS_MC52" />
@@ -70,7 +70,7 @@
 					<Add option="op SHOWDEAD" />
 				</Linker>
 				<ExtraCommands>
-					<Add after="d:\work\watcom\binnt\wlink.exe name bin\w.exe d all SYS dos op m op maxe=25 op q op symf op el file obj\VendorComms.obj,obj\main.obj,obj\WCRCs.obj,obj\VendorHardware.obj,obj\wkern.obj" />
+					<Add after="d:\work\watcom\binnt\wlink.exe name bin\w.exe d all SYS dos op m op maxe=25 op q op symf op el file obj\VendorComms.obj,obj\main.obj,obj\WCRCs.obj,obj\VendorCompat.obj,obj\wkern.obj" />
 					<Add after="cmd /c copy /y bin\w.exe C:\I8000\7188\w.exe" />
 					<Mode after="always" />
 				</ExtraCommands>
@@ -138,6 +138,9 @@
 			<Option virtualFolder="VendorImpl/" />
 		</Unit>
 		<Unit filename="VendorComms.h">
+			<Option virtualFolder="VendorImpl/" />
+		</Unit>
+		<Unit filename="VendorCompat.cpp">
 			<Option virtualFolder="VendorImpl/" />
 		</Unit>
 		<Unit filename="WAm186ES.H" />

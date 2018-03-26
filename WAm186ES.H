@@ -46,8 +46,8 @@
 #define INT_I5INT   INT_DMA0INT
 #define INT_I6INT   INT_DMA1INT
 
-#define INT_SP0INT  0x14 // Serial Port 0 INterrupt Type
-#define INT_SP1INT  0x11 // Serial Port 1 INterrupt Type
+#define INT_SP0INT  0x14 // Serial Port 0 Interrupt Type
+#define INT_SP1INT  0x11 // Serial Port 1 Interrupt Type
 #define INT_NONSPEC 0x8000
 
 // Masks

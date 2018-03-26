@@ -88,7 +88,7 @@ void execute()
 #undef fmt
 #undef arg
 
-#if defined(__UsePerfCounters) && !defined(__UseVendorLibs)
+#if defined(__UsePerfCounters) && !defined(__UseVendorComms)
     for(int i=1; i<=4; i++)
     {
         STRUCT_COMPERF CP;

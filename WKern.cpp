@@ -287,23 +287,8 @@ void _fast SYS::TimerProc(BOOL Hard)
     }
     enable_sti();
 #ifdef __UsePerfCounters
-        if(Hard)stopSysTicksCount(TimerISRTicks);
+    if(Hard)stopSysTicksCount(TimerISRTicks);
 #endif
-}
-
-void interrupt far TimerISR(void)
-{
-    BOOL Hw = HardwareTimerIntr;
-    if(Hw) outpw(INT_EOI,INT_TMREOI);
-    else HardwareTimerIntr = TRUE;
-    SYS::TimerProc(Hw);
-}
-
-void SYS::switchThread(){
-  _disable();
-  HardwareTimerIntr=FALSE;
-  _asm{ int 0x12 };
-  _enable();
 }
 
 #ifdef __DebugUseConsole
@@ -353,6 +338,39 @@ void __sysdump(const void* Data,U16 Len){
 
 #endif
 
+#ifdef __UseVendorTimers
+
+void cdecl TimerFuncCalledFromISR(void){
+  BOOL Hw = HardwareTimerIntr;
+  HardwareTimerIntr = TRUE;
+  SYS::TimerProc(Hw);
+}
+
+void SYS::TimerOpen(){
+  SetUserTimer(1);
+  InstallUserTimerFunction_ms(1, &TimerFuncCalledFromISR);
+}
+
+void SYS::TimerClose(){
+  StopUserTimerFun();
+}
+
+void SYS::switchThread(){
+  _disable();
+  HardwareTimerIntr=FALSE;
+  _asm{ int 0x12 }; // Assume that we use timer 1
+  _enable();
+}
+#else
+
+void interrupt far TimerISR(void)
+{
+  BOOL Hw = HardwareTimerIntr;
+  if(Hw) outpw(INT_EOI,INT_TMREOI);
+  else HardwareTimerIntr = TRUE;
+  SYS::TimerProc(Hw);
+}
+
 void SYS::TimerOpen(){
   _disable();
   outpw(INT_TCUCON,5);
@@ -371,6 +389,16 @@ void SYS::TimerClose(){
   outpw(TMR_T1CON,TC_INH);
   _enable();
 }
+
+void SYS::switchThread(){
+  _disable();
+  HardwareTimerIntr=FALSE;
+  _asm{ int 0x12 }; // Assume that we use timer 1
+  _enable();
+}
+
+#endif // __UseVendorTimers
+
 
 U16 SYS::GetCPUIdleMs(){
   _disable();
@@ -395,17 +423,22 @@ U16 SYS::GetTimerISRMs(){
 //#ifdef __mOS7
 //#include "W_FSOpt.h"
 //#endif
-
-void SYS::startKernel(){
-#ifdef __USESTDMEMMAN
-  U16 Tmp;
-  exploreHeap(Heap16Used,Heap16Avail,Tmp);
-#endif
+void SYS::init(){
+#ifdef __UseVendorComms
+  InitLib();
+#endif // __UseVendorComms
   Init5DigitLed();
 #ifdef __SHOWADCDATA
   Set5DigitLedIntensity(1);
 #else
   Set5DigitLedIntensity(0);
+#endif
+}
+
+void SYS::startKernel(){
+#ifdef __USESTDMEMMAN
+  U16 Tmp;
+  exploreHeap(Heap16Used,Heap16Avail,Tmp);
 #endif
 //#ifdef __mOS7
 //  OS7FileSystemOptimize();
@@ -676,9 +709,6 @@ void SYS::reset(BOOL needStop)
     retf
   }
 }
-
-//void SYS::WDT_Enable() { EnableWDT();  }
-//void SYS::WDT_Disable(){ DisableWDT(); }
 
 #if defined(__7188X)
 
